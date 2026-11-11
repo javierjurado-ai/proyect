@@ -4,8 +4,8 @@ namespace App\Models\Enums;
 
 enum Tipo: string
 {
-    case Inicio = 'inicio';
-    case Modificacion = 'modificacion';
-    case Finalizacion  = 'finalizacion';
-    case Cancelacion = 'cancelacion';
+    case Inicio = 'INICIO';
+    case Modificacion = 'MODIFICACION';
+    case Finalizacion  = 'FINALIZACION';
+    case Cancelacion = 'CANCELACION';
 }
