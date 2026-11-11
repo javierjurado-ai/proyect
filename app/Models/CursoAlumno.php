@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class curso_alumno extends Model
+class CursoAlumno extends Model
 {
     protected $table = 'curso_alumno';
     protected $primaryKey = 'id';
