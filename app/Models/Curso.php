@@ -1,13 +1,10 @@
-
-
+<?php
 namespace App\Models;
 
-use Illuminate\Database\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Curso extends Model
 {
-    use HasFactory;
 
     protected $table = 'curso';
     protected $primaryKey = 'idgrupo';
@@ -36,9 +33,4 @@ class Curso extends Model
         'fecha_fin' => 'date',
     ];
 
-    // Relación recursiva
-    public function cursoPadre()
-    {
-        return $this->belongsTo(Curso::class, 'curso_idcurso', 'idgrupo');
-    }
 }
