@@ -1,14 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Models\Curso;
+use App\Models\PeticionesLogistica;
+
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-
-
-Route::get('/probar-curso', function () {
-    return Curso::all();
+Route::get('/probar-logistica', function () {
+    return PeticionesLogistica::all();
 });
