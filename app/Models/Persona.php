@@ -8,8 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class Persona extends Model
 {
     protected $table = 'persona';
-    
-
     protected $primaryKey = 'idusuario';
     public $incrementing = true;
     protected $keyType = 'int';
