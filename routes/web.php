@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Models\PeticionesLogistica;
 
 
+
 Route::get('/', function () {
     return view('welcome');
 });
