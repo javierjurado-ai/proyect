@@ -9,18 +9,15 @@ class GrupoEmpresa extends Model
 {
     protected $table = 'grupo_empresa';
 
-    public $timestamps = false;
-
     protected $primaryKey = 'id';
 
-    protected $keyType = 'int';
+    public $timestamps = false;
 
     protected $fillable = [
         'grupo_idgrupo',
         'empresa_id'
     ];
 
-    // Relación con Curso
     public function curso(): BelongsTo
     {
         return $this->belongsTo(
@@ -30,7 +27,6 @@ class GrupoEmpresa extends Model
         );
     }
 
-    // Relación con Empresa
     public function empresa(): BelongsTo
     {
         return $this->belongsTo(
