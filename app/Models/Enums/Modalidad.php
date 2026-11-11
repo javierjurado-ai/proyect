@@ -4,7 +4,7 @@ namespace App\Models\Enums;
 
 enum Modalidad: string
 {
-    case Presencial = 'presencial';
-    case Teleformacion = 'teleformacion';
-    case Mixta = 'mixta';
+    case Presencial = 'PRESENCIAL';
+    case Teleformacion = 'TELEFORMACION';
+    case Mixta = 'MIXTA';
 }

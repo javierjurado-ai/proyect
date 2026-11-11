@@ -4,7 +4,7 @@ namespace App\Models\enums;
 
 enum Genero: string
 {
-    case Hombre = 'Hombre';
-    case Mujer = 'Mujer';
-    case Otro = 'Otro';
+    case Hombre = 'HOMBRE';
+    case Mujer = 'MUJER';
+    case Otro = 'OTRO';
 }
