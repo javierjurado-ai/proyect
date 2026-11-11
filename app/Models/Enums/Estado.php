@@ -4,6 +4,6 @@ namespace App\Models\enums;
 
 enum Estado: string
 {
-    case Pendiente = 'Pendiente';
-    case Completada = 'Completada';
+    case Pendiente = 'PENDIENTE';
+    case Completada = 'COMPLETADA';
 }
