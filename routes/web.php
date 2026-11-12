@@ -8,6 +8,8 @@ use App\Http\Controllers\CursoController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\FormacionController;
 use App\Http\Controllers\PersonaController;
+use App\Http\Controllers\CreditoFormativoController;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -41,15 +43,23 @@ Route::put('/empresa/{empresa}', [EmpresaController::class, 'actualizarEmpresa']
 Route::delete('/empresa/{empresa}', [EmpresaController::class, 'eliminarEmpresa']);
 
 // Rutas para el controlador de formaciones
-Route::get('/formaciones', [FormacionController::class, 'listar']);
-Route::get('/formaciones/{id}', [FormacionController::class, 'mostrar']);
-Route::post('/formaciones', [FormacionController::class, 'crear']);
-Route::put('/formaciones/{id}', [FormacionController::class, 'actualizar']);
-Route::delete('/formaciones/{id}', [FormacionController::class, 'eliminar']);
+Route::get('/formacion', [FormacionController::class, 'listarFormacion']);
+Route::get('/formacion/{id}', [FormacionController::class, 'mostrarFormacion']);
+Route::post('/formacion', [FormacionController::class, 'crearFormacion']);
+Route::put('/formacion/{id}', [FormacionController::class, 'actualizarFormacion']);
+Route::delete('/formacin/{id}', [FormacionController::class, 'eliminarFormacion']);
 
 // Rutas para el controlador de centro
-Route::get('/centro', [CentroController::class, 'listar']);
-Route::get('/centro/{id}', [CentroController::class, 'mostrar']);
-Route::post('/centro', [CentroController::class, 'crear']);
-Route::put('/centro/{id}', [CentroController::class, 'actualizar']);
-Route::delete('/centro/{id}', [CentroController::class, 'eliminar']);
+Route::get('/centro', [CentroController::class, 'listarCentro']);
+Route::get('/centro/{id}', [CentroController::class, 'mostrarCentro']);
+Route::post('/centro', [CentroController::class, 'crearCentro']);
+Route::put('/centro/{id}', [CentroController::class, 'actualizarCentro']);
+Route::delete('/centro/{id}', [CentroController::class, 'eliminarCentro']);
+
+
+// Rutas para el controlador de créditos formativos
+Route::get('/credito', [CreditoFormativoController::class, 'listarCredito']);
+Route::get('/credito/{id}', [CreditoFormativoController::class, 'mostrarCredito']);
+Route::post('/credito', [CreditoFormativoController::class, 'crearCredito']);
+Route::put('/credito/{id}', [CreditoFormativoController::class, 'actualizarCredito']);
+Route::delete('/credito/{id}', [CreditoFormativoController::class, 'eliminarcredito']);

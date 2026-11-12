@@ -1,0 +1,18 @@
+$kind: http-request
+description: ""
+url: http://127.0.0.1:8000/credito/3
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \  \"empresa_id\": 3,\r
+
+    \  \"año\": 2026,\r
+
+    \  \"importe_total\": 7500.00,\r
+
+    \  \"importe_consumido\": 2000.00\r
+
+    }"
+order: 4000
