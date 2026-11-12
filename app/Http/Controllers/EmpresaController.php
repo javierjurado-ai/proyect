@@ -10,13 +10,13 @@ use Illuminate\Validation\Rule;
 class EmpresaController extends Controller
 {
     // Listar todas las empresas
-    public function listar()
+    public function listarEmpresa()
     {
         return response()->json(Empresa::all());
     }
 
     // Mostrar una empresa en concreto
-    public function mostrar($id)
+    public function optenerEmpresaPorID($id)
     {
         $empresa = Empresa::find($id);
 
@@ -28,7 +28,7 @@ class EmpresaController extends Controller
     }
 
     // Crear una empresa
-    public function crear(Request $request)
+    public function agregarEmpresa(Request $request)
     {
         $datos = $request->validate([
             'cif'                => 'required|string|max:15|unique:empresa,cif',
@@ -42,7 +42,7 @@ class EmpresaController extends Controller
     }
 
     // Actualizar una empresa
-    public function actualizar(Request $request, $id)
+    public function actualizarEmpresa(Request $request, $id)
     {
         $empresa = Empresa::find($id);
 
@@ -62,7 +62,7 @@ class EmpresaController extends Controller
     }
 
     // Eliminar una empresa
-    public function eliminar($id)
+    public function eliminarEmpresa($id)
     {
         $empresa = Empresa::find($id);
 
