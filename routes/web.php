@@ -45,7 +45,7 @@ Route::delete('/empresa/{empresa}', [EmpresaController::class, 'eliminarEmpresa'
 
 // Rutas para el controlador de formacion
 Route::get('/formacion', [FormacionController::class, 'listarFormacion']);
-Route::get('/formacion/{id}', [FormacionController::class, 'mostrarFormacion']);
+Route::get('/formacion/{id}', [FormacionController::class, 'obtenerFormacionPorID']);
 Route::post('/formacion', [FormacionController::class, 'crearFormacion']);
 Route::put('/formacion/{id}', [FormacionController::class, 'actualizarFormacion']);
 Route::delete('/formacin/{id}', [FormacionController::class, 'eliminarFormacion']);
