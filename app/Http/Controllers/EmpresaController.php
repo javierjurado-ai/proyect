@@ -10,19 +10,25 @@ use Illuminate\Validation\Rule;
 class EmpresaController extends Controller
 {
     // Listar todas las empresas
-    public function listar()
+    public function listarEmpresa()
     {
         return response()->json(Empresa::all());
     }
 
     // Mostrar una empresa en concreto
-    public function mostrar(Empresa $empresa)
+    public function optenerEmpresaPorID($id)
     {
+        $empresa = Empresa::find($id);
+
+        if (! $empresa) {
+            return response()->json(['mensaje' => 'Empresa no encontrada'], 404);
+        }
+
         return response()->json($empresa);
     }
 
     // Crear una empresa
-    public function crear(Request $request)
+    public function agregarEmpresa(Request $request)
     {
         $datos = $request->validate([
             'cif'                => 'required|string|max:15|unique:empresa,cif',
@@ -36,8 +42,14 @@ class EmpresaController extends Controller
     }
 
     // Actualizar una empresa
-    public function actualizar(Request $request, Empresa $empresa)
+    public function actualizarEmpresa(Request $request, $id)
     {
+        $empresa = Empresa::find($id);
+
+        if (! $empresa) {
+            return response()->json(['mensaje' => 'Empresa no encontrada'], 404);
+        }
+
         $datos = $request->validate([
             'cif'                => ['required', 'string', 'max:15', Rule::unique('empresa', 'cif')->ignore($empresa->id)],
             'nombre'             => 'required|string|max:100',
@@ -50,8 +62,14 @@ class EmpresaController extends Controller
     }
 
     // Eliminar una empresa
-    public function eliminar(Empresa $empresa)
+    public function eliminarEmpresa($id)
     {
+        $empresa = Empresa::find($id);
+
+        if (! $empresa) {
+            return response()->json(['mensaje' => 'Empresa no encontrada'], 404);
+        }
+
         try {
             $empresa->delete();
             return response()->json(['mensaje' => 'Empresa eliminada']);
