@@ -48,11 +48,11 @@ Route::put('/formaciones/{id}', [FormacionController::class, 'actualizar']);
 Route::delete('/formaciones/{id}', [FormacionController::class, 'eliminar']);
 
 // Rutas para el controlador de centro
-Route::get('/centro', [CentroController::class, 'listar']);
-Route::get('/centro/{id}', [CentroController::class, 'mostrar']);
-Route::post('/centro', [CentroController::class, 'crear']);
-Route::put('/centro/{id}', [CentroController::class, 'actualizar']);
-Route::delete('/centro/{id}', [CentroController::class, 'eliminar']);
+Route::get('/centro', [CentroController::class, 'listarCentro']);
+Route::get('/centro/{id}', [CentroController::class, 'optenerCentroPorID']);
+Route::post('/centro', [CentroController::class, 'agregarCentro']);
+Route::put('/centro/{id}', [CentroController::class, 'actualizarCentro']);
+Route::delete('/centro/{id}', [CentroController::class, 'eliminarCentro']);
 
 // Rutas para el controlador de peticiones logistica
 Route::get('/peticionesLogistica/listar', [PeticionesLogisticaController::class, 'listarPeticionesLogistica']);
@@ -60,3 +60,10 @@ Route::get('/peticionesLogistica/{id}', [PeticionesLogisticaController::class, '
 Route::post('/peticionesLogistica', [PeticionesLogisticaController::class, 'agregarPeticionLogistica']);
 Route::put('/peticionesLogistica/{id}', [PeticionesLogisticaController::class, 'actualizarPeticionLogistica']);
 Route::delete('/peticionesLogistica/{id}', [PeticionesLogisticaController::class, 'eliminarPeticionLogistica']);
+
+// Rutas para el controlador de centro
+Route::get('/curso/listar', [CursoController::class, 'listarCurso']);
+Route::get('/curso/{id}', [CursoController::class, 'optenerCursoPorID']);
+Route::post('/curso', [CursoController::class, 'agregarCurso']);
+Route::put('/curso/{id}', [CursoController::class, 'actualizarCurso']);
+Route::delete('/curso/{id}', [CursoController::class, 'eliminarCurso']);

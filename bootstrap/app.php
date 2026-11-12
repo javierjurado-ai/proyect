@@ -25,19 +25,28 @@ return Application::configure(basePath: dirname(__DIR__))
             'comunicacionFundae',
             'comunicacionFundae/*',
             'peticionesLogistica',
-            'peticionesLogistica/*'
+            'peticionesLogistica/*',
+            'curso',
+            'curso/*'
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
             return $request->is(
-                'persona', 'persona/*',
-                'empresa', 'empresa/*',
-                'formaciones', 'formaciones/*',
-                'centro', 'centro/*',
-                'comunicacionFundae', 'comunicacionFundae/*',
+                'persona',
+                'persona/*',
+                'empresa',
+                'empresa/*',
+                'formaciones',
+                'formaciones/*',
+                'centro',
+                'centro/*',
+                'comunicacionFundae',
+                'comunicacionFundae/*',
                 'peticionesLogistica',
-            'peticionesLogistica/*'
+                'peticionesLogistica/*',
+                'curso',
+                'curso/*'
             ) || $request->expectsJson();
         });
     })->create();
