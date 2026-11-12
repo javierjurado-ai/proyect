@@ -1,18 +1,19 @@
 <?php
 namespace App\Models;
 
+use App\Models\Enums\Turno;
 use Illuminate\Database\Eloquent\Model;
 
 class Curso extends Model
 {
 
     protected $table = 'curso';
-    protected $primaryKey = 'idgrupo';
+    protected $primaryKey = 'id';
     public $timestamps = false;
 
     protected $fillable = [
-        'curso_idcurso',
-        'codigo_grupo',
+        'formacion_id',
+        'codigo_curso',
         'empresa_formadora',
         'fecha_inicio',
         'fecha_fin',
@@ -31,6 +32,7 @@ class Curso extends Model
     protected $casts = [
         'fecha_inicio' => 'date',
         'fecha_fin' => 'date',
+        'turno' => Turno::class
     ];
 
     // --- Relaciones ---
@@ -38,7 +40,7 @@ class Curso extends Model
     // Relación: Un curso pertenece a una formación principal (curso_idcurso -> idcurso)
     public function formacion()
     {
-        return $this->belongsTo(Formacion::class, 'curso_idcurso', 'idcurso');
+        return $this->belongsTo(Formacion::class, 'formacion_id', 'idcurso');
     }
 
     // Relación: Un curso pertenece a un presupuesto (presupuesto_id -> id)

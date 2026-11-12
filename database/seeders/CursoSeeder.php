@@ -4,20 +4,20 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Curso;
-
+USE App\Models\Enums\Turno;
 class CursoSeeder extends Seeder
 {
     public function run(): void
     {
         Curso::create([
-            'curso_idcurso' => 1,
-            'codigo_grupo' => 'GRUPO-001',
+            'formacion_id' => 1,
+            'codigo_curso' => 20,
             'empresa_formadora' => 'Empresa de formación A',
             'fecha_inicio' => '2026-11-01',
             'fecha_fin' => '2026-12-30',
             'hora_inicio' => '09:00:00',
             'hora_final' => '14:00:00',
-            'turno' => 'Mañana',
+            'turno' => Turno::Manana,
             'aula' => 'Aula 1',
             'aula_virtual' => 'https://example.com/aula1',
             'tecnico_comunidad' => 'Técnico 1',
@@ -28,14 +28,14 @@ class CursoSeeder extends Seeder
         ]);
 
         Curso::create([
-            'curso_idcurso' => 2,
-            'codigo_grupo' => 'GRUPO-002',
+            'formacion_id' => 2,
+            'codigo_curso' => 21,
             'empresa_formadora' => 'Empresa de formación B',
             'fecha_inicio' => '2026-11-15',
             'fecha_fin' => '2027-01-15',
             'hora_inicio' => '16:00:00',
             'hora_final' => '20:00:00',
-            'turno' => 'Tarde',
+            'turno' => Turno::Tarde,
             'aula' => 'Aula 2',
             'aula_virtual' => 'https://example.com/aula2',
             'tecnico_comunidad' => 'Técnico 2',
@@ -44,7 +44,7 @@ class CursoSeeder extends Seeder
             'centro_id' => null,
             'presupuesto_id' => null,
         ]);
-        
+
         $this->command->info('Cursos creados correctamente.');
     }
 }
