@@ -25,13 +25,13 @@ class CursoController extends Controller
             'fecha_fin'               => 'required|date|after_or_equal:fecha_inicio',
             'hora_inicio'             => 'nullable|date_format:H:i',
             'hora_final'              => 'nullable|date_format:H:i',
-            'turno'                   => 'required|string',
+            'turno'                   => 'nullable|string',
             'aula'                    => 'nullable|string|max:45',
             'aula_virtual'            => 'nullable|string|max:45',
             'tecnico_comunidad'       => 'nullable|string|max:45',
             'observaciones'           => 'nullable|string|max:200',
             'peticiones_logistica_id' => 'nullable|exists:peticiones_logistica,id',
-            'centro_id'               => 'required|exists:centro,id',
+            'centro_id'               => 'nullable|exists:centro,id',
             'presupuesto_id'          => 'nullable|exists:presupuesto,id',
         ]);
 
