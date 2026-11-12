@@ -11,9 +11,7 @@ class PersonaController extends Controller
 {
     public function listarPersonas()
     {
-        $personas = Persona::all();
-
-        dd($personas->toArray());
+        return response()->json(Persona::all());
     }
     public function optenerUsuarioPorID($id)
     {
@@ -58,17 +56,8 @@ class PersonaController extends Controller
             'nacionalidad' => 'nullable|string|max:100',
             'telefono' => 'nullable|string|max:20',
             'direccion' => 'nullable|string|max:255',
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('persona', 'email')->ignore($persona->idusuario, 'idusuario'),
-            ],
-            'DNI' => [
-                'nullable',
-                'string',
-                'max:9',
-                Rule::unique('persona', 'DNI')->ignore($persona->idusuario, 'idusuario'),
-            ],
+            'email' => ['required','email',Rule::unique('persona', 'email')->ignore($persona->idusuario, 'idusuario')],
+            'DNI' => ['nullable','string','max:9',Rule::unique('persona', 'DNI')->ignore($persona->idusuario, 'idusuario')],
             'NIE' => 'nullable|string|max:9',
             'numero_seguridad_social' => 'nullable|string|max:20',
             'LOPD' => 'required|boolean',
