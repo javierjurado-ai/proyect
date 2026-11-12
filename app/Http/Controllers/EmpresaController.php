@@ -16,7 +16,7 @@ class EmpresaController extends Controller
     }
 
     // Mostrar una empresa en concreto
-    public function optenerEmpresaPorID(Empresa $empresa)
+    public function optenerEmpresaPorID($id)
     {
         $empresa = Empresa::find($id);
 
@@ -42,7 +42,7 @@ class EmpresaController extends Controller
     }
 
     // Actualizar una empresa
-    public function actualizarEmpresa(Request $request, Empresa $empresa)
+    public function actualizarEmpresa(Request $request, $id)
     {
         $empresa = Empresa::find($id);
 
@@ -62,7 +62,7 @@ class EmpresaController extends Controller
     }
 
     // Eliminar una empresa
-    public function eliminarEmpresa(Empresa $empresa)
+    public function eliminarEmpresa($id)
     {
         $empresa = Empresa::find($id);
 
