@@ -20,6 +20,20 @@ return Application::configure(basePath: dirname(__DIR__))
             'centro', 'centro/*',
             'credito', 'credito/*',
             'comunicacionFundae', 'comunicacionFundae/*',
+            'persona',
+            'persona/*',
+            'empresa',
+            'empresa/*',
+            'formacion',
+            'formacion/*',
+            'centro',
+            'centro/*',
+            'comunicacionFundae',
+            'comunicacionFundae/*',
+            'peticionesLogistica',
+            'peticionesLogistica/*',
+            'curso',
+            'curso/*'
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -27,10 +41,24 @@ return Application::configure(basePath: dirname(__DIR__))
             return $request->is(
                 'persona', 'persona/*',
                 'empresa', 'empresa/*',
-                'formacione', 'formacione/*',
+                'formacion', 'formacion/*',
                 'centro', 'centro/*',
                 'credito', 'credito/*',
                 'comunicacionFundae', 'comunicacionFundae/*'
+                'persona',
+                'persona/*',
+                'empresa',
+                'empresa/*',
+                'formacion',
+                'formacion/*',
+                'centro',
+                'centro/*',
+                'comunicacionFundae',
+                'comunicacionFundae/*',
+                'peticionesLogistica',
+                'peticionesLogistica/*',
+                'curso',
+                'curso/*'
             ) || $request->expectsJson();
         });
     })->create();

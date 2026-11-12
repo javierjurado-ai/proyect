@@ -9,25 +9,21 @@ use Illuminate\Http\Request;
 class CentroController extends Controller
 {
     // Listar todos los centros
-    public function listar()
+    public function listarCentro()
     {
         return response()->json(Centro::all());
     }
 
     // Mostrar un centro por id
-    public function mostrar($id)
+    public function optenerCentroPorID($id)
     {
-        $centro = Centro::find($id);
-
-        if (! $centro) {
-            return response()->json(['mensaje' => 'Centro no encontrado'], 404);
-        }
+        $centro = Centro::findOrFail($id);
 
         return response()->json($centro,201);
     }
 
     // Crear un centro
-    public function crear(Request $request)
+    public function agregarCentro(Request $request)
     {
         $datos = $request->validate($this->reglas());
 
@@ -37,7 +33,7 @@ class CentroController extends Controller
     }
 
     // Actualizar un centro
-    public function actualizar(Request $request, $id)
+    public function actualizarCentro(Request $request, $id)
     {
         $centro = Centro::find($id);
 
@@ -53,7 +49,7 @@ class CentroController extends Controller
     }
 
     // Eliminar un centro
-    public function eliminar($id)
+    public function eliminarCentro($id)
     {
         $centro = Centro::find($id);
 
