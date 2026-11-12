@@ -1,9 +1,10 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+use App\Models\PeticionesLogistica;
+use App\Http\Controllers\CursoController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\FormacionController;
-
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PersonaController;
 use App\Http\Controllers\ComunicacionFundaeController;
 
@@ -11,6 +12,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/probar-logistica', function () {
+    return PeticionesLogistica::all();
+});
+
+Route::resource('cursos', CursoController::class);
 // Rutas para el controlador de personas
 Route::get('/persona/listar', [PersonaController::class, 'listarPersonas']);
 Route::get('/persona/{id}', [PersonaController::class, 'optenerUsuarioPorID']);
