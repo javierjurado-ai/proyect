@@ -8,7 +8,7 @@ use App\Http\Controllers\CursoController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\FormacionController;
 use App\Http\Controllers\PersonaController;
-
+use App\Http\Controllers\PeticionesLogisticaController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -29,7 +29,7 @@ Route::delete('/persona/{id}', [PersonaController::class, 'eliminarPersona']);
 // Rutas para el controlador de comunicaciones FUNDAE
 Route::get('/comunicacionFundae/listar', [ComunicacionFundaeController::class, 'listarComunicacionesFundae']);
 Route::get('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'optenerComunicacionFundaePorID']);
-Route::post('/comunicacionFundae/crear', [ComunicacionFundaeController::class, 'agregarComunicacionFundae']);
+Route::post('/comunicacionFundae', [ComunicacionFundaeController::class, 'agregarComunicacionFundae']);
 Route::put('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'actualizarComunicacionFundae']);
 Route::delete('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'eliminarComunicacionFundae']);
 
@@ -53,3 +53,10 @@ Route::get('/centro/{id}', [CentroController::class, 'mostrar']);
 Route::post('/centro', [CentroController::class, 'crear']);
 Route::put('/centro/{id}', [CentroController::class, 'actualizar']);
 Route::delete('/centro/{id}', [CentroController::class, 'eliminar']);
+
+// Rutas para el controlador de peticiones logistica
+Route::get('/peticionesLogistica/listar', [PeticionesLogisticaController::class, 'listarPeticionesLogistica']);
+Route::get('/peticionesLogistica/{id}', [PeticionesLogisticaController::class, 'optenerPeticionLogisticaPorID']);
+Route::post('/peticionesLogistica', [PeticionesLogisticaController::class, 'agregarPeticionLogistica']);
+Route::put('/peticionesLogistica/{id}', [PeticionesLogisticaController::class, 'actualizarPeticionLogistica']);
+Route::delete('/peticionesLogistica/{id}', [PeticionesLogisticaController::class, 'eliminarPeticionLogistica']);
