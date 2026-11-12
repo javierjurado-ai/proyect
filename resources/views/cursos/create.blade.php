@@ -112,6 +112,68 @@
             @enderror
         </div>
 
+        {{-- Empresa Formadora --}}
+        <div class="form-group">
+            <label for="empresa_formadora">Empresa Formadora:</label>
+            <input type="text" id="empresa_formadora" name="empresa_formadora" value="{{ old('empresa_formadora') }}">
+            @error('empresa_formadora')
+                <div class="error-message">{{ $message }}</div>
+            @enderror
+        </div>
+
+        {{-- Horarios (Hora Inicio y Hora Fin) --}}
+        <div style="display: flex; gap: 15px;">
+            <div class="form-group" style="flex: 1;">
+                <label for="hora_inicio">Hora de Inicio:</label>
+                <input type="time" id="hora_inicio" name="hora_inicio" value="{{ old('hora_inicio') }}">
+                @error('hora_inicio')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group" style="flex: 1;">
+                <label for="hora_final">Hora de Fin:</label>
+                <input type="time" id="hora_final" name="hora_final" value="{{ old('hora_final') }}">
+                @error('hora_final')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
+        {{-- Aulas y Técnico --}}
+        <div class="form-group">
+            <label for="aula">Aula:</label>
+            <input type="text" id="aula" name="aula" value="{{ old('aula') }}">
+            @error('aula')
+                <div class="error-message">{{ $message }}</div>
+            @enderror
+        </div>
+
+        <div class="form-group">
+            <label for="aula_virtual">Aula Virtual:</label>
+            <input type="text" id="aula_virtual" name="aula_virtual" value="{{ old('aula_virtual') }}">
+            @error('aula_virtual')
+                <div class="error-message">{{ $message }}</div>
+            @enderror
+        </div>
+
+        <div class="form-group">
+            <label for="tecnico_comunidad">Técnico de Comunidad:</label>
+            <input type="text" id="tecnico_comunidad" name="tecnico_comunidad" value="{{ old('tecnico_comunidad') }}">
+            @error('tecnico_comunidad')
+                <div class="error-message">{{ $message }}</div>
+            @enderror
+        </div>
+
+        {{-- Observaciones --}}
+        <div class="form-group">
+            <label for="observaciones">Observaciones:</label>
+            <textarea id="observaciones" name="observaciones" rows="3" maxlength="200">{{ old('observaciones') }}</textarea>
+            @error('observaciones')
+                <div class="error-message">{{ $message }}</div>
+            @enderror
+        </div>
+
         <button type="submit">Guardar Curso</button>
     </form>
 
