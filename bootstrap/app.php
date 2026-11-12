@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Throwable;
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__ . '/../routes/web.php',
@@ -16,15 +17,24 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'persona',
             'persona/*',
-            'empresas',
-            'empresas/*',
+            'empresa',
+            'empresa/*',
+            'formaciones',
+            'formaciones/*',
+            'centro',
+            'centro/*',
             'comunicacionFundae',
-            'comunicacionFundae/*'
+            'comunicacionFundae/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
-            return $request->is('persona', 'persona/*', 'empresas', 'empresas/*', 'comunicacionFundae', 'comunicacionFundae/*')
-                || $request->expectsJson();
+            return $request->is(
+                'persona', 'persona/*',
+                'empresa', 'empresa/*',
+                'formaciones', 'formaciones/*',
+                'centro', 'centro/*',
+                'comunicacionFundae', 'comunicacionFundae/*'
+            ) || $request->expectsJson();
         });
     })->create();
