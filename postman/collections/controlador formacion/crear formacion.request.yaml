@@ -1,0 +1,22 @@
+$kind: http-request
+description: ""
+url: http://127.0.0.1:8000/formaciones
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"nombre\": \"Excel avanzado\",\r
+
+    \  \"codigo_accion\": \"AF-003\",\r
+
+    \  \"modalidad\": \"PRESENCIAL\",\r
+
+    \  \"sector\": \"Administración\",\r
+
+    \  \"horas_totales\": 40,\r
+
+    \  \"activo\": true\r
+
+    }"
+order: 3000
