@@ -59,7 +59,7 @@ Route::delete('/centro/{id}', [CentroController::class, 'eliminarCentro']);
 
 // Rutas para el controlador de créditos formativos
 Route::get('/credito', [CreditoFormativoController::class, 'listarCredito']);
-Route::get('/credito/{id}', [CreditoFormativoController::class, 'mostrarCredito']);
+Route::get('/credito/{id}', [CreditoFormativoController::class, 'obtenerCreditoPorID']);
 Route::post('/credito', [CreditoFormativoController::class, 'crearCredito']);
 Route::put('/credito/{id}', [CreditoFormativoController::class, 'actualizarCredito']);
 Route::delete('/credito/{id}', [CreditoFormativoController::class, 'eliminarcredito']);
