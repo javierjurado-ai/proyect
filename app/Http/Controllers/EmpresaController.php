@@ -18,6 +18,12 @@ class EmpresaController extends Controller
     // Mostrar una empresa en concreto
     public function optenerEmpresaPorID(Empresa $empresa)
     {
+        $empresa = Empresa::find($id);
+
+        if (! $empresa) {
+            return response()->json(['mensaje' => 'Empresa no encontrada'], 404);
+        }
+
         return response()->json($empresa);
     }
 
@@ -38,6 +44,12 @@ class EmpresaController extends Controller
     // Actualizar una empresa
     public function actualizarEmpresa(Request $request, Empresa $empresa)
     {
+        $empresa = Empresa::find($id);
+
+        if (! $empresa) {
+            return response()->json(['mensaje' => 'Empresa no encontrada'], 404);
+        }
+
         $datos = $request->validate([
             'cif'                => ['required', 'string', 'max:15', Rule::unique('empresa', 'cif')->ignore($empresa->id)],
             'nombre'             => 'required|string|max:100',
@@ -52,6 +64,12 @@ class EmpresaController extends Controller
     // Eliminar una empresa
     public function eliminarEmpresa(Empresa $empresa)
     {
+        $empresa = Empresa::find($id);
+
+        if (! $empresa) {
+            return response()->json(['mensaje' => 'Empresa no encontrada'], 404);
+        }
+
         try {
             $empresa->delete();
             return response()->json(['mensaje' => 'Empresa eliminada']);
