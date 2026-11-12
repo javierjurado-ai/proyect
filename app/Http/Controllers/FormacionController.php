@@ -11,13 +11,13 @@ use Illuminate\Validation\Rule;
 class FormacionController extends Controller
 {
     // Listar todas las formaciones
-    public function listar()
+    public function listarFormacion()
     {
         return response()->json(Formacion::all());
     }
 
     // Mostrar una formación concreta
-    public function mostrar($id)
+    public function obtenerFormacionPorID($id)
     {
         $formacion = Formacion::find($id);
 
@@ -29,15 +29,15 @@ class FormacionController extends Controller
     }
 
     // Crear una nueva formación
-    public function crear(Request $request)
+    public function crearFormacion(Request $request)
     {
         $datos = $request->validate([
             'nombre'        => 'required|string|max:100',
-            'codigo_accion' => 'nullable|string|max:45',
-            'modalidad'     => ['nullable', Rule::enum(Modalidad::class)],
+            'codigo_accion' => 'required|integer|max:11',
+            'modalidad'     => ['required', Rule::enum(Modalidad::class)],
             'sector'        => 'nullable|string|max:60',
-            'horas_totales' => 'nullable|integer|min:0',
-            'activo'        => 'nullable|boolean',
+            'horas_totales' => 'nullable|integer|max:11',
+            'activo'        => 'nullable|integer|max:11',
         ]);
 
         $formacion = Formacion::create($datos);
@@ -46,7 +46,7 @@ class FormacionController extends Controller
     }
 
     // Actualizar una formación
-    public function actualizar(Request $request, $id)
+    public function actualizarFormacion(Request $request, $id)
     {
         $formacion = Formacion::find($id);
 
@@ -56,11 +56,11 @@ class FormacionController extends Controller
 
         $datos = $request->validate([
             'nombre'        => 'required|string|max:100',
-            'codigo_accion' => 'nullable|string|max:45',
-            'modalidad'     => ['nullable', Rule::enum(Modalidad::class)],
+            'codigo_accion' => 'required|integer|max:11',
+            'modalidad'     => ['required', Rule::enum(Modalidad::class)],
             'sector'        => 'nullable|string|max:60',
-            'horas_totales' => 'nullable|integer|min:0',
-            'activo'        => 'nullable|boolean',
+            'horas_totales' => 'nullable|integer|max:11',
+            'activo'        => 'nullable|integer|max:11',
         ]);
 
         $formacion->update($datos);
@@ -69,7 +69,7 @@ class FormacionController extends Controller
     }
 
     // Eliminar una formación
-    public function eliminar($id)
+    public function eliminarFormacion($id)
     {
         $formacion = Formacion::find($id);
 
