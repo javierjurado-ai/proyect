@@ -14,12 +14,18 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->validateCsrfTokens(except: [
+            'persona', 'persona/*',
+            'empresa', 'empresa/*',
+            'formacion', 'formacion/*',
+            'centro', 'centro/*',
+            'credito', 'credito/*',
+            'comunicacionFundae', 'comunicacionFundae/*',
             'persona',
             'persona/*',
             'empresa',
             'empresa/*',
-            'formaciones',
-            'formaciones/*',
+            'formacion',
+            'formacion/*',
             'centro',
             'centro/*',
             'comunicacionFundae',
@@ -33,12 +39,18 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
             return $request->is(
+                'persona', 'persona/*',
+                'empresa', 'empresa/*',
+                'formacion', 'formacion/*',
+                'centro', 'centro/*',
+                'credito', 'credito/*',
+                'comunicacionFundae', 'comunicacionFundae/*'
                 'persona',
                 'persona/*',
                 'empresa',
                 'empresa/*',
-                'formaciones',
-                'formaciones/*',
+                'formacion',
+                'formacion/*',
                 'centro',
                 'centro/*',
                 'comunicacionFundae',

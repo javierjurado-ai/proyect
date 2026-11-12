@@ -8,6 +8,9 @@ use App\Http\Controllers\CursoController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\FormacionController;
 use App\Http\Controllers\PersonaController;
+use App\Http\Controllers\CreditoFormativoController;
+
+
 use App\Http\Controllers\PeticionesLogisticaController;
 Route::get('/', function () {
     return view('welcome');
@@ -19,8 +22,8 @@ Route::get('/probar-logistica', function () {
 
 Route::resource('cursos', CursoController::class);
 
-// Rutas para el controlador de personas
-Route::get('/persona/listar', [PersonaController::class, 'listarPersonas']);
+// Rutas para el controlador de persona
+Route::get('/persona/listar', [PersonaController::class, 'listarPersona']);
 Route::get('/persona/{id}', [PersonaController::class, 'optenerUsuarioPorID']);
 Route::post('/persona', [PersonaController::class, 'agregarPersona']);
 Route::put('/persona/{id}', [PersonaController::class, 'actualizarPersona']);
@@ -33,26 +36,34 @@ Route::post('/comunicacionFundae', [ComunicacionFundaeController::class, 'agrega
 Route::put('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'actualizarComunicacionFundae']);
 Route::delete('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'eliminarComunicacionFundae']);
 
-// Rutas para el controlador de empresas
+// Rutas para el controlador de empresa
 Route::get('/empresa/listar', [EmpresaController::class, 'listarEmpresa']);
 Route::get('/empresa/{empresa}', [EmpresaController::class, 'optenerEmpresaPorID']);
 Route::post('/empresa', [EmpresaController::class, 'agregarEmpresa']);
 Route::put('/empresa/{empresa}', [EmpresaController::class, 'actualizarEmpresa']);
 Route::delete('/empresa/{empresa}', [EmpresaController::class, 'eliminarEmpresa']);
 
-// Rutas para el controlador de formaciones
-Route::get('/formaciones', [FormacionController::class, 'listar']);
-Route::get('/formaciones/{id}', [FormacionController::class, 'mostrar']);
-Route::post('/formaciones', [FormacionController::class, 'crear']);
-Route::put('/formaciones/{id}', [FormacionController::class, 'actualizar']);
-Route::delete('/formaciones/{id}', [FormacionController::class, 'eliminar']);
+// Rutas para el controlador de formacion
+Route::get('/formacion', [FormacionController::class, 'listarFormacion']);
+Route::get('/formacion/{id}', [FormacionController::class, 'mostrarFormacion']);
+Route::post('/formacion', [FormacionController::class, 'crearFormacion']);
+Route::put('/formacion/{id}', [FormacionController::class, 'actualizarFormacion']);
+Route::delete('/formacin/{id}', [FormacionController::class, 'eliminarFormacion']);
 
 // Rutas para el controlador de centro
-Route::get('/centro', [CentroController::class, 'listarCentro']);
+Route::get('/centro/listar', [CentroController::class, 'listarCentro']);
 Route::get('/centro/{id}', [CentroController::class, 'optenerCentroPorID']);
 Route::post('/centro', [CentroController::class, 'agregarCentro']);
 Route::put('/centro/{id}', [CentroController::class, 'actualizarCentro']);
 Route::delete('/centro/{id}', [CentroController::class, 'eliminarCentro']);
+
+// Rutas para el controlador de créditos formativos
+Route::get('/credito', [CreditoFormativoController::class, 'listarCredito']);
+Route::get('/credito/{id}', [CreditoFormativoController::class, 'mostrarCredito']);
+Route::post('/credito', [CreditoFormativoController::class, 'crearCredito']);
+Route::put('/credito/{id}', [CreditoFormativoController::class, 'actualizarCredito']);
+Route::delete('/credito/{id}', [CreditoFormativoController::class, 'eliminarcredito']);
+
 
 // Rutas para el controlador de peticiones logistica
 Route::get('/peticionesLogistica/listar', [PeticionesLogisticaController::class, 'listarPeticionesLogistica']);
@@ -61,7 +72,7 @@ Route::post('/peticionesLogistica', [PeticionesLogisticaController::class, 'agre
 Route::put('/peticionesLogistica/{id}', [PeticionesLogisticaController::class, 'actualizarPeticionLogistica']);
 Route::delete('/peticionesLogistica/{id}', [PeticionesLogisticaController::class, 'eliminarPeticionLogistica']);
 
-// Rutas para el controlador de centro
+// Rutas para el controlador de curso
 Route::get('/curso/listar', [CursoController::class, 'listarCurso']);
 Route::get('/curso/{id}', [CursoController::class, 'optenerCursoPorID']);
 Route::post('/curso', [CursoController::class, 'agregarCurso']);
