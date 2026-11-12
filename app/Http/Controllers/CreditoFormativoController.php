@@ -14,8 +14,8 @@ class CreditoFormativoController extends Controller
         return response()->json(CreditoFormativo::all());
     }
 
-    // Mostrar un crédito formativo por id
-    public function mostrarCredito($id)
+    // Obtener un crédito formativo por id
+    public function obtenerCredito($id)
     {
         $credito = CreditoFormativo::find($id);
 
@@ -33,7 +33,7 @@ class CreditoFormativoController extends Controller
 
         $credito = CreditoFormativo::create($datos);
 
-        return response()->json($credito, 201);
+        return response()->json($credito->fresh(), 201);
     }
 
     // Actualizar un crédito formativo
@@ -78,7 +78,7 @@ class CreditoFormativoController extends Controller
             'empresa_id'        => 'required|integer|exists:empresa,id',
             'año'               => 'required|integer|between:2000,2100',
             'importe_total'     => 'required|numeric|min:0|max:99999999.99|decimal:0,2',
-            'importe_consumido' => 'nullable|numeric|min:0|decimal:0,2|lte:importe_total',
+            'importe_consumido' => 'sometimes|required|numeric|min:0|max:99999999.99|decimal:0,2|lte:importe_total',
         ];
     }
 }
