@@ -46,7 +46,7 @@ class Persona extends Model
 
     public function cursoAlumno(): HasMany
     {
-        return $this->hasMany(curso_alumno::class, 'persona_idusuario', 'idusuario');
+        return $this->hasMany(CursoAlumno::class, 'persona_idusuario', 'idusuario');
     }
 
      
