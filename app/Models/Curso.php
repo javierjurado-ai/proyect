@@ -37,10 +37,10 @@ class Curso extends Model
 
     // --- Relaciones ---
 
-    // Relación: Un curso pertenece a una formación principal (curso_idcurso -> idcurso)
+    // Relación: Un curso pertenece a una formación principal (formacion_id -> id)
     public function formacion()
     {
-        return $this->belongsTo(Formacion::class, 'formacion_id', 'idcurso');
+        return $this->belongsTo(Formacion::class, 'formacion_id', 'id');
     }
 
     // Relación: Un curso pertenece a un presupuesto (presupuesto_id -> id)
@@ -59,6 +59,57 @@ class Curso extends Model
     public function centro()
     {
         return $this->belongsTo(Centro::class, 'centro_id', 'id');
+    }
+
+    // Relación: Un curso tiene muchas comunicaciones Fundae (curso_id -> id)
+    public function comunicacionesFundae(): HasMany
+    {
+        return $this->hasMany(ComunicacionFundae::class, 'curso_id', 'id');
+    }
+
+    // Relación: Un curso tiene muchas asignaciones de grupo de empresa (curso_id -> id)
+    public function gruposEmpresa(): HasMany
+    {
+        return $this->hasMany(GrupoEmpresa::class, 'curso_id', 'id');
+    }
+
+    // Relación: Un curso tiene muchos alumnos a través de la tabla pivote 'curso_alumno'
+    public function alumnos(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Persona::class, 
+            'curso_alumno', 
+            'curso_id', 
+            'persona_id', 
+            'id', 
+            'id'
+        );
+    }
+
+    // Relación: Un curso tiene muchos docentes a través de la tabla pivote 'curso_docente'
+    public function docentes(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Persona::class, 
+            'curso_docente', 
+            'curso_id', 
+            'persona_id', 
+            'id', 
+            'id'
+        );
+    }
+
+    // Relación de muchos a muchos con empresas a través de 'grupo_empresa'
+    public function empresasGrupo(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Empresa::class, 
+            'grupo_empresa', 
+            'curso_id', 
+            'empresa_id', 
+            'id', 
+            'id'
+        );
     }
 
 }

@@ -13,11 +13,11 @@ class PersonaController extends Controller
     {
         return response()->json(Persona::all());
     }
-    public function optenerUsuarioPorID($id)
+    public function obtenerUsuarioPorID($id)
     {
         $persona = Persona::findOrFail($id);
 
-        dd($persona->toArray());
+        ($persona->toArray());
     }
     public function agregarPersona(Request $request)
     {

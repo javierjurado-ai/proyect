@@ -25,4 +25,12 @@ class Presupuesto extends Model
         'importe_bonificado',
         'fecha_bonificado',
     ];
+
+    /**
+     * Un presupuesto puede tener uno o varios cursos asociados.
+     */
+    public function cursos(): HasMany
+    {
+        return $this->hasMany(Curso::class, 'presupuesto_id', 'id');
+    }
 }

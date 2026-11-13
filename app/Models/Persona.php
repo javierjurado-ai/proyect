@@ -48,24 +48,24 @@ class Persona extends Model
 
     public function cursoAlumno(): HasMany
     {
-        return $this->hasMany(CursoAlumno::class, 'persona_idusuario', 'idusuario');
+        return $this->hasMany(CursoAlumno::class, 'persona_id', 'id');
     }
 
 
     public function cursoDocentes(): HasMany
     {
-        return $this->hasMany(CursoDocente::class, 'persona_idusuario', 'idusuario');
+        return $this->hasMany(CursoDocente::class, 'persona_id', 'id');
     }
 
 
     public function cursosComoAlumno(): BelongsToMany
     {
-        return $this->belongsToMany(Curso::class, 'curso_alumno', 'persona_idusuario', 'grupo_idgrupo', 'idusuario', 'idgrupo');
+        return $this->belongsToMany(Curso::class, 'curso_alumno', 'persona_id', 'curso_id', 'id', 'id');
     }
 
 
     public function cursosComoDocente(): BelongsToMany
     {
-        return $this->belongsToMany(Curso::class, 'curso_docente', 'persona_idusuario', 'grupo_idgrupo', 'idusuario', 'idgrupo');
+        return $this->belongsToMany(Curso::class, 'curso_docente', 'persona_id', 'curso_id', 'id', 'id');
     }
 }
