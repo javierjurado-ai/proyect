@@ -13,7 +13,7 @@ use App\Http\Controllers\CreditoFormativoController;
 
 use App\Http\Controllers\PeticionesLogisticaController;
 Route::get('/', function () {
-    return view('welcome');
+    return view('form');
 });
 
 Route::get('/probar-logistica', function () {
