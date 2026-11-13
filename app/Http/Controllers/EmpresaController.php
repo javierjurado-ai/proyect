@@ -16,7 +16,7 @@ class EmpresaController extends Controller
     }
 
     // Mostrar una empresa en concreto
-    public function optenerEmpresaPorID($id)
+    public function obtenerEmpresaPorID($id)
     {
         $empresa = Empresa::find($id);
 

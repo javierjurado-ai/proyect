@@ -13,7 +13,7 @@ class ComunicacionFundaeController extends Controller
     {
         return response()->json(ComunicacionFundae::all());
     }
-    public function optenerComunicacionFundaePorID($id)
+    public function obtenerComunicacionFundaePorID($id)
     {
         $comunicaciones = ComunicacionFundae::findOrFail($id);
 
@@ -22,7 +22,7 @@ class ComunicacionFundaeController extends Controller
     public function agregarComunicacionFundae(Request $request)
     {
         $datos = $request->validate([
-            'grupo_idgrupo' => ['required', 'integer', 'exists:curso,idgrupo'],
+            'curso_id' => ['required', 'integer', 'exists:curso,id'],
             'tipo' => ['required', Rule::enum(Tipo::class)],
             'fecha_limite' => ['required', 'date'],
             'fecha_envio' => ['required', 'date'],
@@ -37,7 +37,7 @@ class ComunicacionFundaeController extends Controller
         $comunicacion = ComunicacionFundae::findOrFail($id);
 
         $datos = $request->validate([
-            'grupo_idgrupo' => ['required', 'integer', 'exists:curso,idgrupo'],
+            'curso_id'      => ['required', 'integer', 'exists:curso,id'],
             'tipo'          => ['required', Rule::enum(Tipo::class)],
             'fecha_limite'  => ['required', 'date'],
             'fecha_envio'   => ['required', 'date'],

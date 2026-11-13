@@ -9,7 +9,7 @@ class Formacion extends Model
 {
      protected $table = 'formacion';
     public $timestamps = false;
-    protected $primaryKey = 'idcurso';
+    protected $primaryKey = 'id';
     protected $keyType = 'int';
     protected $fillable = [
         'nombre', 

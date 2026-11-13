@@ -15,7 +15,7 @@ class CentroController extends Controller
     }
 
     // Mostrar un centro por id
-    public function optenerCentroPorID($id)
+    public function obtenerCentroPorID($id)
     {
         $centro = Centro::findOrFail($id);
 

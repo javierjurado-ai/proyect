@@ -11,8 +11,8 @@ class ComunicacionFundae extends Model
     protected $primaryKey = 'id';
     protected $keyType = 'int';
     protected $fillable = [
-        'grupo_idgrupo', 
-        'tipo', 
+        'curso_id',
+        'tipo',
         'fecha_limite',
         'fecha_envio',
         'referencia'
@@ -23,12 +23,12 @@ class ComunicacionFundae extends Model
         'fecha_limite' => 'date',
         'fecha_envio' => 'date'
     ];
-    public function empresa(): BelongsTo
+    public function curso(): BelongsTo
     {
         return $this->belongsTo(
             Curso::class,
-            'grupo_idgrupo',
-            'idgrupo'
+            'curso_id',
+            'id'
         );
     }
 }

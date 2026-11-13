@@ -14,7 +14,7 @@ class GrupoEmpresa extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'grupo_idgrupo',
+        'curso_id',
         'empresa_id'
     ];
 
@@ -22,8 +22,8 @@ class GrupoEmpresa extends Model
     {
         return $this->belongsTo(
             Curso::class,
-            'grupo_idgrupo',
-            'idgrupo'
+            'curso_id',
+            'id'
         );
     }
 

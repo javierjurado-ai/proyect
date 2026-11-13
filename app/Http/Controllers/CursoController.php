@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Curso;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-
+use App\Models\Enums\Turno;
 class CursoController extends Controller
 {
     // Mostrar formulario de creación
@@ -18,14 +18,14 @@ class CursoController extends Controller
     public function agregarCurso(Request $request)
     {
         $datos = $request->validate([
-            'curso_idcurso'           => 'required|exists:formacion,idcurso',
-            'codigo_grupo'            => 'required|string|max:45|unique:curso,codigo_grupo',
+            'formacion_id'           => 'required|integer|max:11|exists:formacion,id',
+            'codigo_curso'            => 'required|integer|max:11|unique:curso,id',
             'empresa_formadora'       => 'nullable|string|max:50',
             'fecha_inicio'            => 'required|date',
-            'fecha_fin'               => 'required|date|after_or_equal:fecha_inicio',
+            'fecha_fin'               => 'required|date',
             'hora_inicio'             => 'nullable|date_format:H:i',
             'hora_final'              => 'nullable|date_format:H:i',
-            'turno'                   => 'nullable|string',
+            'turno'                   => ['required', Rule::enum(Turno::class)],
             'aula'                    => 'nullable|string|max:45',
             'aula_virtual'            => 'nullable|string|max:45',
             'tecnico_comunidad'       => 'nullable|string|max:45',
@@ -41,7 +41,7 @@ class CursoController extends Controller
     }
 
     // Mostrar detalles de un curso
-    public function optenerCursoPorID($id)
+    public function obtenerCursoPorID($id)
     {
        $curso = Curso::find($id);
 
@@ -58,23 +58,23 @@ class CursoController extends Controller
         $curso = Curso::findOrFail($id);
         
         $datos = $request->validate([
-           'curso_idcurso'           => 'required|exists:formacion,idcurso',
-            // Ignoramos el idgrupo actual para que no falle el unique al editar el mismo registro
-            'codigo_grupo'            => ['required', 'string', 'max:45', Rule::unique('curso', 'codigo_grupo')->ignore($id, 'idgrupo')],
+            'formacion_id'           => 'required|integer|max:11|exists:formacion,id',
+            'codigo_curso'            => 'required|integer|max:11|unique:curso,id',
             'empresa_formadora'       => 'nullable|string|max:50',
             'fecha_inicio'            => 'required|date',
-            'fecha_fin'               => 'required|date|after_or_equal:fecha_inicio',
+            'fecha_fin'               => 'required|date',
             'hora_inicio'             => 'nullable|date_format:H:i',
             'hora_final'              => 'nullable|date_format:H:i',
-            'turno'                   => 'required|string',
+            'turno'                   => ['required', Rule::enum(Turno::class)],
             'aula'                    => 'nullable|string|max:45',
             'aula_virtual'            => 'nullable|string|max:45',
             'tecnico_comunidad'       => 'nullable|string|max:45',
             'observaciones'           => 'nullable|string|max:200',
             'peticiones_logistica_id' => 'nullable|exists:peticiones_logistica,id',
-            'centro_id'               => 'required|exists:centro,id',
+            'centro_id'               => 'nullable|exists:centro,id',
             'presupuesto_id'          => 'nullable|exists:presupuesto,id',
         ]);
+
 
         $curso->update($datos);
 
