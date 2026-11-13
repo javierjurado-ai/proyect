@@ -24,7 +24,7 @@ Route::resource('cursos', CursoController::class);
 
 // Rutas para el controlador de persona
 Route::get('/persona/listar', [PersonaController::class, 'listarPersona']);
-Route::get('/persona/{id}', [PersonaController::class, 'optenerUsuarioPorID']);
+Route::get('/persona/{id}', [PersonaController::class, 'obtenerUsuarioPorID']);
 Route::post('/persona', [PersonaController::class, 'agregarPersona']);
 Route::put('/persona/{id}', [PersonaController::class, 'actualizarPersona']);
 Route::delete('/persona/{id}', [PersonaController::class, 'eliminarPersona']);
@@ -38,7 +38,7 @@ Route::delete('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 
 
 // Rutas para el controlador de empresa
 Route::get('/empresa/listar', [EmpresaController::class, 'listarEmpresa']);
-Route::get('/empresa/{empresa}', [EmpresaController::class, 'optenerEmpresaPorID']);
+Route::get('/empresa/{empresa}', [EmpresaController::class, 'obtenerEmpresaPorID']);
 Route::post('/empresa', [EmpresaController::class, 'agregarEmpresa']);
 Route::put('/empresa/{empresa}', [EmpresaController::class, 'actualizarEmpresa']);
 Route::delete('/empresa/{empresa}', [EmpresaController::class, 'eliminarEmpresa']);
@@ -52,7 +52,7 @@ Route::delete('/formacin/{id}', [FormacionController::class, 'eliminarFormacion'
 
 // Rutas para el controlador de centro
 Route::get('/centro/listar', [CentroController::class, 'listarCentro']);
-Route::get('/centro/{id}', [CentroController::class, 'optenerCentroPorID']);
+Route::get('/centro/{id}', [CentroController::class, 'obtenerCentroPorID']);
 Route::post('/centro', [CentroController::class, 'agregarCentro']);
 Route::put('/centro/{id}', [CentroController::class, 'actualizarCentro']);
 Route::delete('/centro/{id}', [CentroController::class, 'eliminarCentro']);
@@ -67,7 +67,7 @@ Route::delete('/credito/{id}', [CreditoFormativoController::class, 'eliminarcred
 
 // Rutas para el controlador de peticiones logistica
 Route::get('/peticionesLogistica/listar', [PeticionesLogisticaController::class, 'listarPeticionesLogistica']);
-Route::get('/peticionesLogistica/{id}', [PeticionesLogisticaController::class, 'optenerPeticionLogisticaPorID']);
+Route::get('/peticionesLogistica/{id}', [PeticionesLogisticaController::class, 'obtenerPeticionLogisticaPorID']);
 Route::post('/peticionesLogistica', [PeticionesLogisticaController::class, 'agregarPeticionLogistica']);
 Route::put('/peticionesLogistica/{id}', [PeticionesLogisticaController::class, 'actualizarPeticionLogistica']);
 Route::delete('/peticionesLogistica/{id}', [PeticionesLogisticaController::class, 'eliminarPeticionLogistica']);

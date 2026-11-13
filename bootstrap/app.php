@@ -21,7 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'credito', 'credito/*',
             'comunicacionFundae', 'comunicacionFundae/*',
             'peticionesLogistica', 'peticionesLogistica/*',
-            'curso', 'curso/*'
+            'curso', 'curso/*',
+            'presupuesto', 'presupuesto/*'
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -34,7 +35,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 'credito', 'credito/*',
                 'comunicacionFundae', 'comunicacionFundae/*',
                 'peticionesLogistica', 'peticionesLogistica/*',
-                'curso', 'curso/*'
+                'curso', 'curso/*',
+                'presupuesto', 'presupuesto/*'
             ) || $request->expectsJson();
         });
     })->create();
