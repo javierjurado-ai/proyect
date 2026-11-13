@@ -20,6 +20,10 @@ Route::get('/probar-logistica', function () {
     return PeticionesLogistica::all();
 });
 
+Route::get('/persona', function () {
+    return view('persona.formulario');
+});
+
 Route::resource('cursos', CursoController::class);
 
 // Rutas para el controlador de persona
