@@ -9,6 +9,8 @@ use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\FormacionController;
 use App\Http\Controllers\PersonaController;
 use App\Http\Controllers\CreditoFormativoController;
+use App\Http\Controllers\PersonaFormularioController;  
+
 
 
 use App\Http\Controllers\PeticionesLogisticaController;
@@ -20,9 +22,6 @@ Route::get('/probar-logistica', function () {
     return PeticionesLogistica::all();
 });
 
-Route::get('/persona', function () {
-    return view('persona.formulario');
-});
 
 Route::resource('cursos', CursoController::class);
 
@@ -82,3 +81,6 @@ Route::get('/curso/{id}', [CursoController::class, 'obtenerCursoPorID']);
 Route::post('/curso', [CursoController::class, 'agregarCurso']);
 Route::put('/curso/{id}', [CursoController::class, 'actualizarCurso']);
 Route::delete('/curso/{id}', [CursoController::class, 'eliminarCurso']);
+
+Route::post('/view/formularioPersona', [PersonaFormularioController::class, 'store'])->name('persona.store');
+Route::get('/view/formularioPersona/crear', [PersonaFormularioController::class, 'create'])->name('persona.create');
