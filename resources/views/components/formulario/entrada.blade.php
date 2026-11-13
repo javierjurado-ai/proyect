@@ -2,11 +2,12 @@
     'name',
     'label' => null,
     'value' => '',
+    'contenedor' => '',
 ])
 
-<div class="mb-4">
+<div class="{{ $contenedor }}">
     @if ($label)
-        <label for="{{ $name }}" class="mb-1.5 block text-sm font-medium text-gray-700">
+        <label for="{{ $attributes->get('id', $name) }}" class="mb-1 block text-sm font-medium text-slate-700">
             {{ $label }}
         </label>
     @endif
@@ -17,14 +18,14 @@
             'id' => $name,
             'name' => $name,
             'value' => old($name, $value),
-            'class' => 'block w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm placeholder-gray-400 transition duration-200 focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:bg-gray-100 '
+            'class' => 'w-full rounded-lg border px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:bg-slate-100 '
                 . ($errors->has($name)
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                    : 'border-gray-300 focus:border-blue-600 focus:ring-blue-300'),
+                    ? 'border-red-500 focus:ring-red-300'
+                    : 'border-slate-300 focus:ring-blue-500'),
         ]) }}
     >
 
     @error($name)
-        <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
+        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
     @enderror
 </div>
