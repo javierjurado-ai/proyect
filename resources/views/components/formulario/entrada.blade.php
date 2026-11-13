@@ -17,7 +17,7 @@
             'id' => $name,
             'name' => $name,
             'value' => old($name, $value),
-            'class' => 'block w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm placeholder-gray-400 transition duration-200 focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:bg-gray-100 '
+            'class' => 'block w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-black-900 shadow-sm placeholder-gray-400 transition duration-200 focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:bg-gray-100 '
                 . ($errors->has($name)
                     ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
                     : 'border-gray-300 focus:border-blue-600 focus:ring-blue-300'),

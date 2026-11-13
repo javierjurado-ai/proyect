@@ -9,11 +9,11 @@ use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\FormacionController;
 use App\Http\Controllers\PersonaController;
 use App\Http\Controllers\CreditoFormativoController;
-
+use App\Http\Controllers\CursoFormularioController;
 
 use App\Http\Controllers\PeticionesLogisticaController;
 Route::get('/', function () {
-    return view('form');
+    return view('curso.formulario');
 });
 
 Route::get('/probar-logistica', function () {
@@ -78,3 +78,6 @@ Route::get('/curso/{id}', [CursoController::class, 'obtenerCursoPorID']);
 Route::post('/curso', [CursoController::class, 'agregarCurso']);
 Route::put('/curso/{id}', [CursoController::class, 'actualizarCurso']);
 Route::delete('/curso/{id}', [CursoController::class, 'eliminarCurso']);
+
+Route::post('/view/formularioCurso', [CursoFormularioController::class, 'store'])->name('curso.store');
+Route::get('/view/formulario/crear', [CursoFormularioController::class, 'create'])->name('curso.create');
