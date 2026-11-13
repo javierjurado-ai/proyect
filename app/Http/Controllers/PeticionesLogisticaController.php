@@ -13,7 +13,7 @@ class PeticionesLogisticaController extends Controller
     {
         return response()->json(PeticionesLogistica::all());
     }
-    public function optenerPeticionLogisticaPorID($id)
+    public function obtenerPeticionLogisticaPorID($id)
     {
         $peticionesLogistica = PeticionesLogistica::findOrFail($id);
 

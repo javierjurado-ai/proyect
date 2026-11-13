@@ -14,18 +14,18 @@ class CursoAlumno extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'grupo_idgrupo',
-        'persona_idusuario',
+        'curso_id',
+        'persona_id',
     ];
 
     public function persona(): BelongsTo
     {
-        return $this->belongsTo(Persona::class, 'persona_idusuario', 'idusuario');
+        return $this->belongsTo(Persona::class, 'persona_id', 'id');
     }
 
    public function curso(): BelongsTo
     {
-        return $this->belongsTo(Curso::class, 'grupo_idgrupo', 'idgrupo');
+        return $this->belongsTo(Curso::class, 'curso_id', 'id');
     }
     
 }

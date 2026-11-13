@@ -37,10 +37,10 @@ class Curso extends Model
 
     // --- Relaciones ---
 
-    // Relación: Un curso pertenece a una formación principal (curso_idcurso -> idcurso)
+    // Relación: Un curso pertenece a una formación principal (formacion_id -> id)
     public function formacion()
     {
-        return $this->belongsTo(Formacion::class, 'formacion_id', 'idcurso');
+        return $this->belongsTo(Formacion::class, 'formacion_id', 'id');
     }
 
     // Relación: Un curso pertenece a un presupuesto (presupuesto_id -> id)
