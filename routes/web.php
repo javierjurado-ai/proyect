@@ -24,6 +24,11 @@ Route::get('/persona', function () {
     return view('persona.formulario');
 });
 
+Route::get('/empresa', function () {
+    return view('empresa.formulario');
+});
+
+
 Route::resource('cursos', CursoController::class);
 
 // Rutas para el controlador de persona
