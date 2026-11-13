@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 
-<body>
+<body class="min-h-screen bg-slate-100 px-4 py-10">
     <form method="POST" action="{{ route('curso.store') }}">
         @csrf
 
@@ -22,14 +22,12 @@
                 <p class="mb-4 text-sm text-red-600">{{ $message }}</p>
             @enderror
 
-            <div>
+            <x-formulario.seccion titulo="Datos Curso">
                 <x-formulario.entrada name="codigoCurso" label="Código" type="number" />
                 <x-formulario.entrada name="empresaFormativa" label="Empresa" type="text" />
                 <x-formulario.entrada name="fechaInicio" label="Fecha Inicio" type="date" />
                 <x-formulario.entrada name="fechaFin" label="Fecha Fin" type="date" />
                 <x-formulario.entrada name="horaInicio" label="Hora Inicio" type="time" />
-            </div>
-            <div>
                 <x-formulario.entrada name="horaFin" label="Hora Fin" type="time" />
                 <x-formulario.entrada name="turno" label="Turno" type="text" />
                 <x-formulario.entrada name="aula" label="Aula" type="text" class="text-red-700" />
@@ -39,12 +37,13 @@
                 <x-formulario.entrada name="formacion" label="Formación" type="text" />
                 <x-formulario.selector name="centro" label="Centro" placeholder="Busca un centro..."
                     :options="$centros" />
-            </div>
+                
+            </x-formulario.seccion>
+            <div class="flex justify-end gap-3">
+                    <x-formulario.boton type="submit" class="w-full">Guardar</x-formulario.boton>
+                </div>
         </x-formulario.tarjeta>
 
-        <x-formulario.tarjeta>
-            <x-formulario.boton type="submit" class="w-full">Guardar</x-formulario.boton>
-        </x-formulario.tarjeta>
     </form>
 
 </body>
