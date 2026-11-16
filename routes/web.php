@@ -10,6 +10,8 @@ use App\Http\Controllers\FormacionController;
 use App\Http\Controllers\PersonaController;
 use App\Http\Controllers\CreditoFormativoController;
 use App\Http\Controllers\CursoFormularioController;
+use App\Http\Controllers\PresupuestoController;
+
 
 
 use App\Http\Controllers\PeticionesLogisticaController;
@@ -86,8 +88,21 @@ Route::post('/curso', [CursoController::class, 'agregarCurso'])->name('curso.agr
 Route::put('/curso/{id}', [CursoController::class, 'actualizarCurso']);
 Route::delete('/curso/{id}', [CursoController::class, 'eliminarCurso']);
 
+//Rutas para el controlador de presupuesto
+Route::get('/presupuesto/listar', [PresupuestoController::class, 'listarPresupuesto']);
+Route::get('/presupuesto/{id}', [PresupuestoController::class, 'obtenerPresupuestoPorID'])->whereNumber('id');
+Route::post('/presupuesto', [PresupuestoController::class, 'agregarPresupuesto']);
+Route::put('/presupuesto/{id}', [PresupuestoController::class, 'actualizarPresupuesto'])->whereNumber('id');
+Route::delete('/presupuesto/{id}', [PresupuestoController::class, 'eliminarPresupuesto'])->whereNumber('id');
+
+
+
+
 Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
 Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
 //Views//
 
 Route::get('/view/formulario/crear', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
+
+Route::post('/view/formularioPresupuesto', [PresupuestoController::class, 'store'])->name('presupuesto.store');
+Route::get('/view/formularioPresupuesto/crear', [PresupuestoController::class, 'create'])->name('presupuesto.create');
