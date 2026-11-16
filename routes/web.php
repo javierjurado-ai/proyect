@@ -126,5 +126,5 @@ Route::get('/view/listadoFormacion', [FormacionController::class, 'index'])->nam
 Route::get('/view/listadoFormacion', [FormacionController::class, 'index'])->name('formacion.index');
 Route::post('/view/formularioFormacion', [FormacionController::class, 'store'])->name('formacion.store');
 
-
+Route::get('/view/listadoPresupuesto', [PresupuestoController::class, 'index'])->name('presupuesto.index');
 

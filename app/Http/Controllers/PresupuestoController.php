@@ -11,13 +11,21 @@ class PresupuestoController extends Controller
      *  FORMULARIO (web)
      * ========================================================= */
 
+    // Muestra el listado de presupuestos (vista presupuesto/tabla.blade.php)
+    public function index()
+    {
+        $presupuestos = Presupuesto::orderByDesc('fecha_bonificado')->paginate(15);
+
+        return view('presupuesto.tabla', compact('presupuestos'));
+    }
+
     // Muestra el formulario de alta
     public function create()
     {
         return view('presupuesto.formulario');
     }
 
-    // Guarda lo enviado desde el formulario y vuelve con mensaje
+    // Guarda lo enviado desde el formulario y vuelve a la tabla
     public function store(Request $request)
     {
         $datos = $request->validate($this->reglas(), $this->mensajes());
@@ -25,7 +33,7 @@ class PresupuestoController extends Controller
         Presupuesto::create($datos);
 
         return redirect()
-            ->route('presupuesto.create')
+            ->route('presupuesto.index')
             ->with('ok', 'Presupuesto guardado correctamente.');
     }
 
