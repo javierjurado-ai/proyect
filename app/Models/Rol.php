@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Enums\TipoRol;
 use Illuminate\Database\Eloquent\Model;
 
 class Rol extends Model
@@ -16,6 +17,6 @@ class Rol extends Model
     ];
 
     protected $casts = [
-        'rol' => Rol::class
+        'rol' => TipoRol::class
     ];
 }

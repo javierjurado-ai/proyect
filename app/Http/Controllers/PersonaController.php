@@ -6,6 +6,7 @@ use App\Models\Empresa;
 use App\Models\Persona;
 use App\Models\enums\Genero;
 use App\Models\enums\LOPD;
+use App\Models\Rol;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
