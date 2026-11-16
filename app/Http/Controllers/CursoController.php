@@ -11,7 +11,12 @@ use App\Models\Formacion;
 
 class CursoController extends Controller
 {
+    public function crearTabla()
+    {
+        $cursos = Curso::all();
 
+        return view('curso.tabla',compact('cursos'));
+    }
     public function crearFormulario()
     {
         $formaciones = Formacion::orderBy('nombre')->pluck('nombre', 'id');

@@ -116,9 +116,12 @@ Route::get('/view/formularioPresupuesto/crear', [PresupuestoController::class, '
 Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
 
 Route::get('/view/formulario/crearCurso', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
+Route::get('/view/formulario/crearTablaCurso', [CursoController::class, 'crearTabla'])->name('curso.crearTablaCurso');
 
 Route::get('/view/formulario/crearCentro', [CentroController::class, 'crearFormulario'])->name('centro.crearFormulario');
 
 Route::get('/view/formulario/crearFormacion', [FormacionController::class, 'crearFormulario'])->name('formacion.crearFormulario');
+
+
 
 
