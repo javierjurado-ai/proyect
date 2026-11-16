@@ -97,6 +97,8 @@ Route::put('/curso/{id}', [CursoController::class, 'actualizarCurso']);
 Route::delete('/curso/{id}', [CursoController::class, 'eliminarCurso']);
 Route::post('/curso/rolDocente/{id}', [CursoController::class, 'agregarRolDocente']);
 Route::post('/curso/CursoDocente/{id}', [CursoController::class, 'agregarCursoDocente']);
+Route::post('/curso/rolAlumno/{id}', [CursoController::class, 'agregarRolAlumno']);
+Route::post('/curso/CursoAlumno/{id}', [CursoController::class, 'agregarCursoAlumno']);
 
 //Rutas para el controlador de presupuesto
 Route::get('/presupuesto/listar', [PresupuestoController::class, 'listarPresupuesto']);
@@ -120,6 +122,7 @@ Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create']
 Route::get('/view/formulario/crearCurso', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
 Route::get('/view/formulario/crearTablaCurso', [CursoController::class, 'crearTabla'])->name('curso.crearTablaCurso');
 Route::get('/view/formulario/crearTablaDocente/{id}', [CursoController::class, 'crearTablaPorDocente'])->name('curso.crearTablaPorDocente');
+Route::get('/view/formulario/crearTablaAlumno/{id}', [CursoController::class, 'crearTablaPorAlumno'])->name('curso.crearTablaPorAlumno');
 
 Route::get('/view/formulario/crearCentro', [CentroController::class, 'crearFormulario'])->name('centro.crearFormulario');
 

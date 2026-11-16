@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\Enums\Turno;
 use App\Models\Centro;
+use App\Models\CursoAlumno;
 use App\Models\CursoDocente;
 use App\Models\Enums\TipoRol;
 use App\Models\Formacion;
@@ -15,6 +16,7 @@ use App\Models\Rol;
 
 class CursoController extends Controller
 {
+    ///////////////////Tablas//////////////////////
     public function crearTabla()
     {
         $cursos = Curso::all();
@@ -28,7 +30,14 @@ class CursoController extends Controller
 
         return view('docente.tabla', compact('docentes'));
     }
+    public function crearTablaPorAlumno($id)
+    {
+        $idPersonas = CursoAlumno::where('curso_id', $id)->pluck('persona_id');
+        $alumnos = Persona::findMany($idPersonas);
 
+        return view('alumno.tabla', compact('alumnos'));
+    }
+    ////////////////////Roles////////////////////////////
     public function agregarRolDocente($id)
     {
         return Rol::create([
@@ -36,6 +45,14 @@ class CursoController extends Controller
             'persona_id' => $id,
         ]);
     }
+    public function agregarRolAlumno($id)
+    {
+        return Rol::create([
+            'rol'        => TipoRol::Docente,
+            'persona_id' => $id,
+        ]);
+    }
+    /////////////////////AgregarManyToMany///////////////////////////
     public function agregarCursoDocente($id)
     {
         return CursoDocente::create([
@@ -43,7 +60,14 @@ class CursoController extends Controller
             'persona_id' => $id,
         ]);
     }
-
+    public function agregarCursoAlumno($id)
+    {
+        return CursoDocente::create([
+            'curso_id'        => 3,
+            'persona_id' => $id,
+        ]);
+    }
+    ///////////////////Formulario////////////////////////
     public function crearFormulario()
     {
         $formaciones = Formacion::orderBy('nombre')->pluck('nombre', 'id');
