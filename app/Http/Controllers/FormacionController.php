@@ -10,6 +10,17 @@ use Illuminate\Validation\Rule;
 
 class FormacionController extends Controller
 {
+
+    public function crearFormulario()
+    {
+        $modalidades = collect(Modalidad::cases())->mapWithKeys(
+            fn($modalidad) => [$modalidad->value => ucfirst($modalidad->name)]
+        );
+
+
+        return view('formacion.formulario', compact('modalidades'));
+    }
+
     // Listar todas las formaciones
     public function listarFormacion()
     {
@@ -33,11 +44,11 @@ class FormacionController extends Controller
     {
         $datos = $request->validate([
             'nombre'        => 'required|string|max:100',
-            'codigo_accion' => 'required|integer|max:11',
+            'codigo_accion' => 'required|integer|min:1',
             'modalidad'     => ['required', Rule::enum(Modalidad::class)],
-            'sector'        => 'nullable|string|max:60',
-            'horas_totales' => 'nullable|integer|max:11',
-            'activo'        => 'nullable|integer|max:11',
+            'sector'        => 'required|string|max:60',
+            'horas_totales' => 'nullable|integer|min:1|max:9999',
+            'activo'        => 'nullable|boolean',
         ]);
 
         $formacion = Formacion::create($datos);
@@ -56,11 +67,11 @@ class FormacionController extends Controller
 
         $datos = $request->validate([
             'nombre'        => 'required|string|max:100',
-            'codigo_accion' => 'required|integer|max:11',
+            'codigo_accion' => 'required|integer|min:1',
             'modalidad'     => ['required', Rule::enum(Modalidad::class)],
-            'sector'        => 'nullable|string|max:60',
-            'horas_totales' => 'nullable|integer|max:11',
-            'activo'        => 'nullable|integer|max:11',
+            'sector'        => 'required|string|max:60',
+            'horas_totales' => 'nullable|integer|min:1|max:9999',
+            'activo'        => 'nullable|boolean',
         ]);
 
         $formacion->update($datos);
