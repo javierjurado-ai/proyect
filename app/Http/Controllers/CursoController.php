@@ -62,7 +62,7 @@ class CursoController extends Controller
     }
     public function agregarCursoAlumno($id)
     {
-        return CursoDocente::create([
+        return CursoAlumno::create([
             'curso_id'        => 3,
             'persona_id' => $id,
         ]);
