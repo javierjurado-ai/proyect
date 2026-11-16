@@ -53,7 +53,7 @@ Route::delete('/empresa/{empresa}', [EmpresaController::class, 'eliminarEmpresa'
 // Rutas para el controlador de formacion
 Route::get('/formacion', [FormacionController::class, 'listarFormacion']);
 Route::get('/formacion/{id}', [FormacionController::class, 'obtenerFormacionPorID']);
-Route::post('/formacion', [FormacionController::class, 'crearFormacion']);
+Route::post('/formacion', [FormacionController::class, 'crearFormacion'])->name('formacion.agregarFormacion');
 Route::put('/formacion/{id}', [FormacionController::class, 'actualizarFormacion']);
 Route::delete('/formacin/{id}', [FormacionController::class, 'eliminarFormacion']);
 
@@ -95,3 +95,7 @@ Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create']
 Route::get('/view/formulario/crearCurso', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
 
 Route::get('/view/formulario/crearCentro', [CentroController::class, 'crearFormulario'])->name('centro.crearFormulario');
+
+Route::get('/view/formulario/crearFormacion', [FormacionController::class, 'crearFormulario'])->name('formacion.crearFormulario');
+
+
