@@ -60,7 +60,7 @@ Route::delete('/formacin/{id}', [FormacionController::class, 'eliminarFormacion'
 // Rutas para el controlador de centro
 Route::get('/centro/listar', [CentroController::class, 'listarCentro']);
 Route::get('/centro/{id}', [CentroController::class, 'obtenerCentroPorID']);
-Route::post('/centro', [CentroController::class, 'agregarCentro']);
+Route::post('/centro', [CentroController::class, 'agregarCentro'])->name('centro.agregarCentro');
 Route::put('/centro/{id}', [CentroController::class, 'actualizarCentro']);
 Route::delete('/centro/{id}', [CentroController::class, 'eliminarCentro']);
 
@@ -87,7 +87,11 @@ Route::put('/curso/{id}', [CursoController::class, 'actualizarCurso']);
 Route::delete('/curso/{id}', [CursoController::class, 'eliminarCurso']);
 
 Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
-Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
+
 //Views//
 
-Route::get('/view/formulario/crear', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
+Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
+
+Route::get('/view/formulario/crearCurso', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
+
+Route::get('/view/formulario/crearCentro', [CentroController::class, 'crearFormulario'])->name('centro.crearFormulario');

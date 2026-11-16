@@ -3,11 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Centro;
+use App\Models\Empresa;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
 class CentroController extends Controller
 {
+    public function crearFormulario()
+    {
+        $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
+
+
+        return view('centro.formulario', compact('empresas'));
+    }
     // Listar todos los centros
     public function listarCentro()
     {
