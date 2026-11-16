@@ -84,9 +84,10 @@ Route::delete('/peticionesLogistica/{id}', [PeticionesLogisticaController::class
 // Rutas para el controlador de curso
 Route::get('/curso/listar', [CursoController::class, 'listarCurso']);
 Route::get('/curso/{id}', [CursoController::class, 'obtenerCursoPorID']);
-Route::post('/curso', [CursoController::class, 'agregarCurso']);
+Route::post('/curso', [CursoController::class, 'agregarCurso'])->name('curso.agregarCurso');
 Route::put('/curso/{id}', [CursoController::class, 'actualizarCurso']);
 Route::delete('/curso/{id}', [CursoController::class, 'eliminarCurso']);
 
-Route::post('/view/formularioCurso', [CursoFormularioController::class, 'store'])->name('curso.store');
-Route::get('/view/formulario/crear', [CursoFormularioController::class, 'create'])->name('curso.create');
+//Views//
+
+Route::get('/view/formulario/crear', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');

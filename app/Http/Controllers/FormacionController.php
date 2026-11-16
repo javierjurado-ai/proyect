@@ -36,7 +36,7 @@ class FormacionController extends Controller
             'codigo_accion' => 'required|integer|max:11',
             'modalidad'     => ['required', Rule::enum(Modalidad::class)],
             'sector'        => 'nullable|string|max:60',
-            'horas_totales' => 'nullable|integer|max:11',
+            'horas_totales' => 'nullable|integer|min:1|max:9999',
             'activo'        => 'nullable|integer|max:11',
         ]);
 
