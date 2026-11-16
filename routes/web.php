@@ -9,7 +9,6 @@ use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\FormacionController;
 use App\Http\Controllers\PersonaController;
 use App\Http\Controllers\CreditoFormativoController;
-use App\Http\Controllers\PersonaFormularioController;  
 
 
 
@@ -82,5 +81,5 @@ Route::post('/curso', [CursoController::class, 'agregarCurso']);
 Route::put('/curso/{id}', [CursoController::class, 'actualizarCurso']);
 Route::delete('/curso/{id}', [CursoController::class, 'eliminarCurso']);
 
-Route::post('/view/formularioPersona', [PersonaFormularioController::class, 'store'])->name('persona.store');
-Route::get('/view/formularioPersona/crear', [PersonaFormularioController::class, 'create'])->name('persona.create');
+Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
+Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');

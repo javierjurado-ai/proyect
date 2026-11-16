@@ -22,7 +22,7 @@
             <x-formulario.seccion titulo="Datos personales">
                 <x-formulario.entrada name="nombre" label="Nombre *" maxlength="45" required />
                 <x-formulario.entrada name="primer_apellido" label="Primer apellido *" maxlength="45" required />
-                <x-formulario.entrada name="segundo_apellido" label="Segundo apellido *" maxlength="45" required />
+                <x-formulario.entrada name="segundo_apellido" label="Segundo apellido" maxlength="45" />
 
                 <x-formulario.entrada name="fecha_nacimiento" label="Fecha de nacimiento *" type="date" required />
                 <x-formulario.seleccion name="genero" label="Género *" :options="$generos" required />
@@ -39,7 +39,7 @@
                 <x-formulario.entrada name="NIE" label="NIE *" maxlength="15" placeholder="X1234567L"
                     class="uppercase" contenedor="bloque-NIE hidden" disabled />
 
-                <x-formulario.entrada name="numero_seguridad_social" label="Nº Seguridad Social" maxlength="20" />
+                <x-formulario.entrada name="numero_seguridad_social" label="Nº Seguridad Social *" maxlength="20" required  />
             </x-formulario.seccion>
 
             <x-formulario.seccion titulo="Contacto">
@@ -50,7 +50,9 @@
                     contenedor="md:col-span-3" />
             </x-formulario.seccion>
 
-            <x-formulario.seccion titulo="Protección de datos" columnas="1">
+            <x-formulario.seccion titulo="Empresa y protección de datos" columnas="2">
+                <x-formulario.seleccion name="empresa_id" label="Empresa *" :options="$empresas"
+                    placeholder="-- Selecciona una empresa --" required />
                 <x-formulario.radio name="LOPD" label="Acepta LOPD *" required
                     :options="['SI' => 'Sí', 'NO' => 'No']" />
             </x-formulario.seccion>
@@ -96,7 +98,6 @@
             inputNIE.disabled = esDNI;   inputNIE.required = !esDNI;
             (esDNI ? inputNIE : inputDNI).value = '';
         }
-
         document.querySelectorAll('input[name="tipo_documento"]').forEach(r =>
             r.addEventListener('change', cambiarDocumento));
         form.addEventListener('reset', () => setTimeout(cambiarDocumento));
