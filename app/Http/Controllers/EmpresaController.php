@@ -9,6 +9,13 @@ use Illuminate\Validation\Rule;
 
 class EmpresaController extends Controller
 {
+
+    // Mostrar la vista del formulario de creación web
+    public function mostrarFormulario()
+    {
+        return view('empresa.formulario'); // Asegúrate de que tu vista se llame asi (ej: resources/views/empresa/formulario.blade.php)
+    }
+
     // Listar todas las empresas
     public function listarEmpresa()
     {
@@ -27,7 +34,7 @@ class EmpresaController extends Controller
         return response()->json($empresa);
     }
 
-    // Crear una empresa
+    // Crear una empresa (Sirve tanto para la Web como para la API)
     public function agregarEmpresa(Request $request)
     {
         $datos = $request->validate([
@@ -38,7 +45,13 @@ class EmpresaController extends Controller
 
         $empresa = Empresa::create($datos);
 
-        return response()->json($empresa, 201);
+        // Si la petición espera JSON (Postman, fetch, etc.), devuelve el JSON
+        if ($request->expectsJson()) {
+            return response()->json($empresa, 201);
+        }
+
+        // Si viene del formulario web tradicional, redirige con mensaje de éxito
+        return back()->with('success', '¡Empresa guardada con éxito!');
     }
 
     // Actualizar una empresa
