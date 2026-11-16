@@ -7,7 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\Enums\Turno;
 use App\Models\Centro;
+use App\Models\CursoDocente;
+use App\Models\Enums\TipoRol;
 use App\Models\Formacion;
+use App\Models\Persona;
+use App\Models\Rol;
 
 class CursoController extends Controller
 {
@@ -15,8 +19,31 @@ class CursoController extends Controller
     {
         $cursos = Curso::all();
 
-        return view('curso.tabla',compact('cursos'));
+        return view('curso.tabla', compact('cursos'));
     }
+    public function crearTablaPorDocente($id)
+    {
+        $idPersonas = CursoDocente::where('curso_id', $id)->pluck('persona_id');
+        $docentes = Persona::findMany($idPersonas);
+
+        return view('docente.tabla', compact('docentes'));
+    }
+
+    public function agregarRolDocente($id)
+    {
+        return Rol::create([
+            'rol'        => TipoRol::Docente,
+            'persona_id' => $id,
+        ]);
+    }
+    public function agregarCursoDocente($id)
+    {
+        return CursoDocente::create([
+            'curso_id'        => 3,
+            'persona_id' => $id,
+        ]);
+    }
+
     public function crearFormulario()
     {
         $formaciones = Formacion::orderBy('nombre')->pluck('nombre', 'id');
