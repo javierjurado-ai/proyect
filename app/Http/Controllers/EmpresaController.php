@@ -9,6 +9,13 @@ use Illuminate\Validation\Rule;
 
 class EmpresaController extends Controller
 {
+    // Muestra el listado de empresas (vista empresa/tabla.blade.php)
+    public function index()
+    {
+        $empresas = Empresa::orderBy('nombre')->paginate(15);
+
+        return view('empresa.tabla', compact('empresas'));
+    }
 
     // Mostrar la vista del formulario de creación web
     public function mostrarFormulario()
@@ -50,8 +57,10 @@ class EmpresaController extends Controller
             return response()->json($empresa, 201);
         }
 
-        // Si viene del formulario web tradicional, redirige con mensaje de éxito
-        return back()->with('success', '¡Empresa guardada con éxito!');
+        // Si viene del formulario web, vuelve a la tabla con mensaje
+        return redirect()
+            ->route('empresa.index')
+            ->with('ok', 'Empresa guardada correctamente.');
     }
 
     // Actualizar una empresa

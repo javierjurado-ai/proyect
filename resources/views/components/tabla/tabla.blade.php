@@ -1,6 +1,8 @@
+{{-- columnas: 'Texto' o ['Texto', 'right'|'center'] --}}
 @props([
-    'columnas' => [],                       {{-- 'Texto' o ['Texto', 'right'|'center'] --}}
+    'columnas' => [],
     'vacio' => 'Todavía no hay registros.',
+    'paginacion' => null,
 ])
 
 @if (! $slot->hasActualContent())
@@ -15,8 +17,9 @@
                     @foreach ($columnas as $columna)
                         @php
                             [$texto, $alinear] = is_array($columna) ? $columna : [$columna, 'left'];
+                            $claseAlinear = ['left' => 'text-left', 'right' => 'text-right', 'center' => 'text-center'][$alinear] ?? 'text-left';
                         @endphp
-                        <th class="px-4 py-3 whitespace-nowrap text-{{ $alinear }}">{{ $texto }}</th>
+                        <th class="whitespace-nowrap px-4 py-3 {{ $claseAlinear }}">{{ $texto }}</th>
                     @endforeach
                 </tr>
             </thead>
@@ -25,4 +28,8 @@
             </tbody>
         </table>
     </div>
+@endif
+
+@if ($paginacion && method_exists($paginacion, 'links') && $paginacion->hasPages())
+    <div class="mt-4">{{ $paginacion->links() }}</div>
 @endif

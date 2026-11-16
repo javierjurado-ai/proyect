@@ -49,8 +49,8 @@ Route::delete('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 
 Route::get('/empresa', [EmpresaController::class, 'mostrarFormulario']);
 Route::post('/empresa', [EmpresaController::class, 'agregarEmpresa']);
 
-// Vista general (Listado con tabla)
-Route::get('/empresas/listar', [EmpresaController::class, 'listarEmpresa'])->name('empresa.index');
+// Listado de empresas en JSON (API)
+Route::get('/empresas/listar', [EmpresaController::class, 'listarEmpresa']);
 
 // Vista de detalle / consulta por ID (ej: /empresa/1)
 Route::get('/empresa/{id}', [EmpresaController::class, 'obtenerEmpresaPorID'])->name('empresa.show');
@@ -126,10 +126,10 @@ Route::get('/view/formulario/crearCentro', [CentroController::class, 'crearFormu
 Route::get('/view/formulario/crearFormacion', [FormacionController::class, 'crearFormulario'])->name('formacion.crearFormulario');
 
 Route::get('/view/listadoFormacion', [FormacionController::class, 'index'])->name('formacion.index');
-Route::get('/view/listadoFormacion', [FormacionController::class, 'index'])->name('formacion.index');
 Route::post('/view/formularioFormacion', [FormacionController::class, 'store'])->name('formacion.store');
 
 Route::get('/view/listadoPresupuesto', [PresupuestoController::class, 'index'])->name('presupuesto.index');
 
+Route::get('/view/listadoEmpresa', [EmpresaController::class, 'index'])->name('empresa.index');
 
 
