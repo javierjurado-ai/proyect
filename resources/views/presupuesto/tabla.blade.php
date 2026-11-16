@@ -31,8 +31,8 @@
                     <td class="px-4 py-3 text-slate-700">{{ $p->ubicacion_formacion }}</td>
                     <td class="px-4 py-3 text-right text-slate-700">{{ $p->numero_alumnos }}</td>
                     <td class="px-4 py-3 text-right text-slate-700">{{ $p->horas_totales }}</td>
-                    <td class="px-4 py-3 text-right text-slate-700">{{ number_format($p->importe_bonificado, 2, ',', '.') }} €</td>
-                    <td class="px-4 py-3 text-slate-700">{{ \Illuminate\Support\Carbon::parse($p->fecha_bonificado)->format('d/m/Y') }}</td>
+                   <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700">{{ number_format($p->importe_bonificado, 2, ',', '.') }} €</td>
+<td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ \Illuminate\Support\Carbon::parse($p->fecha_bonificado)->format('d/m/Y') }}</td>
                 </tr>
             @endforeach
         </x-tabla.tabla>
