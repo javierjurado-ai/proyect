@@ -45,12 +45,20 @@ Route::post('/comunicacionFundae', [ComunicacionFundaeController::class, 'agrega
 Route::put('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'actualizarComunicacionFundae']);
 Route::delete('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'eliminarComunicacionFundae']);
 
-// Rutas para el controlador de empresa
-Route::get('/empresa/listar', [EmpresaController::class, 'listarEmpresa']);
-Route::get('/empresa/{empresa}', [EmpresaController::class, 'obtenerEmpresaPorID']);
+// Formulario de creación
+Route::get('/empresa', [EmpresaController::class, 'mostrarFormulario']);
 Route::post('/empresa', [EmpresaController::class, 'agregarEmpresa']);
-Route::put('/empresa/{empresa}', [EmpresaController::class, 'actualizarEmpresa']);
-Route::delete('/empresa/{empresa}', [EmpresaController::class, 'eliminarEmpresa']);
+
+// Vista general (Listado con tabla)
+Route::get('/empresas/listar', [EmpresaController::class, 'listarEmpresa'])->name('empresa.index');
+
+// Vista de detalle / consulta por ID (ej: /empresa/1)
+Route::get('/empresa/{id}', [EmpresaController::class, 'obtenerEmpresaPorID'])->name('empresa.show');
+Route::get('/empresa/{id}/editar', [EmpresaController::class, 'vistaEditar'])->name('empresa.editar');
+
+// Rutas de actualización y eliminación web
+Route::put('/empresa/{id}', [EmpresaController::class, 'actualizarEmpresa'])->name('empresa.actualizar');
+Route::delete('/empresa/{id}', [EmpresaController::class, 'eliminarEmpresa'])->name('empresa.eliminar');
 
 // Rutas para el controlador de formacion
 Route::get('/formacion', [FormacionController::class, 'listarFormacion']);

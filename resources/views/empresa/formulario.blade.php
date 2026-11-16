@@ -10,8 +10,15 @@
     
     <!-- Tarjeta con ancho ampliado y fondo blanco -->
     <x-formulario.tarjeta class="max-w-xl bg-white">
-        <!-- Dejamos el action vacío por ahora para que no intente enviar nada ni de error -->
-        <form action="#" method="POST">
+       
+        <!-- 16-11-26  Agregamos mensaje de exito al guardar -->
+        @if(session('success'))
+            <div id="success-alert" class="mb-6 rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-700 shadow-sm">
+                {{ session('success') }}
+            </div>
+        @endif
+        <!-- Dejamos el action vacío por ahora para que no intente enviar nada ni de error.   16-11-26: Modificamos agregando "/empresa" para que apunte al endpoint e id="empresa-form para el mensaje -->  
+        <form action="/empresa" method="POST" id="empresa-form">
             @csrf
 
             <h2 class="text-2xl font-bold text-slate-800 mb-1">Empresa</h2>
@@ -29,6 +36,15 @@
             </div>
         </form>
     </x-formulario.tarjeta>
+
+    <!-- El script para el mensaje, va aquí abajo, cuando el formulario ya ha sido cargado -->
+    @if(session('success'))
+    <script>
+        document.getElementById('empresa-form').addEventListener('focusin', () => {
+            document.getElementById('success-alert')?.remove();
+        }, { once: true });
+    </script>
+    @endif
 
 </body>
 </html>
