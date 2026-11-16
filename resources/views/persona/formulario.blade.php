@@ -10,18 +10,23 @@
 
 <body class="min-h-screen bg-slate-100 px-4 py-10">
     <x-formulario.tarjeta titulo="Persona" subtitulo="Los campos marcados con * son obligatorios">
-        <form id="formPersona" method="POST">
+        <form id="formPersona" method="POST" action="{{ route('persona.store') }}">
             @csrf
+
+            @if (session('ok'))
+                <div class="mb-6 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
+                    {{ session('ok') }}
+                </div>
+            @endif
 
             <x-formulario.seccion titulo="Datos personales">
                 <x-formulario.entrada name="nombre" label="Nombre *" maxlength="45" required />
                 <x-formulario.entrada name="primer_apellido" label="Primer apellido *" maxlength="45" required />
                 <x-formulario.entrada name="segundo_apellido" label="Segundo apellido" maxlength="45" />
 
-                <x-formulario.entrada name="fecha_nacimiento" label="Fecha de nacimiento" type="date" />
-                <x-formulario.seleccion name="genero" label="Género"
-                    :options="['hombre' => 'Hombre', 'mujer' => 'Mujer', 'otro' => 'Otro']" />
-                <x-formulario.entrada name="nacionalidad" label="Nacionalidad" maxlength="45" />
+                <x-formulario.entrada name="fecha_nacimiento" label="Fecha de nacimiento *" type="date" required />
+                <x-formulario.seleccion name="genero" label="Género *" :options="$generos" required />
+                <x-formulario.entrada name="nacionalidad" label="Nacionalidad *" maxlength="45" required />
             </x-formulario.seccion>
 
             <x-formulario.seccion titulo="Documentación">
@@ -34,18 +39,20 @@
                 <x-formulario.entrada name="NIE" label="NIE *" maxlength="15" placeholder="X1234567L"
                     class="uppercase" contenedor="bloque-NIE hidden" disabled />
 
-                <x-formulario.entrada name="numero_seguridad_social" label="Nº Seguridad Social" maxlength="20" />
+                <x-formulario.entrada name="numero_seguridad_social" label="Nº Seguridad Social *" maxlength="20" required  />
             </x-formulario.seccion>
 
             <x-formulario.seccion titulo="Contacto">
-                <x-formulario.entrada name="telefono" label="Teléfono" type="tel" maxlength="20" />
-                <x-formulario.entrada name="email" label="Email" type="email" maxlength="100"
+                <x-formulario.entrada name="telefono" label="Teléfono *" type="tel" maxlength="20" required />
+                <x-formulario.entrada name="email" label="Email *" type="email" maxlength="100" required
                     contenedor="md:col-span-2" />
-                <x-formulario.entrada name="direccion" label="Dirección" maxlength="150"
+                <x-formulario.entrada name="direccion" label="Dirección *" maxlength="150" required
                     contenedor="md:col-span-3" />
             </x-formulario.seccion>
 
-            <x-formulario.seccion titulo="protección de datos" columnas="2">
+            <x-formulario.seccion titulo="Empresa y protección de datos" columnas="2">
+                <x-formulario.seleccion name="empresa_id" label="Empresa *" :options="$empresas"
+                    placeholder="-- Selecciona una empresa --" required />
                 <x-formulario.radio name="LOPD" label="Acepta LOPD *" required
                     :options="['SI' => 'Sí', 'NO' => 'No']" />
             </x-formulario.seccion>
@@ -91,7 +98,6 @@
             inputNIE.disabled = esDNI;   inputNIE.required = !esDNI;
             (esDNI ? inputNIE : inputDNI).value = '';
         }
-
         document.querySelectorAll('input[name="tipo_documento"]').forEach(r =>
             r.addEventListener('change', cambiarDocumento));
         form.addEventListener('reset', () => setTimeout(cambiarDocumento));
