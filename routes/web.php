@@ -55,14 +55,14 @@ Route::delete('/empresa/{empresa}', [EmpresaController::class, 'eliminarEmpresa'
 // Rutas para el controlador de formacion
 Route::get('/formacion', [FormacionController::class, 'listarFormacion']);
 Route::get('/formacion/{id}', [FormacionController::class, 'obtenerFormacionPorID']);
-Route::post('/formacion', [FormacionController::class, 'crearFormacion']);
+Route::post('/formacion', [FormacionController::class, 'crearFormacion'])->name('formacion.agregarFormacion');
 Route::put('/formacion/{id}', [FormacionController::class, 'actualizarFormacion']);
 Route::delete('/formacin/{id}', [FormacionController::class, 'eliminarFormacion']);
 
 // Rutas para el controlador de centro
 Route::get('/centro/listar', [CentroController::class, 'listarCentro']);
 Route::get('/centro/{id}', [CentroController::class, 'obtenerCentroPorID']);
-Route::post('/centro', [CentroController::class, 'agregarCentro']);
+Route::post('/centro', [CentroController::class, 'agregarCentro'])->name('centro.agregarCentro');
 Route::put('/centro/{id}', [CentroController::class, 'actualizarCentro']);
 Route::delete('/centro/{id}', [CentroController::class, 'eliminarCentro']);
 
@@ -99,10 +99,18 @@ Route::delete('/presupuesto/{id}', [PresupuestoController::class, 'eliminarPresu
 
 
 Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
-Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
+
 //Views//
 
-Route::get('/view/formulario/crear', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
 
 Route::post('/view/formularioPresupuesto', [PresupuestoController::class, 'store'])->name('presupuesto.store');
 Route::get('/view/formularioPresupuesto/crear', [PresupuestoController::class, 'create'])->name('presupuesto.create');
+Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
+
+Route::get('/view/formulario/crearCurso', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
+
+Route::get('/view/formulario/crearCentro', [CentroController::class, 'crearFormulario'])->name('centro.crearFormulario');
+
+Route::get('/view/formulario/crearFormacion', [FormacionController::class, 'crearFormulario'])->name('formacion.crearFormulario');
+
+
