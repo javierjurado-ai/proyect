@@ -9,16 +9,21 @@ use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\FormacionController;
 use App\Http\Controllers\PersonaController;
 use App\Http\Controllers\CreditoFormativoController;
-
+use App\Http\Controllers\CursoFormularioController;
 
 
 use App\Http\Controllers\PeticionesLogisticaController;
 Route::get('/', function () {
-    return view('form');
+    return view('curso.formulario');
 });
 
 Route::get('/probar-logistica', function () {
     return PeticionesLogistica::all();
+});
+
+
+Route::get('/empresa', function () {
+    return view('empresa.formulario');
 });
 
 
@@ -77,9 +82,12 @@ Route::delete('/peticionesLogistica/{id}', [PeticionesLogisticaController::class
 // Rutas para el controlador de curso
 Route::get('/curso/listar', [CursoController::class, 'listarCurso']);
 Route::get('/curso/{id}', [CursoController::class, 'obtenerCursoPorID']);
-Route::post('/curso', [CursoController::class, 'agregarCurso']);
+Route::post('/curso', [CursoController::class, 'agregarCurso'])->name('curso.agregarCurso');
 Route::put('/curso/{id}', [CursoController::class, 'actualizarCurso']);
 Route::delete('/curso/{id}', [CursoController::class, 'eliminarCurso']);
 
 Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
 Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
+//Views//
+
+Route::get('/view/formulario/crear', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
