@@ -10,8 +10,7 @@
 </head>
 
 <body>
-    <form method="POST" action="{{ route('formacion.agregarFormacion') }}">
-        @csrf
+<form method="POST" action="{{ route('formacion.store') }}">        @csrf
 
         <x-formulario.tarjeta>
             @if (session('status'))

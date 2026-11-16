@@ -10,6 +10,32 @@ use Illuminate\Validation\Rule;
 
 class FormacionController extends Controller
 {
+    // Muestra el listado de formaciones (vista formacion/tabla.blade.php)
+    public function index()
+    {
+        $formaciones = Formacion::orderBy('nombre')->paginate(15);
+
+        return view('formacion.tabla', compact('formaciones'));
+    }
+
+    // Guarda lo enviado desde el formulario y vuelve a la tabla
+    public function store(Request $request)
+    {
+        $datos = $request->validate([
+            'nombre'        => 'required|string|max:100',
+            'codigo_accion' => 'required|integer|min:1',
+            'modalidad'     => ['required', Rule::enum(Modalidad::class)],
+            'sector'        => 'required|string|max:60',
+            'horas_totales' => 'nullable|integer|min:1|max:9999',
+            'activo'        => 'nullable|boolean',
+        ]);
+
+        Formacion::create($datos);
+
+        return redirect()
+            ->route('formacion.index')
+            ->with('ok', 'Formación guardada correctamente.');
+    }
 
     public function crearFormulario()
     {
