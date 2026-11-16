@@ -125,8 +125,11 @@ Route::get('/view/formulario/crearCentro', [CentroController::class, 'crearFormu
 
 Route::get('/view/formulario/crearFormacion', [FormacionController::class, 'crearFormulario'])->name('formacion.crearFormulario');
 
+Route::get('/view/listadoFormacion', [FormacionController::class, 'index'])->name('formacion.index');
+Route::get('/view/listadoFormacion', [FormacionController::class, 'index'])->name('formacion.index');
+Route::post('/view/formularioFormacion', [FormacionController::class, 'store'])->name('formacion.store');
 
-
+Route::get('/view/listadoPresupuesto', [PresupuestoController::class, 'index'])->name('presupuesto.index');
 
 
 
