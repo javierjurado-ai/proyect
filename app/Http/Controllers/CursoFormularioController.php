@@ -11,16 +11,10 @@ use App\Models\Centro;
 class CursoFormularioController extends Controller
 {
     public function create()
-{
-    $respuesta = Http::acceptJson()
-        ->get('http://127.0.0.1:8000/centro/listar');
-
-    $centros = $respuesta->successful()
-        ? collect($respuesta->json())->sortBy('nombre')->pluck('nombre', 'id')
-        : collect();
-
-    return view('curso.formulario', compact('centros'));
-}
+    {
+        $centros = Centro::orderBy('nombre')->pluck('nombre', 'id');
+        return view('curso.formulario', compact('centros')); // la vista de tu formulario
+    }
     public function store(Request $request)
     {
         $datos = $request->validate([
