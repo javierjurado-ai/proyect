@@ -89,15 +89,15 @@ class CursoController extends Controller
     {
         // [id => "código - formación"] para el desplegable de cursos
         $cursos = Curso::with('formacion')->orderBy('codigo_curso')->get()
-            ->mapWithKeys(fn ($c) => [
+            ->mapWithKeys(fn($c) => [
                 $c->id => $c->codigo_curso . ($c->formacion ? ' - ' . $c->formacion->nombre : ''),
             ]);
 
         $estados = collect(EstadoAula::cases())
-            ->mapWithKeys(fn ($e) => [$e->value => ucfirst(strtolower($e->value))]);
+            ->mapWithKeys(fn($e) => [$e->value => ucfirst(strtolower($e->value))]);
 
         $usos = collect(UsoAula::cases())
-            ->mapWithKeys(fn ($u) => [$u->value => ucfirst(strtolower($u->value))]);
+            ->mapWithKeys(fn($u) => [$u->value => ucfirst(strtolower($u->value))]);
 
         return view('aula.formulario', compact('cursos', 'estados', 'usos'));
     }
@@ -142,32 +142,27 @@ class CursoController extends Controller
         $datos = $request->validate([
             'formacion_id'            => 'required|integer|exists:formacion,id',
             'codigo_curso'            => 'required|integer|min:1|unique:curso,codigo_curso',
-            'empresa_formadora'       => 'nullable|string|max:50',
+            'empresa_formadora'       => 'required|string|max:50',
             'fecha_inicio'            => 'required|date',
             'fecha_fin'               => 'required|date|after_or_equal:fecha_inicio',
-            'hora_inicio'             => 'nullable|date_format:H:i',
-            'hora_final'              => 'nullable|date_format:H:i',
+            'hora_inicio'             => 'required|date_format:H:i',
+            'hora_final'              => 'required|date_format:H:i',
             'turno'                   => ['required', Rule::enum(Turno::class)],
-            'aula'                    => 'nullable|string|max:45',
-            'aula_virtual'            => 'nullable|string|max:45',
-            'tecnico_comunidad'       => 'nullable|string|max:45',
-            'observaciones'           => 'nullable|string|max:200',
+            'aula'                    => 'required|string|max:45',
+            'aula_virtual'            => 'required|string|max:45',
+            'tecnico_comunidad'       => 'required|string|max:45',
+            'observaciones'           => 'required|string|max:200',
             'peticiones_logistica_id' => 'nullable|exists:peticiones_logistica,id',
             'centro_id'               => 'nullable|exists:centro,id',
             'presupuesto_id'          => 'nullable|exists:presupuesto,id',
         ]);
 
-        $curso = Curso::create($datos);
+        Curso::create($datos);
 
-        if ($request->expectsJson()) {
-            return response()->json($curso, 201);
-        }
-
-        return redirect()->route('crearFormulario')->with('status', 'Curso guardado');
-
-        return back()->with('status', 'Curso guardado');
+        return redirect()
+            ->route('curso.index')
+            ->with('ok', 'Curso guardado correctamente.');
     }
-
     // Mostrar detalles de un curso
     public function obtenerCursoPorID($id)
     {

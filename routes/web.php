@@ -91,7 +91,7 @@ Route::delete('/peticionesLogistica/{id}', [PeticionesLogisticaController::class
 // Rutas para el controlador de curso
 Route::get('/curso/listar', [CursoController::class, 'listarCurso']);
 Route::get('/curso/{id}', [CursoController::class, 'obtenerCursoPorID']);
-Route::post('/curso', [CursoController::class, 'agregarCurso'])->name('curso.agregarCurso');
+Route::post('/view/formularioCurso', [CursoController::class, 'agregarCurso'])->name('curso.agregarCurso');
 Route::put('/curso/{id}', [CursoController::class, 'actualizarCurso']);
 Route::delete('/curso/{id}', [CursoController::class, 'eliminarCurso']);
 Route::post('/curso/rolDocente/{id}', [CursoController::class, 'agregarRolDocente']);
@@ -120,10 +120,9 @@ Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->nam
 
 //Views//
 
-
-
+Route::get('/view/listadoPresupuesto', [PresupuestoController::class, 'index'])->name('presupuesto.index');
 Route::post('/view/formularioPresupuesto', [PresupuestoController::class, 'store'])->name('presupuesto.store');
-Route::get('/view/formularioPresupuesto/crear', [PresupuestoController::class, 'create'])->name('presupuesto.create');
+Route::get('/view/formulario/crearPresupuesto', [PresupuestoController::class, 'create'])->name('presupuesto.create');
 Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
 
 Route::get('/view/formulario/crearCurso', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
@@ -134,14 +133,14 @@ Route::get('/view/formulario/crearAula', [CursoController::class, 'crearFormular
 Route::post('/view/formularioAula', [CursoController::class, 'guardarAula'])->name('aula.store');
 
 Route::get('/view/formulario/crearCentro', [CentroController::class, 'crearFormulario'])->name('centro.crearFormulario');
-Route::post('/view/formularioCentro', [CentroController::class, 'store'])->name('centro.store');
+Route::post('/view/formulario/crearCentro', [CentroController::class, 'store'])->name('centro.store');
 Route::get('/view/listadoCentro', [CentroController::class, 'index'])->name('centro.index');
 Route::get('/view/formulario/crearFormacion', [FormacionController::class, 'crearFormulario'])->name('formacion.crearFormulario');
 
 Route::get('/view/listadoFormacion', [FormacionController::class, 'index'])->name('formacion.index');
 Route::post('/view/formularioFormacion', [FormacionController::class, 'store'])->name('formacion.store');
 
-Route::get('/view/listadoPresupuesto', [PresupuestoController::class, 'index'])->name('presupuesto.index');
+
 
 Route::get('/view/listadoEmpresa', [EmpresaController::class, 'index'])->name('empresa.index');
 
