@@ -2,21 +2,30 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Usuario extends Model
+class Usuario extends Authenticatable
 {
-    protected $table = 'usuario';
+     protected $table = 'usuario';
     protected $primaryKey = 'id';
     public $timestamps = false;
 
     protected $fillable = [
         'usuario',
         'contrasena',
-        'persona_id'
+        'persona_id',
     ];
 
+    protected $hidden = ['contrasena'];
+
     protected $casts = [
-        
+        'contrasena' => 'hashed', // cifra sola al asignar
     ];
+
+    // Laravel buscará la contraseña aquí en vez de "password"
+    public function getAuthPassword()
+    {
+        return $this->contrasena;
+    }
 }
+
