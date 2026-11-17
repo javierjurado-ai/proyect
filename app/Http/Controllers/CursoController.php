@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Aula;
 use App\Models\Curso;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -9,7 +10,9 @@ use App\Models\Enums\Turno;
 use App\Models\Centro;
 use App\Models\CursoAlumno;
 use App\Models\CursoDocente;
+use App\Models\Enums\EstadoAula;
 use App\Models\Enums\TipoRol;
+use App\Models\Enums\UsoAula;
 use App\Models\Formacion;
 use App\Models\Persona;
 use App\Models\Rol;
@@ -80,6 +83,52 @@ class CursoController extends Controller
         return view('curso.formulario', compact('centros', 'formaciones', 'turnos'));
     }
 
+    ///////////////////Aulas////////////////////////
+    // Muestra el formulario de alta de aulas
+    public function crearFormularioAula()
+    {
+        // [id => "código - formación"] para el desplegable de cursos
+        $cursos = Curso::with('formacion')->orderBy('codigo_curso')->get()
+            ->mapWithKeys(fn ($c) => [
+                $c->id => $c->codigo_curso . ($c->formacion ? ' - ' . $c->formacion->nombre : ''),
+            ]);
+
+        $estados = collect(EstadoAula::cases())
+            ->mapWithKeys(fn ($e) => [$e->value => ucfirst(strtolower($e->value))]);
+
+        $usos = collect(UsoAula::cases())
+            ->mapWithKeys(fn ($u) => [$u->value => ucfirst(strtolower($u->value))]);
+
+        return view('aula.formulario', compact('cursos', 'estados', 'usos'));
+    }
+
+    // Guarda el aula enviada desde el formulario
+    public function guardarAula(Request $request)
+    {
+        $datos = $request->validate([
+            'curso_id'      => 'required|integer|exists:curso,id',
+            'nombre_aula'   => 'required|string|max:45',
+            'capacidad'     => 'required|integer|min:1',
+            'estado'        => ['required', Rule::enum(EstadoAula::class)],
+            'uso_aula'      => ['required', Rule::enum(UsoAula::class)],
+            'dimension'     => 'nullable|integer|min:0',
+            'observaciones' => 'nullable|string|max:450',
+        ], [
+            'required'        => 'Este campo es obligatorio.',
+            'max'             => 'Máximo :max caracteres.',
+            'integer'         => 'Debe ser un número entero.',
+            'enum'            => 'El valor elegido no es válido.',
+            'curso_id.exists' => 'El curso elegido no existe.',
+            'capacidad.min'   => 'La capacidad debe ser al menos :min.',
+            'dimension.min'   => 'La dimensión no puede ser negativa.',
+        ]);
+
+        Aula::create($datos);
+
+        return redirect()
+            ->route('aula.create')
+            ->with('ok', 'Aula guardada correctamente.');
+    }
 
     // Mostrar formulario de creación
     public function listarCurso()
