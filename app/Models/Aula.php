@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
-use App\Models\enums\EstadoAula;
+use App\Models\Enums\EstadoAula;
+use App\Models\Enums\UsoAula;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\enums\UsoAula;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 class Aula extends Model
 {
     protected $table = 'aulas';
@@ -18,10 +20,17 @@ class Aula extends Model
         'uso_aula',
         'dimension',
         'observaciones',
-        'curso_id'
+        'curso_id',
     ];
+
     protected $casts = [
+        'estado'   => EstadoAula::class,
         'uso_aula' => UsoAula::class,
-        'estado' => EstadoAula::class
     ];
+
+    // Un aula pertenece a un curso
+    public function curso(): BelongsTo
+    {
+        return $this->belongsTo(Curso::class, 'curso_id', 'id');
+    }
 }
