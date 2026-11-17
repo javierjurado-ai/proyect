@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Enums\TipoCentro;
 
 class Centro extends Model
 {
@@ -17,6 +18,15 @@ class Centro extends Model
         'direccion',
         'telefono',
         'email',
+        'provincia',
+        'municipio',
+        'codigo_postal',
+        'numero_total_aula',
+        'tipo_centro',
+    ];
+
+    protected $casts =[
+        'tipo_centro' => TipoCentro::class
     ];
 
     // Relación: Un centro pertenece a una empresa
