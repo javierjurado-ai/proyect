@@ -40,4 +40,15 @@ class Centro extends Model
     {
         return $this->hasMany(Curso::class, 'centro_id', 'id');
     }
+
+    // Relación: Un centro tiene muchos contactos 
+    public function contactos(): HasMany
+    {
+        return $this->hasMany(
+            CentroContactos::class,
+            'centro_id',
+            'id'
+        );
+    }
+
 }
