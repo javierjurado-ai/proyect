@@ -8,6 +8,8 @@ use App\Models\Enums\TipoCentro;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Models\Enums\Contacto; 
+use App\Models\CentroContactos; 
 
 class CentroController extends Controller
 {
@@ -45,6 +47,33 @@ class CentroController extends Controller
         return redirect()
             ->route('centro.index')
             ->with('ok', 'Centro guardado correctamente.');
+    }
+
+    /* =========================================================
+     *  FORMULARIO DE CONTACTOS DE CENTRO (web)
+     * ========================================================= */
+
+    // Muestra el formulario de alta de contacto de centro
+    public function crearContactoFormulario()
+    {
+        $centros = Centro::orderBy('nombre')->pluck('nombre', 'id');
+
+        $tiposContacto = collect(Contacto::cases())
+            ->mapWithKeys(fn ($c) => [$c->value => ucfirst(strtolower($c->value))]);
+
+        return view('centro_contactos.formulario', compact('centros', 'tiposContacto'));
+    }
+
+    // Guarda el contacto enviado desde el formulario y vuelve con mensaje
+    public function storeContacto(Request $request)
+    {
+        $datos = $request->validate($this->reglasContacto(), $this->mensajes());
+
+        CentroContactos::create($datos);
+
+        return redirect()
+            ->route('centro_contactos.create')
+            ->with('success', 'Contacto del centro guardado correctamente.');
     }
 
     /* =========================================================
@@ -111,6 +140,59 @@ class CentroController extends Controller
     }
 
     /* =========================================================
+     *  API DE CONTACTOS DE CENTRO (JSON)
+     * ========================================================= */
+
+    public function listarContactos()
+    {
+        return response()->json(CentroContactos::with('centro')->get());
+    }
+
+    public function obtenerContactoPorID($id)
+    {
+        $contacto = CentroContactos::findOrFail($id);
+
+        return response()->json($contacto);
+    }
+
+    public function agregarContacto(Request $request)
+    {
+        $datos = $request->validate($this->reglasContacto(), $this->mensajes());
+
+        $contacto = CentroContactos::create($datos);
+
+        return response()->json($contacto, 201);
+    }
+
+    public function actualizarContacto(Request $request, $id)
+    {
+        $contacto = CentroContactos::find($id);
+
+        if (! $contacto) {
+            return response()->json(['mensaje' => 'Contacto no encontrado'], 404);
+        }
+
+        $datos = $request->validate($this->reglasContacto(), $this->mensajes());
+
+        $contacto->update($datos);
+
+        return response()->json($contacto);
+    }
+
+    public function eliminarContacto($id)
+    {
+        $contacto = CentroContactos::find($id);
+
+        if (! $contacto) {
+            return response()->json(['mensaje' => 'Contacto no encontrado'], 404);
+        }
+
+        $contacto->delete();
+
+        return response()->json(['mensaje' => 'Contacto eliminado']);
+    }
+
+    /* =========================================================
      *  AUXILIARES (compartidos por formulario y API)
      * ========================================================= */
 
@@ -127,6 +209,17 @@ class CentroController extends Controller
             'telefono'          => 'required|string|max:45',
             'email'             => 'nullable|email|max:45',
             'numero_total_aula' => 'nullable|integer|min:0',
+        ];
+    }
+
+        private function reglasContacto(): array
+    {
+        return [
+            'centro_id'         => 'required|integer|exists:centro,id',
+            'nombre'            => 'required|string|max:45',
+            'contacto'          => ['required', Rule::enum(Contacto::class)],
+            'telefono_personal' => 'nullable|string|max:45',
+            'email_personal'    => 'nullable|email|max:45',
         ];
     }
 
