@@ -1,7 +1,4 @@
 @php
-    // Datos de ejemplo: sustitúyelos por los reales desde el controlador
-    $usuario = auth()->user()->usuario ?? 'Usuario';
-    $rol = 'COORDINADOR'; // prueba con 'ADMINISTRADOR' para ver el menú completo
 
     $tareas = [
         ['etiqueta' => 'Urgente',   'color' => 'rojo',  'titulo' => 'Comunicación FUNDAE sin enviar', 'detalle' => 'Fecha límite: mañana',  'accion' => 'Revisar', 'href' => '/comunicacionFundae/listar'],
@@ -18,7 +15,7 @@
     $altas = ['Ana López', 'Carlos Ruiz', 'María Pérez'];
 @endphp
 
-<x-interfaz.layout.app titulo="Inicio" :rol="$rol" :usuario="$usuario" :contadores="[]">
+<x-interfaz.layout.app titulo="Inicio" :rol="$rol" :usuario="$nombre" :contadores="[]">
 
     <x-interfaz.panel.cabecera titulo="Inicio" subtitulo="Resumen de la actividad de hoy">
         <x-slot:acciones>

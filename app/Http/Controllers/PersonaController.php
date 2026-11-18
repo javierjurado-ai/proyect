@@ -6,6 +6,7 @@ use App\Models\Empresa;
 use App\Models\Persona;
 use App\Models\enums\Genero;
 use App\Models\enums\LOPD;
+use App\Models\Enums\TipoRol;
 use App\Models\Rol;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -21,7 +22,7 @@ class PersonaController extends Controller
     {
         // [valor => texto] para el desplegable de género, sacado del enum
         $generos = collect(Genero::cases())
-            ->mapWithKeys(fn ($g) => [$g->value => ucfirst(strtolower($g->value))]);
+            ->mapWithKeys(fn($g) => [$g->value => ucfirst(strtolower($g->value))]);
 
         // [id => nombre] de la tabla empresa para el desplegable
         $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
@@ -41,6 +42,28 @@ class PersonaController extends Controller
         return redirect()
             ->route('persona.create')
             ->with('ok', 'Persona guardada correctamente.');
+    }
+    /* =========================================================
+     *  API (JSON)
+     * ========================================================= */
+
+    public function crearRol(Request $request, $id)
+    {
+        $persona = Persona::findOrFail($id);
+
+        $datos = $request->validate([
+            'rol' => ['required', Rule::enum(TipoRol::class)],
+        ], [
+            'rol.required' => 'Debes seleccionar un rol.',
+            'rol.enum'     => 'El rol seleccionado no es válido.',
+        ]);
+
+        Rol::firstOrCreate([
+            'persona_id' => $persona->id,
+            'rol'        => $datos['rol'],
+        ]);
+
+        return back()->with('ok', 'Rol asignado correctamente.');
     }
 
     /* =========================================================

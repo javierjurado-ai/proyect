@@ -20,7 +20,7 @@
     </a>
 
     <nav aria-label="Menú principal" class="flex flex-col gap-1">
-        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="inicio">Inicio</x-interfaz.layout.menu-enlace>
+        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="panel.inicio" roles="ADMINISTRADOR,COORDINADOR,COMERCIAL">Inicio</x-interfaz.layout.menu-enlace>
 
         {{-- Formación --}}
         <x-interfaz.layout.menu-enlace :rol="$rol" ruta="curso.crearTablaCurso" roles="ADMINISTRADOR,COORDINADOR,COMERCIAL">Cursos</x-interfaz.layout.menu-enlace>

@@ -125,6 +125,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/centro-contactos/{id}', [CentroController::class, 'actualizarContacto']);
     Route::delete('/centro-contactos/{id}', [CentroController::class, 'eliminarContacto']);
 
+    Route::post('/rol/{id}', [CentroController::class, 'agregarRolCoordinador']);
+
     Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
 
     // Views
