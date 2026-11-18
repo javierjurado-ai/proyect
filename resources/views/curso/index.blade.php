@@ -8,7 +8,7 @@
         <x-slot:acciones>
             <a href="{{ route('curso.crearFormulario') }}"
                class="inline-flex items-center rounded-lg bg-marca-800 px-5 py-2 text-sm font-semibold text-white hover:bg-marca-900">
-                + Nuevo curso
+                Nuevo curso
             </a>
         </x-slot:acciones>
     </x-interfaz.panel.cabecera>
