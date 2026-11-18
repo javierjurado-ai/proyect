@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alumnos</title>
+    <title>Centros</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 
@@ -12,10 +12,19 @@
     <x-tabla.pagina titulo="Centros">
         <x-tabla.tarjeta titulo="Centros" subtitulo="{{ $centros->total() }} registrados">
             <x-slot:acciones>
-                <x-tabla.boton href="{{ route('centro.crearFormulario') }}">Nuevo centro</x-tabla.nuevo>
+                <a href="{{ route('centro.crearFormulario') }}"
+                   class="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2 font-medium text-white hover:bg-blue-700">
+                    + Nuevo centro
+                </a>
             </x-slot:acciones>
 
-            <x-tabla.tabla :paginacion="$centros" vacio="Todavía no hay centros guardados." :columnas="['Nombre', 'Tipo', 'Empresa', 'Municipio', 'Provincia', 'Teléfono', 'Email', ['Aulas', 'right']]">
+            @if (session('error'))
+                <div class="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            <x-tabla.tabla :paginacion="$centros" vacio="Todavía no hay centros guardados." :columnas="['Nombre', 'Tipo', 'Empresa', 'Municipio', 'Provincia', 'Teléfono', 'Email', ['Aulas', 'right'], ['Acciones', 'center']]">
                 @foreach ($centros as $centro)
                     <x-tabla.fila>
                         <x-tabla.celda tipo="destacado">
@@ -30,6 +39,14 @@
                         <x-tabla.celda class="whitespace-nowrap" :valor="$centro->telefono" />
                         <x-tabla.celda :valor="$centro->email" />
                         <x-tabla.celda tipo="numero" :valor="$centro->numero_total_aula" />
+
+                        {{-- CELDA DE ACCIONES --}}
+                        <td class="px-4 py-3 text-center whitespace-nowrap">
+                            <div class="inline-flex items-center gap-2">
+                                <x-tabla.boton-editar :href="route('centro.edit', $centro->id)" />
+                                <x-tabla.boton-eliminar :action="route('centro.destroy', $centro->id)" />
+                            </div>
+                        </td>
                     </x-tabla.fila>
                 @endforeach
             </x-tabla.tabla>

@@ -23,13 +23,8 @@ Route::middleware('guest')->group(function () {
 Route::post('/persona/iniciarSesion', [AuthController::class, 'iniciarSesion']);
 });
 
-Route::get('/view/formulario/crearTablaCurso', [CursoController::class, 'crearTabla'])->name('curso.crearTablaCurso');
-Route::get('/view/formulario/editarCurso/{id}', [CursoController::class, 'editarCursoFormulario'])->name('curso.edit')->whereNumber('id');
-Route::put('/view/formulario/actualizarCurso/{id}', [CursoController::class, 'actualizarCursoWeb'])->name('curso.update')->whereNumber('id');
-Route::delete('/curso/{id}', [CursoController::class, 'eliminarCursoWeb'])->name('curso.destroy')->whereNumber('id');
+   
 
-Route::get('/view/formulario/crearCurso', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
-Route::post('/view/formularioCurso', [CursoController::class, 'agregarCurso'])->name('curso.agregarCurso');
 
 /*
 |--------------------------------------------------------------------------
@@ -89,9 +84,9 @@ Route::middleware('auth')->group(function () {
     // Rutas para el controlador de centro
     Route::get('/centro/listar', [CentroController::class, 'listarCentro']);
     Route::get('/centro/{id}', [CentroController::class, 'obtenerCentroPorID']);
-    Route::post('/centro', [CentroController::class, 'agregarCentro'])->name('centro.agregarCentro');
-    Route::put('/centro/{id}', [CentroController::class, 'actualizarCentro']);
-    Route::delete('/centro/{id}', [CentroController::class, 'eliminarCentro']);
+    
+   
+    
 
     // Rutas para el controlador de créditos formativos
     Route::get('/credito', [CreditoFormativoController::class, 'listarCredito']);
@@ -147,9 +142,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/view/formulario/crearAula', [CursoController::class, 'crearFormularioAula'])->name('aula.create');
     Route::post('/view/formularioAula', [CursoController::class, 'guardarAula'])->name('aula.store');
     
-    Route::get('/view/formulario/crearCentro', [CentroController::class, 'crearFormulario'])->name('centro.crearFormulario');
-    Route::post('/view/formulario/crearCentro', [CentroController::class, 'store'])->name('centro.store');
-    Route::get('/view/listadoCentro', [CentroController::class, 'index'])->name('centro.index');
+    
+
+    
     Route::get('/view/formulario/crearFormacion', [FormacionController::class, 'crearFormulario'])->name('formacion.crearFormulario');
 
     Route::get('/view/listadoFormacion', [FormacionController::class, 'index'])->name('formacion.index');
@@ -162,7 +157,21 @@ Route::middleware('auth')->group(function () {
     Route::post('/view/formularioContactoCentro', [CentroController::class, 'storeContacto'])->name('centro_contactos.store');
 
     // Rutas web para la gestión de Cursos (Editar, Actualizar y Eliminar)
+    Route::get('/view/formulario/crearTablaCurso', [CursoController::class, 'crearTabla'])->name('curso.crearTablaCurso');
+    Route::get('/view/formulario/editarCurso/{id}', [CursoController::class, 'editarCursoFormulario'])->name('curso.edit')->whereNumber('id');
+    Route::put('/view/formulario/actualizarCurso/{id}', [CursoController::class, 'actualizarCursoWeb'])->name('curso.update')->whereNumber('id');
+    Route::delete('/curso/{id}', [CursoController::class, 'eliminarCursoWeb'])->name('curso.destroy')->whereNumber('id');
+    Route::get('/view/formulario/crearCurso', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
+    Route::post('/view/formularioCurso', [CursoController::class, 'agregarCurso'])->name('curso.agregarCurso');
     
+
+    // Rutas web para la gestión de Centros (Editar, Actualizar y Eliminar)
+    Route::get('/view/listadoCentro', [CentroController::class, 'index'])->name('centro.index');
+    Route::get('/view/formulario/crearCentro', [CentroController::class, 'crearFormulario'])->name('centro.crearFormulario');
+    Route::post('/view/formulario/crearCentro', [CentroController::class, 'store'])->name('centro.store');
+    Route::get('/view/formulario/editarCentro/{id}', [CentroController::class, 'editarCentroFormulario'])->name('centro.edit')->whereNumber('id');
+    Route::put('/view/formulario/actualizarCentro/{id}', [CentroController::class, 'actualizarCentroWeb'])->name('centro.update')->whereNumber('id');
+    Route::delete('/centro/{id}', [CentroController::class, 'eliminarCentroWeb'])->name('centro.destroy')->whereNumber('id');
     
 
 });
