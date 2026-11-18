@@ -23,7 +23,13 @@ Route::middleware('guest')->group(function () {
 Route::post('/persona/iniciarSesion', [AuthController::class, 'iniciarSesion']);
 });
 
-   
+Route::get('/view/listadoEmpresa', [EmpresaController::class, 'index'])->name('empresa.index');
+Route::get('/view/formulario/crearEmpresa', [EmpresaController::class, 'mostrarFormulario'])->name('empresa.create');
+Route::post('/view/formulario/crearEmpresa', [EmpresaController::class, 'agregarEmpresa'])->name('empresa.store');
+Route::get('/view/formulario/editarEmpresa/{id}', [EmpresaController::class, 'vistaEditar'])->name('empresa.editar')->whereNumber('id');
+Route::put('/view/formulario/actualizarEmpresa/{id}', [EmpresaController::class, 'actualizarEmpresaWeb'])->name('empresa.actualizar')->whereNumber('id');
+Route::delete('/empresa/{id}', [EmpresaController::class, 'eliminarEmpresaWeb'])->name('empresa.eliminar')->whereNumber('id');
+      
 
 
 /*
@@ -45,6 +51,8 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('cursos', CursoController::class);
 
+ 
+
     // Rutas para el controlador de persona
     Route::get('/persona/listar', [PersonaController::class, 'listarPersona']);
     Route::get('/persona/{id}', [PersonaController::class, 'obtenerUsuarioPorID']);
@@ -59,20 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'actualizarComunicacionFundae']);
     Route::delete('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'eliminarComunicacionFundae']);
 
-    // Formulario de creación
-    Route::get('/empresa', [EmpresaController::class, 'mostrarFormulario']);
-    Route::post('/empresa', [EmpresaController::class, 'agregarEmpresa']);
 
-    // Listado de empresas en JSON (API)
-    Route::get('/empresas/listar', [EmpresaController::class, 'listarEmpresa']);
-
-    // Vista de detalle / consulta por ID (ej: /empresa/1)
-    Route::get('/empresa/{id}', [EmpresaController::class, 'obtenerEmpresaPorID'])->name('empresa.show');
-    Route::get('/empresa/{id}/editar', [EmpresaController::class, 'vistaEditar'])->name('empresa.editar');
-
-    // Rutas de actualización y eliminación web
-    Route::put('/empresa/{id}', [EmpresaController::class, 'actualizarEmpresa'])->name('empresa.actualizar');
-    Route::delete('/empresa/{id}', [EmpresaController::class, 'eliminarEmpresa'])->name('empresa.eliminar');
 
     // Rutas para el controlador de formacion
     Route::get('/formacion', [FormacionController::class, 'listarFormacion']);
@@ -81,9 +76,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/formacion/{id}', [FormacionController::class, 'actualizarFormacion']);
     Route::delete('/formacion/{id}', [FormacionController::class, 'eliminarFormacion']);
 
-    // Rutas para el controlador de centro
-    Route::get('/centro/listar', [CentroController::class, 'listarCentro']);
-    Route::get('/centro/{id}', [CentroController::class, 'obtenerCentroPorID']);
+    
     
    
     
@@ -150,7 +143,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/view/listadoFormacion', [FormacionController::class, 'index'])->name('formacion.index');
     Route::post('/view/formularioFormacion', [FormacionController::class, 'store'])->name('formacion.store');
 
-    Route::get('/view/listadoEmpresa', [EmpresaController::class, 'index'])->name('empresa.index');
+
+
+
+    
 
     // Formulario web de Contactos de Centro
     Route::get('/view/formulario/crearContactoCentro', [CentroController::class, 'crearContactoFormulario'])->name('centro_contactos.create');
@@ -172,6 +168,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/view/formulario/editarCentro/{id}', [CentroController::class, 'editarCentroFormulario'])->name('centro.edit')->whereNumber('id');
     Route::put('/view/formulario/actualizarCentro/{id}', [CentroController::class, 'actualizarCentroWeb'])->name('centro.update')->whereNumber('id');
     Route::delete('/centro/{id}', [CentroController::class, 'eliminarCentroWeb'])->name('centro.destroy')->whereNumber('id');
+
     
+    // Rutas web para la gestión de Empresas (Editar, Actualizar y Eliminar)
+   
 
 });
