@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Aula;
 use App\Models\Curso;
-use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\Enums\Turno;
 use App\Models\Centro;
@@ -16,15 +15,36 @@ use App\Models\Enums\UsoAula;
 use App\Models\Formacion;
 use App\Models\Persona;
 use App\Models\Rol;
-
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 class CursoController extends Controller
 {
     ///////////////////Tablas//////////////////////
-    public function crearTabla()
+    public function crearTabla(Request $request)
     {
+        $personaId = Auth::user()->persona_id;
+
+    $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+    $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
+
+    if (! $rol || ! $persona) {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()
+            ->route('login')
+            ->withErrors(['usuario' => 'No tienes acceso a la página.']);
+    }
+
+    $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
+        ->filter()
+        ->implode(' ');
+        $rol = Rol::where('persona_id', Auth::user()->persona_id)->value('rol')?->value;
+
         $cursos = Curso::all();
 
-        return view('curso.tabla', compact('cursos'));
+        return view('curso.index', compact('cursos','rol', 'nombre'));
     }
     public function crearTablaPorDocente($id)
     {

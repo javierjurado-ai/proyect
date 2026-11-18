@@ -37,11 +37,10 @@ class AuthController extends Controller
             'usuario_id' => $usuario->id,
             'expira'     => $expira,
         ]));
-
         return response()->json([
             'token'    => $token,
             'expira'   => $expira,
-            'redirect' => '/view/inicio',
+            'redirect' => '/view/inicio/',
         ]);
     }
 
