@@ -23,12 +23,7 @@ Route::middleware('guest')->group(function () {
 Route::post('/persona/iniciarSesion', [AuthController::class, 'iniciarSesion']);
 });
 
-Route::get('/view/listadoEmpresa', [EmpresaController::class, 'index'])->name('empresa.index');
-Route::get('/view/formulario/crearEmpresa', [EmpresaController::class, 'mostrarFormulario'])->name('empresa.create');
-Route::post('/view/formulario/crearEmpresa', [EmpresaController::class, 'agregarEmpresa'])->name('empresa.store');
-Route::get('/view/formulario/editarEmpresa/{id}', [EmpresaController::class, 'vistaEditar'])->name('empresa.editar')->whereNumber('id');
-Route::put('/view/formulario/actualizarEmpresa/{id}', [EmpresaController::class, 'actualizarEmpresaWeb'])->name('empresa.actualizar')->whereNumber('id');
-Route::delete('/empresa/{id}', [EmpresaController::class, 'eliminarEmpresaWeb'])->name('empresa.eliminar')->whereNumber('id');
+
       
 
 
@@ -171,6 +166,11 @@ Route::middleware('auth')->group(function () {
 
     
     // Rutas web para la gestión de Empresas (Editar, Actualizar y Eliminar)
-   
+    Route::get('/view/listadoEmpresa', [EmpresaController::class, 'index'])->name('empresa.index');
+    Route::get('/view/formulario/crearEmpresa', [EmpresaController::class, 'mostrarFormulario'])->name('empresa.create');
+    Route::post('/view/formulario/crearEmpresa', [EmpresaController::class, 'agregarEmpresa'])->name('empresa.store');
+    Route::get('/view/formulario/editarEmpresa/{id}', [EmpresaController::class, 'vistaEditar'])->name('empresa.editar')->whereNumber('id');
+    Route::put('/view/formulario/actualizarEmpresa/{id}', [EmpresaController::class, 'actualizarEmpresaWeb'])->name('empresa.actualizar')->whereNumber('id');
+    Route::delete('/empresa/{id}', [EmpresaController::class, 'eliminarEmpresaWeb'])->name('empresa.eliminar')->whereNumber('id');
 
 });
