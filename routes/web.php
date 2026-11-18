@@ -10,18 +10,19 @@ use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\FormacionController;
 use App\Http\Controllers\PersonaController;
 use App\Http\Controllers\CreditoFormativoController;
+use App\Http\Controllers\InicioController;
 use App\Http\Controllers\PresupuestoController;
 use App\Http\Controllers\PeticionesLogisticaController;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
 | Rutas públicas (solo para quien NO ha iniciado sesión)
 |--------------------------------------------------------------------------
 */
-Route::middleware('guest')->group(function () {
     Route::get('/persona/iniciarSesion', [AuthController::class, 'mostrarInicioSesion'])->name('login');
 Route::post('/persona/iniciarSesion', [AuthController::class, 'iniciarSesion']);
-});
+
 
 /*
 |--------------------------------------------------------------------------
@@ -153,4 +154,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/view/formulario/crearContactoCentro', [CentroController::class, 'crearContactoFormulario'])->name('centro_contactos.create');
     Route::post('/view/formularioContactoCentro', [CentroController::class, 'storeContacto'])->name('centro_contactos.store');
 
+    Route::get('/view/inicio', [InicioController::class, 'mostrarPaginaInicio'])->name('inicio.inicio');
 });

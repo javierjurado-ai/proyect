@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
 class Usuario extends Authenticatable
 {
-     protected $table = 'usuario';
+    use HasApiTokens;
+
+    protected $table = 'usuario';
     protected $primaryKey = 'id';
     public $timestamps = false;
 
@@ -19,13 +22,11 @@ class Usuario extends Authenticatable
     protected $hidden = ['contrasena'];
 
     protected $casts = [
-        'contrasena' => 'hashed', // cifra sola al asignar
+        'contrasena' => 'hashed',
     ];
 
-    // Laravel buscará la contraseña aquí en vez de "password"
     public function getAuthPassword()
     {
         return $this->contrasena;
     }
 }
-
