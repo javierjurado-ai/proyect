@@ -21,14 +21,8 @@
             </a>
         </x-slot:acciones>
 
-        @if (session('ok'))
-            <div class="mb-6 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
-                {{ session('ok') }}
-            </div>
-        @endif
-
         <x-tabla.tabla vacio="Todavía no hay cursos guardados."
-            :columnas="['Código', 'Formación', 'Empresa formadora', 'Inicio', 'Fin', 'Turno', 'Horario', 'Aula']">
+            :columnas="['Código', 'Formación', 'Empresa formadora', 'Inicio', 'Fin', 'Turno', 'Horario', 'Aula', ['Acciones', 'center']]">
             @foreach ($cursos as $curso)
                 @php
                     $turno = $curso->turno->value ?? $curso->turno;
@@ -62,6 +56,14 @@
                         @if ($curso->aula_virtual)
                             <span class="block text-xs text-slate-500">{{ $curso->aula_virtual }}</span>
                         @endif
+                    </td>
+
+                    {{-- NUEVA CELDA DE ACCIONES --}}
+                    <td class="px-4 py-3 text-center whitespace-nowrap">
+                        <div class="inline-flex items-center gap-2">
+                            <x-tabla.boton-editar :href="route('curso.edit', $curso->id)" />
+                            <x-tabla.boton-eliminar :action="route('curso.destroy', $curso->id)" />
+                        </div>
                     </td>
                 </tr>
             @endforeach
