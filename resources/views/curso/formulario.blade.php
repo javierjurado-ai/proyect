@@ -4,6 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {{-- Si no hay token válido, vuelve al inicio de sesión --}}
+    <script>
+        const expira = Number(sessionStorage.getItem('expira')); 
+
+        if (!token || Date.now() / 1000 > expira) {
+            sessionStorage.clear();
+            window.location.href = '/persona/iniciarSesion';
+        }
+    </script>
+
     <title>Curso</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>

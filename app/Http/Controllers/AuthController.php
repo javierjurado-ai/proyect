@@ -6,6 +6,7 @@ use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Crypt;
 
 class AuthController extends Controller
 {
@@ -23,16 +24,25 @@ class AuthController extends Controller
 
         $usuario = Usuario::where('usuario', $credenciales['usuario'])->first();
 
-        if ($usuario && Hash::check($credenciales['contrasena'], $usuario->contrasena)) {
-            Auth::login($usuario, $request->boolean('recordar'));
-            $request->session()->regenerate();
-
-            return redirect('/persona/listar');
+        if (!$usuario || !Hash::check($credenciales['contrasena'], $usuario->contrasena)) {
+            return response()->json(['message' => 'Usuario o contraseña incorrectos.'], 401);
         }
 
-        return back()
-            ->withErrors(['usuario' => 'Usuario o contraseña incorrectos.'])
-            ->onlyInput('usuario');
+        Auth::login($usuario, $request->boolean('recordar'));
+        $request->session()->regenerate();
+
+        $expira = now()->addMinutes(30)->timestamp;
+
+        $token = Crypt::encryptString(json_encode([
+            'usuario_id' => $usuario->id,
+            'expira'     => $expira,
+        ]));
+
+        return response()->json([
+            'token'    => $token,
+            'expira'   => $expira,
+            'redirect' => '/view/inicio',
+        ]);
     }
 
     public function crearUsuario(Request $request)
