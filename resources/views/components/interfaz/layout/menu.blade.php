@@ -7,7 +7,7 @@
 <aside id="menu"
     class="fixed inset-y-0 left-0 z-30 flex w-60 shrink-0 -translate-x-full flex-col overflow-y-auto bg-marca-950 px-4 py-5 text-white transition-transform lg:static lg:translate-x-0">
 
-    <a href="{{ \Illuminate\Support\Facades\Route::has('inicio') ? route('inicio') : url('/') }}"
+    <a href="{{ \Illuminate\Support\Facades\Route::has('inicio') ? route('inicio') : url('/view/inicio') }}"
         class="mb-8 flex items-center gap-3 px-2 text-lg font-bold">
         <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-400 text-marca-950">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -20,7 +20,7 @@
     </a>
 
     <nav aria-label="Menú principal" class="flex flex-col gap-1">
-        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="panel.inicio" roles="ADMINISTRADOR,COORDINADOR,COMERCIAL">Inicio</x-interfaz.layout.menu-enlace>
+        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="inicio.index">Inicio</x-interfaz.layout.menu-enlace>
 
         {{-- Formación --}}
         <x-interfaz.layout.menu-enlace :rol="$rol" ruta="curso.crearTablaCurso" roles="ADMINISTRADOR,COORDINADOR,COMERCIAL">Cursos</x-interfaz.layout.menu-enlace>

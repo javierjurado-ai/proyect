@@ -156,5 +156,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/view/formulario/crearContactoCentro', [CentroController::class, 'crearContactoFormulario'])->name('centro_contactos.create');
     Route::post('/view/formularioContactoCentro', [CentroController::class, 'storeContacto'])->name('centro_contactos.store');
 
-    Route::get('/view/inicio', [InicioController::class, 'mostrarPaginaInicio'])->name('inicio.inicio');
+    Route::get('/view/inicio', [InicioController::class, 'mostrarPaginaInicio'])->name('inicio.index');
 });
