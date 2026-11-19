@@ -70,13 +70,6 @@
                         :options="$empresas"
                         contenedor="md:col-span-2"
                         :value="$centro->empresa_id ?? ''" />
-
-                    <x-formulario.entrada
-                        name="numero_total_aula"
-                        label="Nº total de aulas"
-                        type="number"
-                        min="0"
-                        :value="$centro->numero_total_aula ?? ''" />
                 </div>
             </fieldset>
 

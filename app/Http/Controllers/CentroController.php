@@ -49,24 +49,24 @@ class CentroController extends Controller
 
     // Muestra el formulario de alta
     public function crearFormulario()
-{
-    $personaId = Auth::user()->persona_id;
+    {
+        $personaId = Auth::user()->persona_id;
 
-    $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
-    $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
+        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
 
-    $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
-        ->filter()
-        ->implode(' ');
+        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
+            ->filter()
+            ->implode(' ');
 
-    $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
+        $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
 
-    // [valor => texto] para el desplegable, sacado del enum
-    $tiposCentro = collect(TipoCentro::cases())
-        ->mapWithKeys(fn ($t) => [$t->value => ucfirst(strtolower($t->value))]);
+        // [valor => texto] para el desplegable, sacado del enum
+        $tiposCentro = collect(TipoCentro::cases())
+            ->mapWithKeys(fn($t) => [$t->value => ucfirst(strtolower($t->value))]);
 
-    return view('centro.formulario', compact('empresas', 'tiposCentro', 'rol', 'nombre'));
-}
+        return view('centro.formulario', compact('empresas', 'tiposCentro', 'rol', 'nombre'));
+    }
 
     // Guarda lo enviado desde el formulario y vuelve a la tabla
     public function store(Request $request)
@@ -90,7 +90,7 @@ class CentroController extends Controller
         $centros = Centro::orderBy('nombre')->pluck('nombre', 'id');
 
         $tiposContacto = collect(Contacto::cases())
-            ->mapWithKeys(fn ($c) => [$c->value => ucfirst(strtolower($c->value))]);
+            ->mapWithKeys(fn($c) => [$c->value => ucfirst(strtolower($c->value))]);
 
         return view('centro_contactos.formulario', compact('centros', 'tiposContacto'));
     }
@@ -129,7 +129,7 @@ class CentroController extends Controller
     public function agregarCentro(Request $request)
     {
         $datos = $request->validate($this->reglas(), $this->mensajes());
-
+        $datos['numero_total_aula'] = 0;
         $centro = Centro::create($datos);
 
         return response()->json($centro, 201);
@@ -263,8 +263,7 @@ class CentroController extends Controller
             'integer'               => 'Debe ser un número entero.',
             'enum'                  => 'El valor elegido no es válido.',
             'empresa_id.exists'     => 'La empresa elegida no existe.',
-            'codigo_postal.digits'  => 'El código postal debe tener 5 números.',
-            'numero_total_aula.min' => 'No puede ser negativo.',
+            'codigo_postal.digits'  => 'El código postal debe tener 5 números.'
         ];
     }
 }
