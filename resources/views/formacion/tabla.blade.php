@@ -1,5 +1,5 @@
 <x-tabla.tabla vacio="Todavía no hay formaciones guardadas."
-    :columnas="['Código acción', 'Nombre', 'Modalidad', 'Sector', 'Horas', 'Activo']">
+    :columnas="['Código acción', 'Nombre', 'Modalidad', 'Sector', 'Horas', 'Activo', ['Acciones', 'center']]">
     @foreach ($formaciones as $formacion)
         @php
             $modalidad = $formacion->modalidad->value ?? $formacion->modalidad;
@@ -26,6 +26,14 @@
                 <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $formacion->activo ? 'bg-green-100 text-green-800' : 'bg-stone-100 text-slate-600' }}">
                     {{ $formacion->activo ? 'Sí' : 'No' }}
                 </span>
+            </td>
+
+            {{-- ACCIONES --}}
+            <td class="px-4 py-3 text-center whitespace-nowrap">
+                <div class="inline-flex items-center gap-2">
+                    <x-tabla.boton-editar :href="route('formacion.edit', $formacion->id)" />
+                    <x-tabla.boton-eliminar :action="route('formacion.destroy', $formacion->id)" />
+                </div>
             </td>
         </tr>
     @endforeach

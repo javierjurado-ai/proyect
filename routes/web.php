@@ -23,10 +23,10 @@ use Illuminate\Support\Facades\Auth;
     Route::get('/persona/iniciarSesion', [AuthController::class, 'mostrarInicioSesion'])->name('login');
 Route::post('/persona/iniciarSesion', [AuthController::class, 'iniciarSesion']);
 
+Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
 
-
-      
-
+Route::post('/persona', [PersonaController::class, 'agregarPersona']);      
+Route::post('/persona/crearUsuario', [AuthController::class, 'crearUsuario'])->name('persona.crearUsuario');
 
 /*
 |--------------------------------------------------------------------------
@@ -115,7 +115,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/view/listadoPresupuesto', [PresupuestoController::class, 'index'])->name('presupuesto.index');
     Route::post('/view/formularioPresupuesto', [PresupuestoController::class, 'store'])->name('presupuesto.store');
     Route::get('/view/formulario/crearPresupuesto', [PresupuestoController::class, 'create'])->name('presupuesto.create');
-    Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
+    
 
     
     
@@ -124,16 +124,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/view/formulario/crearAula', [CursoController::class, 'crearFormularioAula'])->name('aula.create');
     Route::post('/view/formularioAula', [CursoController::class, 'guardarAula'])->name('aula.store');
     
-    
-
-    
-    
-
-
-
-
-    
-
     // Formulario web de Contactos de Centro
     Route::get('/view/formulario/crearContactoCentro', [CentroController::class, 'crearContactoFormulario'])->name('centro_contactos.create');
     Route::post('/view/formularioContactoCentro', [CentroController::class, 'storeContacto'])->name('centro_contactos.store');
