@@ -17,6 +17,7 @@ use App\Models\Persona;
 use App\Models\Rol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
 class CursoController extends Controller
 {
     ///////////////////Tablas//////////////////////
@@ -24,27 +25,43 @@ class CursoController extends Controller
     {
         $personaId = Auth::user()->persona_id;
 
-    $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
-    $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
+        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
 
-    if (! $rol || ! $persona) {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        if (! $rol || ! $persona) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
-        return redirect()
-            ->route('login')
-            ->withErrors(['usuario' => 'No tienes acceso a la página.']);
-    }
+            return redirect()
+                ->route('login')
+                ->withErrors(['usuario' => 'No tienes acceso a la página.']);
+        }
 
-    $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
-        ->filter()
-        ->implode(' ');
+        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
+            ->filter()
+            ->implode(' ');
         $rol = Rol::where('persona_id', Auth::user()->persona_id)->value('rol')?->value;
 
         $cursos = Curso::all();
 
-        return view('curso.index', compact('cursos','rol', 'nombre'));
+        return view('curso.index', compact('cursos', 'rol', 'nombre'));
+    }
+    public function visualizarCurso(Request $request, Curso $curso)
+    {
+        $personaId = Auth::user()->persona_id;
+
+        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
+
+        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
+            ->filter()
+            ->implode(' ');
+
+        $curso->load('formacion');
+        $curso->load('presupuesto');
+        $curso->load('peticionLogistica');
+        return view('curso.visualizar', compact('curso', 'rol', 'nombre'));
     }
     public function crearTablaPorDocente($id)
     {
@@ -276,7 +293,7 @@ class CursoController extends Controller
         return response()->json('curso eliminado con exito', 201);
     }
 
-     // Elimina el curso desde la tabla web
+    // Elimina el curso desde la tabla web
     public function eliminarCursoWeb($id)
     {
         $curso = Curso::findOrFail($id);
