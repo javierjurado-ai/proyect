@@ -7,9 +7,12 @@ use App\Models\Empresa;
 use App\Models\Enums\TipoCentro;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use App\Models\Persona;
+use App\Models\Rol;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use App\Models\Enums\Contacto; 
-use App\Models\CentroContactos; 
+use App\Models\Enums\Contacto;
+use App\Models\CentroContactos;
 
 class CentroController extends Controller
 {
@@ -17,12 +20,31 @@ class CentroController extends Controller
      *  FORMULARIO Y TABLA (web)
      * ========================================================= */
 
-    // Muestra el listado de centros (vista centro/tabla.blade.php)
-    public function index()
+    // Muestra el listado de centros (vista centro/index.blade.php)
+    public function index(Request $request)
     {
+        $personaId = Auth::user()->persona_id;
+
+        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
+
+        if (! $rol || ! $persona) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()
+                ->route('login')
+                ->withErrors(['usuario' => 'No tienes acceso a la página.']);
+        }
+
+        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
+            ->filter()
+            ->implode(' ');
+
         $centros = Centro::with('empresa')->orderBy('nombre')->paginate(15);
 
-        return view('centro.tabla', compact('centros'));
+        return view('centro.index', compact('centros', 'rol', 'nombre'));
     }
 
     // Muestra el formulario de alta
@@ -47,48 +69,6 @@ class CentroController extends Controller
         return redirect()
             ->route('centro.index')
             ->with('ok', 'Centro guardado correctamente.');
-    }
-
-    // Muestra el formulario de edición con los datos del centro
-    public function editarCentroFormulario($id)
-    {
-        $centro = Centro::findOrFail($id);
-        $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
-        $tiposCentro = collect(TipoCentro::cases())
-            ->mapWithKeys(fn ($t) => [$t->value => ucfirst(strtolower($t->value))]);
-
-        return view('centro.formulario', compact('centro', 'empresas', 'tiposCentro'));
-    }
-
-    // Actualiza el centro enviado desde el formulario web
-    public function actualizarCentroWeb(Request $request, $id)
-    {
-        $centro = Centro::findOrFail($id);
-
-        $datos = $request->validate($this->reglas(), $this->mensajes());
-
-        $centro->update($datos);
-
-        return redirect()
-            ->route('centro.index')
-            ->with('ok', 'Centro actualizado correctamente.');
-    }
-
-    // Elimina el centro desde la tabla web
-    public function eliminarCentroWeb($id)
-    {
-        $centro = Centro::findOrFail($id);
-
-        try {
-            $centro->delete();
-            return redirect()
-                ->route('centro.index')
-                ->with('ok', 'Centro eliminado correctamente.');
-        } catch (\Illuminate\Database\QueryException $e) {
-            return redirect()
-                ->route('centro.index')
-                ->with('error', 'No se puede eliminar: el centro tiene cursos o elementos asociados.');
-        }
     }
 
     /* =========================================================
@@ -254,7 +234,7 @@ class CentroController extends Controller
         ];
     }
 
-        private function reglasContacto(): array
+    private function reglasContacto(): array
     {
         return [
             'centro_id'         => 'required|integer|exists:centro,id',
@@ -268,13 +248,13 @@ class CentroController extends Controller
     private function mensajes(): array
     {
         return [
-            'required'             => 'Este campo es obligatorio.',
-            'max'                  => 'Máximo :max caracteres.',
-            'email'                => 'El email no es válido.',
-            'integer'              => 'Debe ser un número entero.',
-            'enum'                 => 'El valor elegido no es válido.',
-            'empresa_id.exists'    => 'La empresa elegida no existe.',
-            'codigo_postal.digits' => 'El código postal debe tener 5 números.',
+            'required'              => 'Este campo es obligatorio.',
+            'max'                   => 'Máximo :max caracteres.',
+            'email'                 => 'El email no es válido.',
+            'integer'               => 'Debe ser un número entero.',
+            'enum'                  => 'El valor elegido no es válido.',
+            'empresa_id.exists'     => 'La empresa elegida no existe.',
+            'codigo_postal.digits'  => 'El código postal debe tener 5 números.',
             'numero_total_aula.min' => 'No puede ser negativo.',
         ];
     }

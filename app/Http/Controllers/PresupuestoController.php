@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Persona;
 use App\Models\Presupuesto;
+use App\Models\Rol;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PresupuestoController extends Controller
 {
@@ -11,12 +14,31 @@ class PresupuestoController extends Controller
      *  FORMULARIO (web)
      * ========================================================= */
 
-    // Muestra el listado de presupuestos (vista presupuesto/tabla.blade.php)
-    public function index()
+    // Muestra el listado de presupuestos (vista presupuesto/index.blade.php)
+    public function index(Request $request)
     {
+        $personaId = Auth::user()->persona_id;
+
+        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
+
+        if (! $rol || ! $persona) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()
+                ->route('login')
+                ->withErrors(['usuario' => 'No tienes acceso a la página.']);
+        }
+
+        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
+            ->filter()
+            ->implode(' ');
+
         $presupuestos = Presupuesto::orderByDesc('fecha_bonificado')->paginate(15);
 
-        return view('presupuesto.tabla', compact('presupuestos'));
+        return view('presupuesto.index', compact('presupuestos', 'rol', 'nombre'));
     }
 
     // Muestra el formulario de alta
@@ -101,17 +123,17 @@ class PresupuestoController extends Controller
     private function mensajes(): array
     {
         return [
-            'required'                   => 'Este campo es obligatorio.',
-            'string'                     => 'Debe ser un texto.',
-            'integer'                    => 'Debe ser un número entero.',
-            'numeric'                    => 'Debe ser un número.',
-            'date'                       => 'La fecha no es válida.',
+            'required'                        => 'Este campo es obligatorio.',
+            'string'                          => 'Debe ser un texto.',
+            'integer'                         => 'Debe ser un número entero.',
+            'numeric'                         => 'Debe ser un número.',
+            'date'                            => 'La fecha no es válida.',
             // min/max cambian según sea texto o número
-            'min'                        => ['numeric' => 'El valor mínimo es :min.', 'string' => 'Mínimo :min caracteres.'],
-            'max'                        => ['numeric' => 'El valor máximo es :max.', 'string' => 'Máximo :max caracteres.'],
-            'numero_alumnos.min'         => 'Debe haber al menos :min alumno.',
-            'horas_totales.min'          => 'Debe tener al menos :min hora.',
-            'importe_bonificado.decimal' => 'El importe puede tener como máximo 2 decimales.',
+            'min'                             => ['numeric' => 'El valor mínimo es :min.', 'string' => 'Mínimo :min caracteres.'],
+            'max'                             => ['numeric' => 'El valor máximo es :max.', 'string' => 'Máximo :max caracteres.'],
+            'numero_alumnos.min'              => 'Debe haber al menos :min alumno.',
+            'horas_totales.min'               => 'Debe tener al menos :min hora.',
+            'importe_bonificado.decimal'      => 'El importe puede tener como máximo 2 decimales.',
             'fecha_bonificado.after_or_equal' => 'La fecha de bonificación no puede ser anterior a hoy.',
         ];
     }
