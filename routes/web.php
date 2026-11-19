@@ -140,6 +140,7 @@ Route::middleware('auth')->group(function () {
 
     // Rutas web para la gestión de Cursos (Editar, Actualizar y Eliminar)
     Route::get('/view/formulario/crearTablaCurso', [CursoController::class, 'crearTabla'])->name('curso.crearTablaCurso');
+    Route::get('/view/curso/{curso}', [CursoController::class, 'visualizarCurso'])->name('curso.visualizar');
     Route::get('/view/formulario/editarCurso/{id}', [CursoController::class, 'editarCursoFormulario'])->name('curso.edit')->whereNumber('id');
     Route::put('/view/formulario/actualizarCurso/{id}', [CursoController::class, 'actualizarCursoWeb'])->name('curso.update')->whereNumber('id');
     Route::delete('/curso/{id}', [CursoController::class, 'eliminarCursoWeb'])->name('curso.destroy')->whereNumber('id');
