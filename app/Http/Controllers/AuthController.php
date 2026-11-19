@@ -66,6 +66,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/iniciarSesion');
+        // Vuelve al login (antes iba a /iniciarSesion, que no existe → 404)
+        return redirect()->route('login');
     }
 }
