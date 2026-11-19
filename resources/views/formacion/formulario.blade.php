@@ -3,7 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< botones_actualizar_eliminar
     <title>{{ isset($formacion) ? 'Editar Formación' : 'Crear Formación' }}</title>
+=======
+    <title>Formación</title>
+    <script>
+        const expira = Number(sessionStorage.getItem('expira')); 
+
+        if (!token || Date.now() / 1000 > expira) {
+            sessionStorage.clear();
+            window.location.href = '/persona/iniciarSesion';
+        }
+    </script>
+>>>>>>> interfaz
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 <body class="bg-slate-100 min-h-screen py-10 px-4">

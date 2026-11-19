@@ -13,18 +13,22 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->validateCsrfTokens(except: [
-            'persona', 'persona/*',
-            'empresa', 'empresa/*',
-            'formacion', 'formacion/*',
-            'centro', 'centro/*',
-            'credito', 'credito/*',
-            'comunicacionFundae', 'comunicacionFundae/*',
-            'peticionesLogistica', 'peticionesLogistica/*',
-            'curso', 'curso/*',
-            'presupuesto', 'presupuesto/*'
-        ]);
-    })
+    $middleware->alias([
+        'token.temporal' => \App\Http\Middleware\TokenTemporal::class,
+    ]);
+
+    $middleware->validateCsrfTokens(except: [
+        'persona', 'persona/*',
+        'empresa', 'empresa/*',
+        'formacion', 'formacion/*',
+        'centro', 'centro/*',
+        'credito', 'credito/*',
+        'comunicacionFundae', 'comunicacionFundae/*',
+        'peticionesLogistica', 'peticionesLogistica/*',
+        'curso', 'curso/*',
+        'presupuesto', 'presupuesto/*'
+    ]);
+})
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
             return $request->is(

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Rol extends Model
 {
-    protected $table = 'peticiones_logistica';
+    protected $table = 'rol';
     protected $primaryKey = 'id';
     public $timestamps = false;
 

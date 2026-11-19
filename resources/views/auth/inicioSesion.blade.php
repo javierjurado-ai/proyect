@@ -1,13 +1,13 @@
 {{--
     Inicio de sesión (vista de AuthController@mostrarInicioSesion).
-    Solo cambia el aspecto: mismos campos que espera el controller
-    (usuario, contrasena, recordar) y mismos errores.
+    Envía el login con fetch, guarda el token en sessionStorage y redirige.
 --}}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Iniciar sesión · {{ config('app.name') }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,7 +70,7 @@
     {{-- ========== Derecha: formulario ========== --}}
     <section class="flex items-center justify-center px-6 py-12 lg:w-1/2">
         {{-- route('login') = /persona/iniciarSesion, que también recibe el POST --}}
-        <form method="POST" action="{{ route('login') }}" class="flex w-full max-w-md flex-col gap-5" novalidate>
+        <form id="form-login" method="POST" action="{{ route('login') }}" class="flex w-full max-w-md flex-col gap-5" novalidate>
             @csrf
 
             <div>
@@ -78,6 +78,7 @@
                 <p class="mt-1 text-slate-500">Introduce los datos de tu cuenta.</p>
             </div>
 
+            {{-- Errores de una recarga normal (respaldo si falla el JavaScript) --}}
             @if ($errors->any())
                 <div role="alert" class="flex items-start gap-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
                     <svg class="mt-0.5 shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
@@ -88,6 +89,11 @@
                     </div>
                 </div>
             @endif
+
+            {{-- Errores del fetch (se muestran con JavaScript) --}}
+            <div id="error-login" role="alert"
+                 class="hidden items-start gap-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+            </div>
 
             {{-- Usuario --}}
             <div class="flex flex-col gap-2">
@@ -142,6 +148,50 @@
         const mostrar = contrasena.type === 'password';
         contrasena.type = mostrar ? 'text' : 'password';
         verContrasena.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    });
+
+    // Login con fetch: guarda el token y redirige
+    const form = document.getElementById('form-login');
+    const errorLogin = document.getElementById('error-login');
+
+    function mostrarError(mensaje) {
+        errorLogin.textContent = mensaje;
+        errorLogin.classList.remove('hidden');
+        errorLogin.classList.add('flex');
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorLogin.classList.add('hidden');
+        errorLogin.classList.remove('flex');
+
+        try {
+            const res = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({
+                    usuario: form.usuario.value,
+                    contrasena: form.contrasena.value,
+                    recordar: form.recordar.checked,
+                }),
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (res.ok) {
+                sessionStorage.setItem('token', data.token);
+                window.location.href = data.redirect;
+                return;
+            }
+
+            mostrarError(data.message ?? 'No se pudo iniciar sesión.');
+        } catch (err) {
+            mostrarError('No se pudo conectar con el servidor.');
+        }
     });
 </script>
 </body>

@@ -10,18 +10,19 @@ use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\FormacionController;
 use App\Http\Controllers\PersonaController;
 use App\Http\Controllers\CreditoFormativoController;
+use App\Http\Controllers\InicioController;
 use App\Http\Controllers\PresupuestoController;
 use App\Http\Controllers\PeticionesLogisticaController;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
 | Rutas públicas (solo para quien NO ha iniciado sesión)
 |--------------------------------------------------------------------------
 */
-Route::middleware('guest')->group(function () {
     Route::get('/persona/iniciarSesion', [AuthController::class, 'mostrarInicioSesion'])->name('login');
 Route::post('/persona/iniciarSesion', [AuthController::class, 'iniciarSesion']);
-});
+
 
 
       
@@ -106,6 +107,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/centro-contactos/{id}', [CentroController::class, 'actualizarContacto']);
     Route::delete('/centro-contactos/{id}', [CentroController::class, 'eliminarContacto']);
 
+    Route::post('/rol/{id}', [CentroController::class, 'agregarRolCoordinador']);
+
     Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
 
     // Views
@@ -170,4 +173,5 @@ Route::middleware('auth')->group(function () {
     Route::delete('/formacion/{id}', [FormacionController::class, 'eliminarFormacionWeb'])->name('formacion.destroy')->whereNumber('id');   
 
 
+    Route::get('/view/inicio', [InicioController::class, 'mostrarPaginaInicio'])->name('inicio.index');
 });
