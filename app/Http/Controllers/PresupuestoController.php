@@ -59,6 +59,45 @@ class PresupuestoController extends Controller
             ->with('ok', 'Presupuesto guardado correctamente.');
     }
 
+    // Muestra el formulario de edición con los datos del presupuesto
+    public function edit($id)
+    {
+        $presupuesto = Presupuesto::findOrFail($id);
+
+        return view('presupuesto.formulario', compact('presupuesto'));
+    }
+
+    // Actualiza el presupuesto enviado desde el formulario web
+    public function update(Request $request, $id)
+    {
+        $presupuesto = Presupuesto::findOrFail($id);
+
+        $datos = $request->validate($this->reglas(), $this->mensajes());
+
+        $presupuesto->update($datos);
+
+        return redirect()
+            ->route('presupuesto.index')
+            ->with('ok', 'Presupuesto actualizado correctamente.');
+    }
+
+    // Elimina el presupuesto desde la tabla web
+    public function destroy($id)
+    {
+        $presupuesto = Presupuesto::findOrFail($id);
+
+        try {
+            $presupuesto->delete();
+            return redirect()
+                ->route('presupuesto.index')
+                ->with('ok', 'Presupuesto eliminado correctamente.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()
+                ->route('presupuesto.index')
+                ->with('error', 'No se puede eliminar: el presupuesto tiene relaciones asociadas.');
+        }
+    }
+
     /* =========================================================
      *  API (JSON)
      * ========================================================= */

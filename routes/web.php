@@ -63,11 +63,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'actualizarComunicacionFundae']);
     Route::delete('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'eliminarComunicacionFundae']);
 
-    
-    
-   
-    
-
     // Rutas para el controlador de créditos formativos
     Route::get('/credito', [CreditoFormativoController::class, 'listarCredito']);
     Route::get('/credito/{id}', [CreditoFormativoController::class, 'obtenerCreditoPorID']);
@@ -93,13 +88,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/curso/rolAlumno/{id}', [CursoController::class, 'agregarRolAlumno']);
     Route::post('/curso/CursoAlumno/{id}', [CursoController::class, 'agregarCursoAlumno']);
 
-    // Rutas para el controlador de presupuesto
-    Route::get('/presupuesto/listar', [PresupuestoController::class, 'listarPresupuesto']);
-    Route::get('/presupuesto/{id}', [PresupuestoController::class, 'obtenerPresupuestoPorID'])->whereNumber('id');
-    Route::post('/presupuesto', [PresupuestoController::class, 'agregarPresupuesto']);
-    Route::put('/presupuesto/{id}', [PresupuestoController::class, 'actualizarPresupuesto'])->whereNumber('id');
-    Route::delete('/presupuesto/{id}', [PresupuestoController::class, 'eliminarPresupuesto'])->whereNumber('id');
-
     // API JSON de Contactos de Centro
     Route::get('/centro-contactos/listar', [CentroController::class, 'listarContactos']);
     Route::get('/centro-contactos/{id}', [CentroController::class, 'obtenerContactoPorID']);
@@ -112,12 +100,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
 
     // Views
-    Route::get('/view/listadoPresupuesto', [PresupuestoController::class, 'index'])->name('presupuesto.index');
-    Route::post('/view/formularioPresupuesto', [PresupuestoController::class, 'store'])->name('presupuesto.store');
-    Route::get('/view/formulario/crearPresupuesto', [PresupuestoController::class, 'create'])->name('presupuesto.create');
-    
-
-    
     
     Route::get('/view/formulario/crearTablaDocente/{id}', [CursoController::class, 'crearTablaPorDocente'])->name('curso.crearTablaPorDocente');
     Route::get('/view/formulario/crearTablaAlumno/{id}', [CursoController::class, 'crearTablaPorAlumno'])->name('curso.crearTablaPorAlumno');
@@ -163,6 +145,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/view/formulario/actualizarFormacion/{id}', [FormacionController::class, 'actualizarFormacionWeb'])->name('formacion.update')->whereNumber('id');
     Route::delete('/formacion/{id}', [FormacionController::class, 'eliminarFormacionWeb'])->name('formacion.destroy')->whereNumber('id');   
 
+    // Rutas web para la gestión de Presupuestos (Editar, Actualizar y Eliminar)
+    Route::get('/view/listadoPresupuesto', [PresupuestoController::class, 'index'])->name('presupuesto.index');
+    Route::get('/view/formulario/crearPresupuesto', [PresupuestoController::class, 'create'])->name('presupuesto.create');
+    Route::post('/view/formulario/crearPresupuesto', [PresupuestoController::class, 'store'])->name('presupuesto.store');
+    Route::get('/view/formulario/editarPresupuesto/{id}', [PresupuestoController::class, 'edit'])->name('presupuesto.edit')->whereNumber('id');
+    Route::put('/view/formulario/actualizarPresupuesto/{id}', [PresupuestoController::class, 'update'])->name('presupuesto.update')->whereNumber('id');
+    Route::delete('/presupuesto/{id}', [PresupuestoController::class, 'destroy'])->name('presupuesto.destroy')->whereNumber('id');
 
     Route::get('/view/inicio', [InicioController::class, 'mostrarPaginaInicio'])->name('inicio.index');
 });
