@@ -49,15 +49,24 @@ class CentroController extends Controller
 
     // Muestra el formulario de alta
     public function crearFormulario()
-    {
-        $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
+{
+    $personaId = Auth::user()->persona_id;
 
-        // [valor => texto] para el desplegable, sacado del enum
-        $tiposCentro = collect(TipoCentro::cases())
-            ->mapWithKeys(fn ($t) => [$t->value => ucfirst(strtolower($t->value))]);
+    $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+    $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
 
-        return view('centro.formulario', compact('empresas', 'tiposCentro'));
-    }
+    $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
+        ->filter()
+        ->implode(' ');
+
+    $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
+
+    // [valor => texto] para el desplegable, sacado del enum
+    $tiposCentro = collect(TipoCentro::cases())
+        ->mapWithKeys(fn ($t) => [$t->value => ucfirst(strtolower($t->value))]);
+
+    return view('centro.formulario', compact('empresas', 'tiposCentro', 'rol', 'nombre'));
+}
 
     // Guarda lo enviado desde el formulario y vuelve a la tabla
     public function store(Request $request)
