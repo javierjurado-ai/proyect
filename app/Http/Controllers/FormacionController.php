@@ -41,7 +41,7 @@ class FormacionController extends Controller
         $rol = Rol::where('persona_id', Auth::user()->persona_id)->value('rol')?->value;
         $formaciones = Formacion::orderBy('nombre')->paginate(15);
 
-        return view('formacion.index', compact('formaciones','rol','nombre'));
+        return view('formacion.index', compact('formaciones', 'rol', 'nombre'));
     }
 
     // Guarda lo enviado desde el formulario y vuelve a la tabla
@@ -68,24 +68,41 @@ class FormacionController extends Controller
 
     public function crearFormulario()
     {
+        $personaId = Auth::user()->persona_id;
+
+        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
+
+        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
+            ->filter()
+            ->implode(' ');
+
         $modalidades = collect(Modalidad::cases())->mapWithKeys(
             fn($modalidad) => [$modalidad->value => ucfirst($modalidad->name)]
         );
 
-
-        return view('formacion.formulario', compact('modalidades'));
+        return view('formacion.formulario', compact('modalidades', 'rol', 'nombre'));
     }
 
     // Muestra el formulario de edición con los datos de la formación
-    public function editarFormacionFormulario($id)
+    public function editarFormacionFormulario(Request $request, $id)
     {
+        $personaId = Auth::user()->persona_id;
+
+        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
+
+        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
+            ->filter()
+            ->implode(' ');
+
         $formacion = Formacion::findOrFail($id);
-        
+
         $modalidades = collect(Modalidad::cases())->mapWithKeys(
             fn($modalidad) => [$modalidad->value => ucfirst($modalidad->name)]
         );
 
-        return view('formacion.formulario', compact('formacion', 'modalidades'));
+        return view('formacion.formulario', compact('formacion', 'modalidades', 'rol', 'nombre'));
     }
 
     // Actualiza la formación enviada desde el formulario web
@@ -102,7 +119,7 @@ class FormacionController extends Controller
             'activo'        => 'nullable|boolean',
         ]);
 
-         // Asegura que si no viene marcado se guarde como falso (0) o verdadero (1)
+        // Asegura que si no viene marcado se guarde como falso (0) o verdadero (1)
         $datos['activo'] = $request->has('activo') ? 1 : 0;
 
         $formacion->update($datos);
