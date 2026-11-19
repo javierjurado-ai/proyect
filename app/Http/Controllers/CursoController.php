@@ -116,8 +116,25 @@ class CursoController extends Controller
             fn($turno) => [$turno->value => ucfirst($turno->name)]
         );
 
+        return view('curso.formulario', array_merge(
+            compact('centros', 'formaciones', 'turnos'),
+            $this->datosUsuario()
+        ));
+    }
 
-        return view('curso.formulario', compact('centros', 'formaciones', 'turnos'));
+    // Rol y nombre del usuario conectado (los necesita el menú y la barra de arriba)
+    private function datosUsuario(): array
+    {
+        $personaId = Auth::user()->persona_id;
+
+        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
+
+        $nombre = collect([$persona?->nombre, $persona?->primer_apellido, $persona?->segundo_apellido])
+            ->filter()
+            ->implode(' ');
+
+        return compact('rol', 'nombre');
     }
 
     ///////////////////Aulas////////////////////////
@@ -251,7 +268,10 @@ class CursoController extends Controller
             fn($turno) => [$turno->value => ucfirst($turno->name)]
         );
 
-        return view('curso.formulario', compact('curso', 'centros', 'formaciones', 'turnos'));
+        return view('curso.formulario', array_merge(
+            compact('curso', 'centros', 'formaciones', 'turnos'),
+            $this->datosUsuario()
+        ));
     }
 
     // Actualiza el curso enviado desde el formulario web
