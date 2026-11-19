@@ -35,6 +35,14 @@
                     <span class="block text-xs text-slate-500">{{ $curso->aula_virtual }}</span>
                 @endif
             </td>
+
+            {{-- ACCIONES --}}
+            <td class="px-4 py-3 text-center whitespace-nowrap">
+                <div class="inline-flex items-center gap-2">
+                    <x-tabla.boton-editar :href="route('curso.edit', $curso->id)" />
+                    <x-tabla.boton-eliminar :action="route('curso.destroy', $curso->id)" />
+                </div>
+            </td>
         </tr>
     @endforeach
 </x-tabla.tabla>
