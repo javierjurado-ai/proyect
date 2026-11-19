@@ -24,6 +24,10 @@ use Illuminate\Support\Facades\Auth;
 Route::post('/persona/iniciarSesion', [AuthController::class, 'iniciarSesion']);
 
 
+
+      
+
+
 /*
 |--------------------------------------------------------------------------
 | Rutas protegidas (si no hay sesión, redirige a la ruta "login")
@@ -43,6 +47,8 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('cursos', CursoController::class);
 
+ 
+
     // Rutas para el controlador de persona
     Route::get('/persona/listar', [PersonaController::class, 'listarPersona']);
     Route::get('/persona/{id}', [PersonaController::class, 'obtenerUsuarioPorID']);
@@ -57,34 +63,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'actualizarComunicacionFundae']);
     Route::delete('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'eliminarComunicacionFundae']);
 
-    // Formulario de creación
-    Route::get('/empresa', [EmpresaController::class, 'mostrarFormulario']);
-    Route::post('/empresa', [EmpresaController::class, 'agregarEmpresa']);
-
-    // Listado de empresas en JSON (API)
-    Route::get('/empresas/listar', [EmpresaController::class, 'listarEmpresa']);
-
-    // Vista de detalle / consulta por ID (ej: /empresa/1)
-    Route::get('/empresa/{id}', [EmpresaController::class, 'obtenerEmpresaPorID'])->name('empresa.show');
-    Route::get('/empresa/{id}/editar', [EmpresaController::class, 'vistaEditar'])->name('empresa.editar');
-
-    // Rutas de actualización y eliminación web
-    Route::put('/empresa/{id}', [EmpresaController::class, 'actualizarEmpresa'])->name('empresa.actualizar');
-    Route::delete('/empresa/{id}', [EmpresaController::class, 'eliminarEmpresa'])->name('empresa.eliminar');
-
-    // Rutas para el controlador de formacion
-    Route::get('/formacion', [FormacionController::class, 'listarFormacion']);
-    Route::get('/formacion/{id}', [FormacionController::class, 'obtenerFormacionPorID']);
-    Route::post('/formacion', [FormacionController::class, 'crearFormacion'])->name('formacion.agregarFormacion');
-    Route::put('/formacion/{id}', [FormacionController::class, 'actualizarFormacion']);
-    Route::delete('/formacion/{id}', [FormacionController::class, 'eliminarFormacion']);
-
-    // Rutas para el controlador de centro
-    Route::get('/centro/listar', [CentroController::class, 'listarCentro']);
-    Route::get('/centro/{id}', [CentroController::class, 'obtenerCentroPorID']);
-    Route::post('/centro', [CentroController::class, 'agregarCentro'])->name('centro.agregarCentro');
-    Route::put('/centro/{id}', [CentroController::class, 'actualizarCentro']);
-    Route::delete('/centro/{id}', [CentroController::class, 'eliminarCentro']);
+    
+    
+   
+    
 
     // Rutas para el controlador de créditos formativos
     Route::get('/credito', [CreditoFormativoController::class, 'listarCredito']);
@@ -103,9 +85,9 @@ Route::middleware('auth')->group(function () {
     // Rutas para el controlador de curso
     Route::get('/curso/listar', [CursoController::class, 'listarCurso']);
     Route::get('/curso/{id}', [CursoController::class, 'obtenerCursoPorID']);
-    Route::post('/view/formularioCurso', [CursoController::class, 'agregarCurso'])->name('curso.agregarCurso');
+    
     Route::put('/curso/{id}', [CursoController::class, 'actualizarCurso']);
-    Route::delete('/curso/{id}', [CursoController::class, 'eliminarCurso']);
+   
     Route::post('/curso/rolDocente/{id}', [CursoController::class, 'agregarRolDocente']);
     Route::post('/curso/CursoDocente/{id}', [CursoController::class, 'agregarCursoDocente']);
     Route::post('/curso/rolAlumno/{id}', [CursoController::class, 'agregarRolAlumno']);
@@ -135,26 +117,61 @@ Route::middleware('auth')->group(function () {
     Route::get('/view/formulario/crearPresupuesto', [PresupuestoController::class, 'create'])->name('presupuesto.create');
     Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
 
-    Route::get('/view/formulario/crearCurso', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
-    Route::get('/view/formulario/crearTablaCurso', [CursoController::class, 'crearTabla'])->name('curso.crearTablaCurso');
+    
+    
     Route::get('/view/formulario/crearTablaDocente/{id}', [CursoController::class, 'crearTablaPorDocente'])->name('curso.crearTablaPorDocente');
     Route::get('/view/formulario/crearTablaAlumno/{id}', [CursoController::class, 'crearTablaPorAlumno'])->name('curso.crearTablaPorAlumno');
     Route::get('/view/formulario/crearAula', [CursoController::class, 'crearFormularioAula'])->name('aula.create');
     Route::post('/view/formularioAula', [CursoController::class, 'guardarAula'])->name('aula.store');
+    
+    
 
-    Route::get('/view/formulario/crearCentro', [CentroController::class, 'crearFormulario'])->name('centro.crearFormulario');
-    Route::post('/view/formulario/crearCentro', [CentroController::class, 'store'])->name('centro.store');
-    Route::get('/view/listadoCentro', [CentroController::class, 'index'])->name('centro.index');
-    Route::get('/view/formulario/crearFormacion', [FormacionController::class, 'crearFormulario'])->name('formacion.crearFormulario');
+    
+    
 
-    Route::get('/view/listadoFormacion', [FormacionController::class, 'index'])->name('formacion.index');
-    Route::post('/view/formularioFormacion', [FormacionController::class, 'store'])->name('formacion.store');
 
-    Route::get('/view/listadoEmpresa', [EmpresaController::class, 'index'])->name('empresa.index');
+
+
+    
 
     // Formulario web de Contactos de Centro
     Route::get('/view/formulario/crearContactoCentro', [CentroController::class, 'crearContactoFormulario'])->name('centro_contactos.create');
     Route::post('/view/formularioContactoCentro', [CentroController::class, 'storeContacto'])->name('centro_contactos.store');
+
+    // Rutas web para la gestión de Cursos (Editar, Actualizar y Eliminar)
+    Route::get('/view/formulario/crearTablaCurso', [CursoController::class, 'crearTabla'])->name('curso.crearTablaCurso');
+    Route::get('/view/formulario/editarCurso/{id}', [CursoController::class, 'editarCursoFormulario'])->name('curso.edit')->whereNumber('id');
+    Route::put('/view/formulario/actualizarCurso/{id}', [CursoController::class, 'actualizarCursoWeb'])->name('curso.update')->whereNumber('id');
+    Route::delete('/curso/{id}', [CursoController::class, 'eliminarCursoWeb'])->name('curso.destroy')->whereNumber('id');
+    Route::get('/view/formulario/crearCurso', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
+    Route::post('/view/formularioCurso', [CursoController::class, 'agregarCurso'])->name('curso.agregarCurso');
+    
+
+    // Rutas web para la gestión de Centros (Editar, Actualizar y Eliminar)
+    Route::get('/view/listadoCentro', [CentroController::class, 'index'])->name('centro.index');
+    Route::get('/view/formulario/crearCentro', [CentroController::class, 'crearFormulario'])->name('centro.crearFormulario');
+    Route::post('/view/formulario/crearCentro', [CentroController::class, 'store'])->name('centro.store');
+    Route::get('/view/formulario/editarCentro/{id}', [CentroController::class, 'editarCentroFormulario'])->name('centro.edit')->whereNumber('id');
+    Route::put('/view/formulario/actualizarCentro/{id}', [CentroController::class, 'actualizarCentroWeb'])->name('centro.update')->whereNumber('id');
+    Route::delete('/centro/{id}', [CentroController::class, 'eliminarCentroWeb'])->name('centro.destroy')->whereNumber('id');
+
+    
+    // Rutas web para la gestión de Empresas (Editar, Actualizar y Eliminar)
+    Route::get('/view/listadoEmpresa', [EmpresaController::class, 'index'])->name('empresa.index');
+    Route::get('/view/formulario/crearEmpresa', [EmpresaController::class, 'mostrarFormulario'])->name('empresa.create');
+    Route::post('/view/formulario/crearEmpresa', [EmpresaController::class, 'agregarEmpresa'])->name('empresa.store');
+    Route::get('/view/formulario/editarEmpresa/{id}', [EmpresaController::class, 'vistaEditar'])->name('empresa.editar')->whereNumber('id');
+    Route::put('/view/formulario/actualizarEmpresa/{id}', [EmpresaController::class, 'actualizarEmpresaWeb'])->name('empresa.actualizar')->whereNumber('id');
+    Route::delete('/empresa/{id}', [EmpresaController::class, 'eliminarEmpresaWeb'])->name('empresa.eliminar')->whereNumber('id');
+
+    // Rutas web para la gestión de Formaciones (Editar, Actualizar y Eliminar)
+     Route::get('/view/listadoFormacion', [FormacionController::class, 'index'])->name('formacion.index');
+    Route::get('/view/formulario/crearFormacion', [FormacionController::class, 'crearFormulario'])->name('formacion.crearFormulario');
+    Route::post('/view/formulario/crearFormacion', [FormacionController::class, 'store'])->name('formacion.store');
+    Route::get('/view/formulario/editarFormacion/{id}', [FormacionController::class, 'editarFormacionFormulario'])->name('formacion.edit')->whereNumber('id');
+    Route::put('/view/formulario/actualizarFormacion/{id}', [FormacionController::class, 'actualizarFormacionWeb'])->name('formacion.update')->whereNumber('id');
+    Route::delete('/formacion/{id}', [FormacionController::class, 'eliminarFormacionWeb'])->name('formacion.destroy')->whereNumber('id');   
+
 
     Route::get('/view/inicio', [InicioController::class, 'mostrarPaginaInicio'])->name('inicio.index');
 });

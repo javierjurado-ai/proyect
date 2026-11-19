@@ -49,6 +49,48 @@ class CentroController extends Controller
             ->with('ok', 'Centro guardado correctamente.');
     }
 
+    // Muestra el formulario de edición con los datos del centro
+    public function editarCentroFormulario($id)
+    {
+        $centro = Centro::findOrFail($id);
+        $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
+        $tiposCentro = collect(TipoCentro::cases())
+            ->mapWithKeys(fn ($t) => [$t->value => ucfirst(strtolower($t->value))]);
+
+        return view('centro.formulario', compact('centro', 'empresas', 'tiposCentro'));
+    }
+
+    // Actualiza el centro enviado desde el formulario web
+    public function actualizarCentroWeb(Request $request, $id)
+    {
+        $centro = Centro::findOrFail($id);
+
+        $datos = $request->validate($this->reglas(), $this->mensajes());
+
+        $centro->update($datos);
+
+        return redirect()
+            ->route('centro.index')
+            ->with('ok', 'Centro actualizado correctamente.');
+    }
+
+    // Elimina el centro desde la tabla web
+    public function eliminarCentroWeb($id)
+    {
+        $centro = Centro::findOrFail($id);
+
+        try {
+            $centro->delete();
+            return redirect()
+                ->route('centro.index')
+                ->with('ok', 'Centro eliminado correctamente.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()
+                ->route('centro.index')
+                ->with('error', 'No se puede eliminar: el centro tiene cursos o elementos asociados.');
+        }
+    }
+
     /* =========================================================
      *  FORMULARIO DE CONTACTOS DE CENTRO (web)
      * ========================================================= */

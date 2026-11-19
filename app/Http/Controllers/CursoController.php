@@ -180,7 +180,7 @@ class CursoController extends Controller
         Curso::create($datos);
 
         return redirect()
-            ->route('curso.index')
+            ->route('curso.crearTablaCurso')
             ->with('ok', 'Curso guardado correctamente.');
     }
     // Mostrar detalles de un curso
@@ -224,6 +224,48 @@ class CursoController extends Controller
         return response()->json($curso, 200);
     }
 
+    // Muestra el formulario de edición con los datos del curso web
+    public function editarCursoFormulario($id)
+    {
+        $curso = Curso::findOrFail($id);
+        $formaciones = Formacion::orderBy('nombre')->pluck('nombre', 'id');
+        $centros = Centro::orderBy('nombre')->pluck('nombre', 'id');
+        $turnos = collect(Turno::cases())->mapWithKeys(
+            fn($turno) => [$turno->value => ucfirst($turno->name)]
+        );
+
+        return view('curso.formulario', compact('curso', 'centros', 'formaciones', 'turnos'));
+    }
+
+    // Actualiza el curso enviado desde el formulario web
+    public function actualizarCursoWeb(Request $request, $id)
+    {
+        $curso = Curso::findOrFail($id);
+
+        $datos = $request->validate([
+            'formacion_id'            => 'required|integer|exists:formacion,id',
+            'codigo_curso'            => ['required', 'integer', 'min:1', Rule::unique('curso', 'codigo_curso')->ignore($curso->id)],
+            'empresa_formadora'       => 'required|string|max:50',
+            'fecha_inicio'            => 'required|date',
+            'fecha_fin'               => 'required|date|after_or_equal:fecha_inicio',
+            'hora_inicio'             => 'required|date_format:H:i',
+            'hora_final'              => 'required|date_format:H:i',
+            'turno'                   => ['required', Rule::enum(Turno::class)],
+            'aula'                    => 'required|string|max:45',
+            'aula_virtual'            => 'required|string|max:45',
+            'tecnico_comunidad'       => 'required|string|max:45',
+            'observaciones'           => 'required|string|max:200',
+            'peticiones_logistica_id' => 'nullable|exists:peticiones_logistica,id',
+            'centro_id'               => 'nullable|exists:centro,id',
+            'presupuesto_id'          => 'nullable|exists:presupuesto,id',
+        ]);
+
+        $curso->update($datos);
+
+        return redirect()
+            ->route('curso.crearTablaCurso')
+            ->with('ok', 'Curso actualizado correctamente.');
+    }
 
     // Eliminar un curso
     public function eliminarCurso($id)
@@ -232,5 +274,16 @@ class CursoController extends Controller
         $curso->delete();
 
         return response()->json('curso eliminado con exito', 201);
+    }
+
+     // Elimina el curso desde la tabla web
+    public function eliminarCursoWeb($id)
+    {
+        $curso = Curso::findOrFail($id);
+        $curso->delete();
+
+        return redirect()
+            ->route('curso.crearTablaCurso')
+            ->with('ok', 'Curso eliminado correctamente.');
     }
 }

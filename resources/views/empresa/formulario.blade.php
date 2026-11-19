@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ isset($empresa) ? 'Editar Empresa' : 'Crear Empresa' }}</title>
     <title>Crear Empresa</title>
     <script>
         const expira = Number(sessionStorage.getItem('expira')); 
@@ -18,8 +19,11 @@
 
 <body class="min-h-screen bg-slate-100 px-4 py-10">
     <x-formulario.tarjeta titulo="Empresa" subtitulo="Los campos marcados con * son obligatorios">
-        <form id="empresa-form" method="POST" action="/empresa">
+        <form id="empresa-form" method="POST" action="{{ isset($empresa) ? route('empresa.actualizar', $empresa->id) : route('empresa.store') }}">
             @csrf
+            @if(isset($empresa))
+                @method('PUT')
+            @endif
 
             @if (session('success'))
                 <div id="success-alert" class="mb-6 rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-700 shadow-sm">
@@ -38,29 +42,20 @@
             @endif
 
             <x-formulario.seccion titulo="Datos de la empresa">
-                <x-formulario.entrada name="cif" label="CIF *" placeholder="A12345678" maxlength="15" />
+                <x-formulario.entrada name="cif" label="CIF *" placeholder="A12345678" maxlength="15" :value="$empresa?->cif ?? old('cif')" required />
                 <x-formulario.entrada name="nombre" label="Nombre *" maxlength="100"
-                    contenedor="md:col-span-2" />
+                    contenedor="md:col-span-2" :value="$empresa?->nombre ?? old('nombre')" required />
 
                 <x-formulario.entrada name="total_trabajadores" label="Total trabajadores" type="number" min="0"
-                    placeholder="0" />
+                    placeholder="0" :value="$empresa?->total_trabajadores ?? old('total_trabajadores')" />
             </x-formulario.seccion>
 
             <div class="flex justify-end gap-3">
                 <x-formulario.boton type="reset" variante="secundario">Limpiar</x-formulario.boton>
-                <x-formulario.boton type="submit">Guardar empresa</x-formulario.boton>
+                <x-formulario.boton type="submit">{{ isset($empresa) ? 'Actualizar empresa' : 'Guardar empresa' }}</x-formulario.boton>
             </div>
         </form>
     </x-formulario.tarjeta>
-
-    @if (session('success'))
-    <script>
-        document.getElementById('empresa-form').addEventListener('focusin', () => {
-            document.getElementById('success-alert')?.remove();
-        }, { once: true });
-    </script>
-    @endif
-
 </body>
 
 </html>
