@@ -63,11 +63,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'actualizarComunicacionFundae']);
     Route::delete('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'eliminarComunicacionFundae']);
 
-    
-    
-   
-    
-
     // Rutas para el controlador de créditos formativos
     Route::get('/credito', [CreditoFormativoController::class, 'listarCredito']);
     Route::get('/credito/{id}', [CreditoFormativoController::class, 'obtenerCreditoPorID']);
@@ -92,8 +87,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/curso/CursoDocente/{id}', [CursoController::class, 'agregarCursoDocente']);
     Route::post('/curso/rolAlumno/{id}', [CursoController::class, 'agregarRolAlumno']);
     Route::post('/curso/CursoAlumno/{id}', [CursoController::class, 'agregarCursoAlumno']);
-
-   
 
     // API JSON de Contactos de Centro
     Route::get('/centro-contactos/listar', [CentroController::class, 'listarContactos']);
