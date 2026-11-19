@@ -16,6 +16,7 @@ class CursoAlumno extends Model
     protected $fillable = [
         'curso_id',
         'persona_id',
+        'empresa_id'
     ];
 
     public function persona(): BelongsTo
@@ -26,6 +27,10 @@ class CursoAlumno extends Model
    public function curso(): BelongsTo
     {
         return $this->belongsTo(Curso::class, 'curso_id', 'id');
+    }
+    public function empresa(): BelongsTo
+    {
+        return $this->belongsTo(Empresa::class, 'empresa_id', 'id');
     }
     
 }
