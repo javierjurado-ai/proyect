@@ -10,6 +10,10 @@ use Illuminate\Validation\Rule;
 
 class FormacionController extends Controller
 {
+    /* =========================================================
+     *  FORMULARIO Y TABLA (web)
+     * ========================================================= */
+
     // Muestra el listado de formaciones (vista formacion/tabla.blade.php)
     public function index()
     {
@@ -30,6 +34,9 @@ class FormacionController extends Controller
             'activo'        => 'nullable|boolean',
         ]);
 
+        // Asegura que si no viene marcado se guarde como falso (0) o verdadero (1)
+        $datos['activo'] = $request->has('activo') ? 1 : 0;
+
         Formacion::create($datos);
 
         return redirect()
@@ -46,6 +53,63 @@ class FormacionController extends Controller
 
         return view('formacion.formulario', compact('modalidades'));
     }
+
+    // Muestra el formulario de edición con los datos de la formación
+    public function editarFormacionFormulario($id)
+    {
+        $formacion = Formacion::findOrFail($id);
+        
+        $modalidades = collect(Modalidad::cases())->mapWithKeys(
+            fn($modalidad) => [$modalidad->value => ucfirst($modalidad->name)]
+        );
+
+        return view('formacion.formulario', compact('formacion', 'modalidades'));
+    }
+
+    // Actualiza la formación enviada desde el formulario web
+    public function actualizarFormacionWeb(Request $request, $id)
+    {
+        $formacion = Formacion::findOrFail($id);
+
+        $datos = $request->validate([
+            'nombre'        => 'required|string|max:100',
+            'codigo_accion' => 'required|integer|min:1',
+            'modalidad'     => ['required', Rule::enum(Modalidad::class)],
+            'sector'        => 'required|string|max:60',
+            'horas_totales' => 'nullable|integer|min:1|max:9999',
+            'activo'        => 'nullable|boolean',
+        ]);
+
+         // Asegura que si no viene marcado se guarde como falso (0) o verdadero (1)
+        $datos['activo'] = $request->has('activo') ? 1 : 0;
+
+        $formacion->update($datos);
+
+        return redirect()
+            ->route('formacion.index')
+            ->with('ok', 'Formación actualizada correctamente.');
+    }
+
+    // Elimina la formación desde la tabla web
+    public function eliminarFormacionWeb($id)
+    {
+        $formacion = Formacion::findOrFail($id);
+
+        try {
+            $formacion->delete();
+            return redirect()
+                ->route('formacion.index')
+                ->with('ok', 'Formación eliminada correctamente.');
+        } catch (QueryException $e) {
+            return redirect()
+                ->route('formacion.index')
+                ->with('error', 'No se puede eliminar: la formación tiene cursos asociados.');
+        }
+    }
+
+    /* =========================================================
+     *  API REST
+     * ========================================================= */
 
     // Listar todas las formaciones
     public function listarFormacion()
