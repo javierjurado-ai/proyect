@@ -97,8 +97,10 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/rol/{id}', [CentroController::class, 'agregarRolCoordinador']);
 
-    Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
-
+    Route::get('/view/persona', [PersonaController::class, 'index'])->name('persona.index');
+    Route::get('/view/formularioPersona', [PersonaController::class, 'create'])->name('persona.crearFormulario');
+    Route::put('/persona/{id}', [PersonaController::class, 'update'])->name('persona.update');
+    
     // Views
     
     Route::get('/view/formulario/crearTablaDocente/{id}', [CursoController::class, 'crearTablaPorDocente'])->name('curso.crearTablaPorDocente');

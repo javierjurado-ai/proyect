@@ -38,6 +38,6 @@
         <x-interfaz.layout.menu-enlace :rol="$rol" ruta="credito.index" roles="ADMINISTRADOR,COMERCIAL">Créditos</x-interfaz.layout.menu-enlace>
 
         {{-- Administración --}}
-        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="usuario.index" roles="ADMINISTRADOR" :contador="$contadores['usuarios'] ?? null">Usuarios y roles</x-interfaz.layout.menu-enlace>
+        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="persona.index" roles="ADMINISTRADOR" :contador="$contadores['usuarios'] ?? null">Usuarios y roles</x-interfaz.layout.menu-enlace>
     </nav>
 </aside>
