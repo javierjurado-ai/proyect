@@ -51,8 +51,13 @@ class CursoController extends Controller
 
     public function visualizarCurso(Request $request, Curso $curso)
     {
+        $personaId = Auth::user()->persona_id;
         $curso->load(['formacion', 'presupuesto', 'peticionLogistica', 'centro']);
-
+        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
+        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
+            ->filter()
+            ->implode(' ');
         $usuario = $this->datosUsuario();
 
         // Los alumnos solo los ven el administrador y el coordinador.
@@ -67,7 +72,7 @@ class CursoController extends Controller
             'alumnos.persona',
             'alumnos.empresa'
         ]);
-        return view('curso.visualizar', compact('curso', 'rol', 'nombre'));
+        return view('curso.visualizar', compact('curso', 'rol', 'nombre','persona','nombre'));
     }
 
     public function crearTablaPorDocente($id)
