@@ -12,9 +12,7 @@ class Centro extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'empresa_id',
         'nombre',
-        'responsable',
         'direccion',
         'telefono',
         'email',
@@ -23,6 +21,7 @@ class Centro extends Model
         'codigo_postal',
         'numero_total_aula',
         'tipo_centro',
+        'empresa_id'
     ];
 
     protected $casts =[
