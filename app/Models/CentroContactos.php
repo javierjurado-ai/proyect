@@ -28,11 +28,12 @@ class CentroContactos extends Model
 
     public function centro(): BelongsTo
     {
-        return $this->belongsTo(
-            Centro::class,
-            'centro_id',
-            'id'
-        );
+        return $this->belongsTo(Centro::class, 'centro_id', 'id');
+    }
+
+    public function curso(): BelongsTo
+    {
+        return $this->belongsTo(Curso::class, 'curso_id', 'id');
     }
     public function curso(): BelongsTo
     {
