@@ -131,7 +131,6 @@ class PersonaController extends Controller
     private function reglas(): array
     {
         return [
-            'empresa_id'              => 'required|exists:empresa,id',
             'nombre'                  => 'required|string|max:45',
             'primer_apellido'         => 'required|string|max:45',
             'segundo_apellido'        => 'nullable|string|max:45',

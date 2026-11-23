@@ -50,8 +50,6 @@ class FormacionController extends Controller
         $datos = $request->validate([
             'nombre'        => 'required|string|max:100',
             'codigo_accion' => 'required|integer|min:1',
-            'modalidad'     => ['required', Rule::enum(Modalidad::class)],
-            'sector'        => 'required|string|max:60',
             'horas_totales' => 'nullable|integer|min:1|max:9999',
             'activo'        => 'nullable|boolean',
         ]);
@@ -113,8 +111,6 @@ class FormacionController extends Controller
         $datos = $request->validate([
             'nombre'        => 'required|string|max:100',
             'codigo_accion' => 'required|integer|min:1',
-            'modalidad'     => ['required', Rule::enum(Modalidad::class)],
-            'sector'        => 'required|string|max:60',
             'horas_totales' => 'nullable|integer|min:1|max:9999',
             'activo'        => 'nullable|boolean',
         ]);
@@ -174,8 +170,6 @@ class FormacionController extends Controller
         $datos = $request->validate([
             'nombre'        => 'required|string|max:100',
             'codigo_accion' => 'required|integer|min:1',
-            'modalidad'     => ['required', Rule::enum(Modalidad::class)],
-            'sector'        => 'required|string|max:60',
             'horas_totales' => 'nullable|integer|min:1|max:9999',
             'activo'        => 'nullable|boolean',
         ]);
@@ -197,8 +191,6 @@ class FormacionController extends Controller
         $datos = $request->validate([
             'nombre'        => 'required|string|max:100',
             'codigo_accion' => 'required|integer|min:1',
-            'modalidad'     => ['required', Rule::enum(Modalidad::class)],
-            'sector'        => 'required|string|max:60',
             'horas_totales' => 'nullable|integer|min:1|max:9999',
             'activo'        => 'nullable|boolean',
         ]);
