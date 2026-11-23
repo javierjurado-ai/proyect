@@ -2,7 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Models\PeticionesLogistica;
+use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DocenteController;
 use App\Http\Controllers\CentroController;
 use App\Http\Controllers\ComunicacionFundaeController;
 use App\Http\Controllers\CursoController;
@@ -160,4 +162,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/presupuesto/{id}', [PresupuestoController::class, 'destroy'])->name('presupuesto.destroy')->whereNumber('id');
 
     Route::get('/view/inicio', [InicioController::class, 'mostrarPaginaInicio'])->name('inicio.index');
+
+    // Alumnos y docentes (solo administrador y coordinador; lo comprueba el controlador)
+    Route::get('/view/alumnos', [AlumnoController::class, 'index'])->name('alumno.index');
+    Route::get('/view/alumnos/{persona}', [AlumnoController::class, 'visualizar'])->name('alumno.visualizar')->whereNumber('persona');
+    Route::get('/view/docentes', [DocenteController::class, 'index'])->name('docente.index');
+    Route::get('/view/docentes/{persona}', [DocenteController::class, 'visualizar'])->name('docente.visualizar')->whereNumber('persona');
 });

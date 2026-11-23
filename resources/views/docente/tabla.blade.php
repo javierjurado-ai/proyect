@@ -25,7 +25,9 @@
                 @php $lopd = $persona->LOPD->value ?? $persona->LOPD; @endphp
                 <tr class="hover:bg-stone-50">
                     <td class="px-4 py-3 font-semibold text-slate-900">
-                        {{ $persona->nombre }} {{ $persona->primer_apellido }} {{ $persona->segundo_apellido }}
+                        <a href="{{ route('docente.visualizar', $persona) }}" class="font-semibold text-marca-900 hover:underline" title="Ver ficha del docente">
+                            {{ $persona->nombre }} {{ $persona->primer_apellido }} {{ $persona->segundo_apellido }}
+                        </a>
                     </td>
                     <td class="px-4 py-3 font-mono text-slate-700">{{ $persona->DNI ?? $persona->NIE ?? '—' }}</td>
                     <td class="px-4 py-3 text-slate-700">{{ $persona->email ?? '—' }}</td>
