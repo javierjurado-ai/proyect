@@ -6,72 +6,27 @@ use App\Models\Empresa;
 use App\Models\Persona;
 use App\Models\enums\Genero;
 use App\Models\enums\LOPD;
-use App\Models\Enums\TipoRol;
 use App\Models\Rol;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Auth;
 
 class PersonaController extends Controller
 {
-    public function index(Request $request)
-    {
-        $personaId = Auth::user()->persona_id;
-
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
-        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
-
-        if (! $rol || ! $persona) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return redirect()
-                ->route('login')
-                ->withErrors(['usuario' => 'No tienes acceso a la página.']);
-        }
-
-        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
-            ->filter()
-            ->implode(' ');
-
-        $personas = Persona::all();
-
-        return view('persona.index', compact('personas', 'rol', 'nombre'));
-    }
     /* =========================================================
      *  FORMULARIO (web)
      * ========================================================= */
 
     // Muestra el formulario de alta
-    public function create(Request $request)
+    public function create()
     {
-        $personaId = Auth::user()->persona_id;
-
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
-        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
-        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
-            ->filter()
-            ->implode(' ');
-        if (! $rol || ! $persona) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return redirect()
-                ->route('login')
-                ->withErrors(['usuario' => 'No tienes acceso a la página.']);
-        }
         // [valor => texto] para el desplegable de género, sacado del enum
         $generos = collect(Genero::cases())
-            ->mapWithKeys(fn($g) => [$g->value => ucfirst(strtolower($g->value))]);
-        $lopd = collect(LOPD::cases())
-            ->mapWithKeys(fn($l) => [$l->value => ucfirst(strtolower($l->value))]);
+            ->mapWithKeys(fn ($g) => [$g->value => ucfirst(strtolower($g->value))]);
 
         // [id => nombre] de la tabla empresa para el desplegable
         $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
 
-        return view('persona.formulario', compact('generos', 'empresas','lopd','rol','persona','nombre'));
+        return view('persona.formulario', compact('generos', 'empresas'));
     }
 
     // Guarda lo enviado desde el formulario y vuelve con mensaje
@@ -86,33 +41,6 @@ class PersonaController extends Controller
         return redirect()
             ->route('persona.create')
             ->with('ok', 'Persona guardada correctamente.');
-    }
-
-    public function editarWeb($id) {
-        $persona = Persona::findOrFail($id);
-        return view('persona.editar', compact('persona')); 
-    }
-    /* =========================================================
-     *  API (JSON)
-     * ========================================================= */
-
-    public function crearRol(Request $request, $id)
-    {
-        $persona = Persona::findOrFail($id);
-
-        $datos = $request->validate([
-            'rol' => ['required', Rule::enum(TipoRol::class)],
-        ], [
-            'rol.required' => 'Debes seleccionar un rol.',
-            'rol.enum'     => 'El rol seleccionado no es válido.',
-        ]);
-
-        Rol::firstOrCreate([
-            'persona_id' => $persona->id,
-            'rol'        => $datos['rol'],
-        ]);
-
-        return back()->with('ok', 'Rol asignado correctamente.');
     }
 
     /* =========================================================
@@ -180,6 +108,7 @@ class PersonaController extends Controller
     private function reglas(): array
     {
         return [
+            'empresa_id'              => 'required|exists:empresa,id',
             'nombre'                  => 'required|string|max:45',
             'primer_apellido'         => 'required|string|max:45',
             'segundo_apellido'        => 'nullable|string|max:45',

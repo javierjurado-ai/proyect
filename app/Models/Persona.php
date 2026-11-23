@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use App\Models\Enums\Genero;
-use App\Models\Enums\LOPD;
+use App\Models\enums\Genero;
+use App\Models\enums\LOPD;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Persona extends Model
 {
@@ -15,10 +15,11 @@ class Persona extends Model
     protected $primaryKey = 'id';
     public $incrementing = true;
     protected $keyType = 'int';
+
     public $timestamps = false;
 
-    // 'empresa_id' ya no existe en persona: la empresa va en curso_alumno / curso_docente
     protected $fillable = [
+        'empresa_id',
         'nombre',
         'primer_apellido',
         'segundo_apellido',
@@ -37,17 +38,12 @@ class Persona extends Model
     protected $casts = [
         'fecha_nacimiento' => 'date',
         'genero'           => Genero::class,
-        'LOPD'             => LOPD::class,
+        'LOPD'             => LOPD::class
     ];
 
-    public function usuario(): HasOne
+    public function empresa(): BelongsTo
     {
-        return $this->hasOne(Usuario::class, 'persona_id', 'id');
-    }
-
-    public function roles(): HasMany
-    {
-        return $this->hasMany(Rol::class, 'persona_id', 'id');
+        return $this->belongsTo(Empresa::class, 'empresa_id', 'id');
     }
 
     public function cursoAlumno(): HasMany
@@ -55,24 +51,21 @@ class Persona extends Model
         return $this->hasMany(CursoAlumno::class, 'persona_id', 'id');
     }
 
+
     public function cursoDocentes(): HasMany
     {
         return $this->hasMany(CursoDocente::class, 'persona_id', 'id');
     }
 
+
     public function cursosComoAlumno(): BelongsToMany
     {
-        return $this->belongsToMany(Curso::class, 'curso_alumno', 'persona_id', 'curso_id');
+        return $this->belongsToMany(Curso::class, 'curso_alumno', 'persona_id', 'curso_id', 'id', 'id');
     }
+
 
     public function cursosComoDocente(): BelongsToMany
     {
-        return $this->belongsToMany(Curso::class, 'curso_docente', 'persona_id', 'curso_id');
-    }
-
-    // Empresas con las que ha participado como alumno
-    public function empresasComoAlumno(): BelongsToMany
-    {
-        return $this->belongsToMany(Empresa::class, 'curso_alumno', 'persona_id', 'empresa_id')->distinct();
+        return $this->belongsToMany(Curso::class, 'curso_docente', 'persona_id', 'curso_id', 'id', 'id');
     }
 }

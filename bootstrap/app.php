@@ -13,35 +13,30 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias([
-            'token.temporal' => \App\Http\Middleware\TokenTemporal::class,
-        ]);
-
-        // Rutas JSON (Postman) que no piden token CSRF.
-        // OJO: Laravel decide solo por la dirección, no por el método. Por eso NO están
-        // 'persona', 'empresa', 'formacion', 'centro', 'presupuesto' ni 'curso/{id}':
-        // comparten dirección con los formularios y botones de borrar de la web, que sí
-        // deben llevar CSRF.
         $middleware->validateCsrfTokens(except: [
+            'persona', 'persona/*',
+            'empresa', 'empresa/*',
+            'formacion', 'formacion/*',
+            'centro', 'centro/*',
             'credito', 'credito/*',
             'comunicacionFundae', 'comunicacionFundae/*',
             'peticionesLogistica', 'peticionesLogistica/*',
-            'centro-contactos/*', 'api/centro-contactos',
-            'curso/rolDocente/*', 'curso/CursoDocente/*',
-            'curso/rolAlumno/*', 'curso/CursoAlumno/*',
+            'curso', 'curso/*',
+            'presupuesto', 'presupuesto/*'
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Errores en JSON para las rutas de la API (y para el login, que va por fetch)
         $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
             return $request->is(
-                'persona/iniciarSesion',
+                'persona', 'persona/*',
+                'empresa', 'empresa/*',
+                'formacion', 'formacion/*',
+                'centro', 'centro/*',
                 'credito', 'credito/*',
                 'comunicacionFundae', 'comunicacionFundae/*',
                 'peticionesLogistica', 'peticionesLogistica/*',
-                'centro-contactos/*', 'api/centro-contactos',
-                'curso/listar', 'curso/rolDocente/*', 'curso/CursoDocente/*',
-                'curso/rolAlumno/*', 'curso/CursoAlumno/*'
+                'curso', 'curso/*',
+                'presupuesto', 'presupuesto/*'
             ) || $request->expectsJson();
         });
     })->create();

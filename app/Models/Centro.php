@@ -2,11 +2,8 @@
 
 namespace App\Models;
 
-use App\Models\Enums\TipoCentro;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use App\Models\Enums\TipoCentro;
 
 class Centro extends Model
 {
@@ -14,9 +11,10 @@ class Centro extends Model
     protected $primaryKey = 'id';
     public $timestamps = false;
 
-    // 'responsable' ya no existe: ahora va en centro_contactos
     protected $fillable = [
+        'empresa_id',
         'nombre',
+        'responsable',
         'direccion',
         'telefono',
         'email',
@@ -25,36 +23,32 @@ class Centro extends Model
         'codigo_postal',
         'numero_total_aula',
         'tipo_centro',
-        'empresa_id'
     ];
 
-    protected $casts = [
-        'tipo_centro'       => TipoCentro::class,
-        'numero_total_aula' => 'integer',
+    protected $casts =[
+        'tipo_centro' => TipoCentro::class
     ];
 
-    // Un centro pertenece a una empresa (empresa_id puede ser NULL)
-    public function empresa(): BelongsTo
+    // Relación: Un centro pertenece a una empresa
+    public function empresa()
     {
         return $this->belongsTo(Empresa::class, 'empresa_id', 'id');
     }
 
-    // Un centro tiene muchos cursos
-    public function cursos(): HasMany
+    // Relación: Un centro tiene muchos cursos
+    public function cursos()
     {
         return $this->hasMany(Curso::class, 'centro_id', 'id');
     }
 
-    // La tabla aulas no tiene centro_id: se llega a través de curso
-    // centro.id -> curso.centro_id -> aulas.curso_id
-    public function aulas(): HasManyThrough
-    {
-        return $this->hasManyThrough(Aula::class, Curso::class, 'centro_id', 'curso_id', 'id', 'id');
-    }
-
-    // Un centro tiene muchos contactos (coordinador / responsable)
+    // Relación: Un centro tiene muchos contactos 
     public function contactos(): HasMany
     {
-        return $this->hasMany(CentroContactos::class, 'centro_id', 'id');
+        return $this->hasMany(
+            CentroContactos::class,
+            'centro_id',
+            'id'
+        );
     }
+
 }

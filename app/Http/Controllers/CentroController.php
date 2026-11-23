@@ -7,12 +7,9 @@ use App\Models\Empresa;
 use App\Models\Enums\TipoCentro;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use App\Models\Persona;
-use App\Models\Rol;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use App\Models\Enums\Contacto;
-use App\Models\CentroContactos;
+use App\Models\Enums\Contacto; 
+use App\Models\CentroContactos; 
 
 class CentroController extends Controller
 {
@@ -20,40 +17,24 @@ class CentroController extends Controller
      *  FORMULARIO Y TABLA (web)
      * ========================================================= */
 
-    // Muestra el listado de centros (vista centro/index.blade.php)
-    public function index(Request $request)
+    // Muestra el listado de centros (vista centro/tabla.blade.php)
+    public function index()
     {
-        $personaId = Auth::user()->persona_id;
-
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
-        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
-
-        if (! $rol || ! $persona) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return redirect()
-                ->route('login')
-                ->withErrors(['usuario' => 'No tienes acceso a la página.']);
-        }
-
-        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
-            ->filter()
-            ->implode(' ');
-
         $centros = Centro::with('empresa')->orderBy('nombre')->paginate(15);
 
-        return view('centro.index', compact('centros', 'rol', 'nombre'));
+        return view('centro.tabla', compact('centros'));
     }
 
     // Muestra el formulario de alta
     public function crearFormulario()
     {
-        return view('centro.formulario', array_merge(
-            $this->desplegables(),
-            $this->datosUsuario()
-        ));
+        $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
+
+        // [valor => texto] para el desplegable, sacado del enum
+        $tiposCentro = collect(TipoCentro::cases())
+            ->mapWithKeys(fn ($t) => [$t->value => ucfirst(strtolower($t->value))]);
+
+        return view('centro.formulario', compact('empresas', 'tiposCentro'));
     }
 
     // Guarda lo enviado desde el formulario y vuelve a la tabla
@@ -61,68 +42,11 @@ class CentroController extends Controller
     {
         $datos = $request->validate($this->reglas(), $this->mensajes());
 
-        // numero_total_aula es NOT NULL en la BD y el formulario no lo envía
-        $datos['numero_total_aula'] ??= 0;
-
         Centro::create($datos);
 
         return redirect()
             ->route('centro.index')
             ->with('ok', 'Centro guardado correctamente.');
-    }
-
-    // Muestra el formulario de edición con los datos del centro
-    public function editarCentroFormulario($id)
-    {
-        $centro = Centro::findOrFail($id);
-
-        return view('centro.formulario', array_merge(
-            compact('centro'),
-            $this->desplegables(),
-            $this->datosUsuario()
-        ));
-    }
-
-    // Actualiza el centro desde el formulario web
-    public function actualizarCentroWeb(Request $request, $id)
-    {
-        $centro = Centro::findOrFail($id);
-
-        $datos = $request->validate($this->reglas(), $this->mensajes());
-        $datos['numero_total_aula'] ??= $centro->numero_total_aula ?? 0;
-
-        $centro->update($datos);
-
-        return redirect()
-            ->route('centro.index')
-            ->with('ok', 'Centro actualizado correctamente.');
-    }
-
-    // Elimina el centro desde la tabla web
-    public function eliminarCentroWeb($id)
-    {
-        $centro = Centro::findOrFail($id);
-
-        try {
-            $centro->delete();
-            return redirect()
-                ->route('centro.index')
-                ->with('ok', 'Centro eliminado correctamente.');
-        } catch (QueryException $e) {
-            return redirect()
-                ->route('centro.index')
-                ->with('error', 'No se puede eliminar: el centro tiene cursos o contactos asociados.');
-        }
-    }
-
-    // Asigna el rol COORDINADOR a una persona (ruta POST /rol/{id})
-    public function agregarRolCoordinador($id)
-    {
-        $persona = Persona::findOrFail($id);
-
-        $rol = Rol::updateOrCreate(['persona_id' => $persona->id], ['rol' => 'COORDINADOR']);
-
-        return response()->json($rol, 201);
     }
 
     /* =========================================================
@@ -135,7 +59,7 @@ class CentroController extends Controller
         $centros = Centro::orderBy('nombre')->pluck('nombre', 'id');
 
         $tiposContacto = collect(Contacto::cases())
-            ->mapWithKeys(fn($c) => [$c->value => ucfirst(strtolower($c->value))]);
+            ->mapWithKeys(fn ($c) => [$c->value => ucfirst(strtolower($c->value))]);
 
         return view('centro_contactos.formulario', compact('centros', 'tiposContacto'));
     }
@@ -174,7 +98,7 @@ class CentroController extends Controller
     public function agregarCentro(Request $request)
     {
         $datos = $request->validate($this->reglas(), $this->mensajes());
-        $datos['numero_total_aula'] ??= 0;
+
         $centro = Centro::create($datos);
 
         return response()->json($centro, 201);
@@ -190,7 +114,6 @@ class CentroController extends Controller
         }
 
         $datos = $request->validate($this->reglas(), $this->mensajes());
-        $datos['numero_total_aula'] ??= $centro->numero_total_aula ?? 0;
 
         $centro->update($datos);
 
@@ -276,8 +199,7 @@ class CentroController extends Controller
     private function reglas(): array
     {
         return [
-            // Los centros internos son propios; los externos pertenecen a una empresa cliente
-            'empresa_id'        => 'nullable|required_if:tipo_centro,EXTERNO|integer|exists:empresa,id',
+            'empresa_id'        => 'required|integer|exists:empresa,id',
             'nombre'            => 'required|string|max:45',
             'tipo_centro'       => ['required', Rule::enum(TipoCentro::class)],
             'direccion'         => 'required|string|max:45',
@@ -285,63 +207,33 @@ class CentroController extends Controller
             'provincia'         => 'required|string|max:45',
             'codigo_postal'     => 'required|digits:5',
             'telefono'          => 'required|string|max:45',
-            'email'             => 'required|email|max:45',   // NOT NULL en la BD
+            'email'             => 'nullable|email|max:45',
             'numero_total_aula' => 'nullable|integer|min:0',
         ];
     }
 
-    private function reglasContacto(): array
+        private function reglasContacto(): array
     {
         return [
             'centro_id'         => 'required|integer|exists:centro,id',
-            'curso_id'          => 'nullable|integer|exists:curso,id',
             'nombre'            => 'required|string|max:45',
             'contacto'          => ['required', Rule::enum(Contacto::class)],
-            'telefono_personal' => 'required|string|max:45',   // NOT NULL en la BD
-            'email_personal'    => 'required|email|max:45',    // NOT NULL en la BD
+            'telefono_personal' => 'nullable|string|max:45',
+            'email_personal'    => 'nullable|email|max:45',
         ];
     }
 
     private function mensajes(): array
     {
         return [
-            'required'              => 'Este campo es obligatorio.',
-            'max'                   => 'Máximo :max caracteres.',
-            'email'                 => 'El email no es válido.',
-            'integer'               => 'Debe ser un número entero.',
-            'enum'                  => 'El valor elegido no es válido.',
-            'empresa_id.exists'     => 'La empresa elegida no existe.',
-            'empresa_id.required_if' => 'Un centro externo debe pertenecer a una empresa.',
-            'codigo_postal.digits'  => 'El código postal debe tener 5 números.',
-            'min'                   => 'El valor mínimo es :min.',
-            'centro_id.exists'      => 'El centro elegido no existe.',
-            'curso_id.exists'       => 'El curso elegido no existe.',
+            'required'             => 'Este campo es obligatorio.',
+            'max'                  => 'Máximo :max caracteres.',
+            'email'                => 'El email no es válido.',
+            'integer'              => 'Debe ser un número entero.',
+            'enum'                 => 'El valor elegido no es válido.',
+            'empresa_id.exists'    => 'La empresa elegida no existe.',
+            'codigo_postal.digits' => 'El código postal debe tener 5 números.',
+            'numero_total_aula.min' => 'No puede ser negativo.',
         ];
-    }
-
-    // [id => nombre] de empresas y [valor => texto] de tipos de centro
-    private function desplegables(): array
-    {
-        $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
-
-        $tiposCentro = collect(TipoCentro::cases())
-            ->mapWithKeys(fn ($t) => [$t->value => ucfirst(strtolower($t->value))]);
-
-        return compact('empresas', 'tiposCentro');
-    }
-
-    // Rol y nombre del usuario conectado (menú y barra superior)
-    private function datosUsuario(): array
-    {
-        $personaId = Auth::user()->persona_id;
-
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
-        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
-
-        $nombre = collect([$persona?->nombre, $persona?->primer_apellido, $persona?->segundo_apellido])
-            ->filter()
-            ->implode(' ');
-
-        return compact('rol', 'nombre');
     }
 }
