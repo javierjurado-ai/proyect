@@ -5,11 +5,36 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\PeticionesLogistica;
 use App\Models\Enums\Estado;
+use App\Models\Persona;
+use App\Models\Rol;
 use Illuminate\Database\QueryException;
 use Illuminate\Validation\Rule;
-
+use Illuminate\Support\Facades\Auth;
 class PeticionesLogisticaController extends Controller
 {
+
+    public function index(Request $request){
+        $personaId = Auth::user()->persona_id;
+        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $personas = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
+        $nombre = collect([$personas->nombre, $personas->primer_apellido, $personas->segundo_apellido])
+            ->filter()
+            ->implode(' ');
+
+        if (! $rol || ! $personas) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()
+                ->route('login')
+                ->withErrors(['usuario' => 'No tienes acceso a la página.']);
+        }
+        $logistica = PeticionesLogistica::all();
+
+        return view('logistica.index', compact('logistica', 'rol', 'nombre','personas'));
+    }
+
     public function listarPeticionesLogistica()
     {
         return response()->json(PeticionesLogistica::all());

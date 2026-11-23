@@ -99,6 +99,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/view/formularioPersona', [PersonaController::class, 'create'])->name('persona.crearFormulario');
     Route::put('/persona/{id}', [PersonaController::class, 'update'])->name('persona.update');
     
+    Route::get('/view/logistica', [PeticionesLogisticaController::class, 'index'])->name('logistica.index');
+
     Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
     Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
 
