@@ -65,12 +65,6 @@
                         :value="$formacion->codigo_accion ?? ''" />
 
                     <x-formulario.entrada
-                        name="sector"
-                        label="Sector *"
-                        contenedor="md:col-span-2"
-                        :value="$formacion->sector ?? ''" />
-
-                    <x-formulario.entrada
                         name="horas_totales"
                         label="Horas totales *"
                         type="number"
@@ -82,11 +76,6 @@
             <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Modalidad y estado</legend>
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                    <x-formulario.radio
-                        name="modalidad"
-                        label="Modalidad *"
-                        :options="$modalidades"
-                        :value="$formacion->modalidad->value ?? ''" />
 
                     <x-formulario.checkbox
                         name="activo"

@@ -10,6 +10,7 @@ use App\Models\Centro;
 use App\Models\CursoAlumno;
 use App\Models\CursoDocente;
 use App\Models\Enums\EstadoAula;
+use App\Models\Enums\Modalidad;
 use App\Models\Enums\TipoRol;
 use App\Models\Enums\UsoAula;
 use App\Models\Formacion;
@@ -115,9 +116,12 @@ class CursoController extends Controller
         $turnos = collect(Turno::cases())->mapWithKeys(
             fn($turno) => [$turno->value => ucfirst($turno->name)]
         );
+        $modalidades = collect(Modalidad::cases())->mapWithKeys(
+            fn($modalidad) => [$modalidad->value => ucfirst($modalidad->name)]
+        );
 
         return view('curso.formulario', array_merge(
-            compact('centros', 'formaciones', 'turnos'),
+            compact('centros', 'formaciones', 'turnos', 'modalidades'),
             $this->datosUsuario()
         ));
     }
@@ -194,8 +198,8 @@ class CursoController extends Controller
     public function agregarCurso(Request $request)
     {
         $datos = $request->validate([
-            'formacion_id'            => 'required|integer|exists:formacion,id',
-            'codigo_curso'            => 'required|integer|min:1|unique:curso,codigo_curso',
+            'codigo_accion'           => 'required|string|max:45',
+            'codigo_grupo'            => 'required|string|max:45',
             'empresa_formadora'       => 'required|string|max:50',
             'fecha_inicio'            => 'required|date',
             'fecha_fin'               => 'required|date|after_or_equal:fecha_inicio',
@@ -203,12 +207,19 @@ class CursoController extends Controller
             'hora_final'              => 'required|date_format:H:i',
             'turno'                   => ['required', Rule::enum(Turno::class)],
             'aula'                    => 'required|string|max:45',
-            'aula_virtual'            => 'required|string|max:45',
             'tecnico_comunidad'       => 'required|string|max:45',
-            'observaciones'           => 'required|string|max:200',
+            'observaciones'           => 'nullable|string|max:45',
+            'aula_virtual'            => 'required|string|max:45',
+            'objetivos'               => 'required|string|max:200',
+            'contenido'               => 'required|string|max:1000',
+            'horas_presenciales'  => 'required|decimal:0,2|min:0|max:9999.99',
+            'horas_teleformacion' => 'required|decimal:0,2|min:0|max:9999.99',
+            'modalidad'               => ['required', Rule::enum(Modalidad::class)],
+            'nivel_formacion'         => 'required|integer|max:3',
             'peticiones_logistica_id' => 'nullable|exists:peticiones_logistica,id',
             'centro_id'               => 'nullable|exists:centro,id',
             'presupuesto_id'          => 'nullable|exists:presupuesto,id',
+            'formacion_id'            => 'nullable|exists:formacion,id',
         ]);
 
         Curso::create($datos);
@@ -235,21 +246,28 @@ class CursoController extends Controller
         $curso = Curso::findOrFail($id);
 
         $datos = $request->validate([
-            'formacion_id'            => 'required|integer|exists:formacion,id',
-            'codigo_curso'            => 'required|integer|min:1|unique:curso,codigo_curso',
-            'empresa_formadora'       => 'nullable|string|max:50',
+            'codigo_accion'           => 'required|string|max:45',
+            'codigo_grupo'            => 'required|string|max:45',
+            'empresa_formadora'       => 'required|string|max:50',
             'fecha_inicio'            => 'required|date',
             'fecha_fin'               => 'required|date|after_or_equal:fecha_inicio',
-            'hora_inicio'             => 'nullable|date_format:H:i',
-            'hora_final'              => 'nullable|date_format:H:i',
+            'hora_inicio'             => 'required|date_format:H:i',
+            'hora_final'              => 'required|date_format:H:i',
             'turno'                   => ['required', Rule::enum(Turno::class)],
-            'aula'                    => 'nullable|string|max:45',
-            'aula_virtual'            => 'nullable|string|max:45',
-            'tecnico_comunidad'       => 'nullable|string|max:45',
-            'observaciones'           => 'nullable|string|max:200',
+            'aula'                    => 'required|string|max:45',
+            'tecnico_comunidad'       => 'required|string|max:45',
+            'observaciones'           => 'nullable|string|max:45',
+            'aula_virtual'            => 'required|string|max:45',
+            'objetivos'               => 'required|string|max:200',
+            'contenido'               => 'required|string|max:1000',
+            'horas_presenciales'      => 'required|decimal',
+            'horas_teleformacion'     => 'required|decimal',
+            'modalidad'               => ['required', Rule::enum(Modalidad::class)],
+            'nivel_formacion'         => 'required|integer|max:3',
             'peticiones_logistica_id' => 'nullable|exists:peticiones_logistica,id',
             'centro_id'               => 'nullable|exists:centro,id',
             'presupuesto_id'          => 'nullable|exists:presupuesto,id',
+            'formacion_id'            => 'nullable|exists:formacion,id',
         ]);
 
 
