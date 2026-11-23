@@ -107,27 +107,24 @@
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($destacadas as $f)
                     @php
-                        $valorMod = $f->modalidad instanceof \BackedEnum ? $f->modalidad->value : $f->modalidad;
-                        $mod = $modalidades[$valorMod] ?? ['texto' => $valorMod, 'franja' => 'bg-stone-400', 'chip' => 'bg-stone-100 text-slate-700'];
+                        // La formación ya no tiene modalidad ni sector
+                        $mod = ['franja' => 'bg-marca-800'];
                         $hayDetalle = \Illuminate\Support\Facades\Route::has('formacion.detalle');
                     @endphp
                     <article class="flex flex-col overflow-hidden rounded-xl border border-stone-200">
                         <div class="h-2 {{ $mod['franja'] }}"></div>
                         <div class="flex flex-1 flex-col gap-2 p-4">
-                            @if ($f->sector)
-                                <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $f->sector }}</span>
+                            @if ($f->codigo_accion)
+                                <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Acción {{ $f->codigo_accion }}</span>
                             @endif
                             <h3 class="text-base font-bold text-marca-950">{{ $f->nombre }}</h3>
                             <div class="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                                @if ($valorMod)
-                                    <span class="rounded-full px-2.5 py-0.5 font-semibold {{ $mod['chip'] }}">{{ $mod['texto'] }}</span>
-                                @endif
                                 @if ($f->horas_totales) <span>{{ $f->horas_totales }} horas</span> @endif
                             </div>
                             <div class="mt-auto flex items-end justify-between gap-3 border-t border-stone-100 pt-3">
                                 <div>
-                                    <span class="block text-xs text-slate-500">Precio</span>
-                                    <span class="text-lg font-bold text-marca-950">{{ $f->precio !== null ? $euros($f->precio) : 'Consultar' }}</span>
+                                    <span class="block text-xs text-slate-500">Duración</span>
+                                    <span class="text-lg font-bold text-marca-950">{{ $f->horas_totales ? rtrim(rtrim(number_format((float) $f->horas_totales, 1, ',', ''), '0'), ',') . ' h' : '—' }}</span>
                                 </div>
                                 <a href="{{ $hayDetalle ? route('formacion.detalle', $f->id) : $ruta('formacion.index') }}"
                                    class="rounded-lg bg-marca-800 px-3 py-2 text-xs font-semibold text-white hover:bg-marca-900">

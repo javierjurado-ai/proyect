@@ -17,13 +17,6 @@
         </x-slot:acciones>
     </x-interfaz.panel.cabecera>
 
-    {{-- Mensaje de éxito --}}
-    @if (session('ok') || session('status'))
-        <div id="success-alert" role="status"
-             class="mb-6 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
-            {{ session('ok') ?? session('status') }}
-        </div>
-    @endif
 
     {{-- Error de API --}}
     @error('api')
@@ -59,28 +52,29 @@
 
                     <x-formulario.entrada
                         name="codigo_accion"
-                        label="Código acción *"
+                        label="Código acción"
                         type="number"
                         min="1"
                         :value="$formacion->codigo_accion ?? ''" />
 
+                    {{-- 'sector' y 'modalidad' ya no son de formación (la modalidad va en cada curso) --}}
                     <x-formulario.entrada
                         name="horas_totales"
-                        label="Horas totales *"
+                        label="Horas totales"
                         type="number"
-                        min="0"
+                        min="1"
+                        step="0.5"
                         :value="$formacion->horas_totales ?? ''" />
                 </div>
             </fieldset>
 
             <fieldset class="mb-8">
-                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Modalidad y estado</legend>
+                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Estado</legend>
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-
                     <x-formulario.checkbox
                         name="activo"
                         label="Formación activa"
-                        :checked="old('activo', $editando ? $formacion->activo : false)" />
+                        :checked="old('activo', $editando ? $formacion->activo : true)" />
                 </div>
             </fieldset>
 

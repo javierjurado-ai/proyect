@@ -1,5 +1,5 @@
 @php
-   $ruta = fn (string $nombre) => \Illuminate\Support\Facades\Route::has($nombre) ? route($nombre) : '#';
+   $ruta = fn (string $nombre) => \Illuminate\Support\Facades\Route::has($nombre) ? route($nombre) : null; // null = página aún sin hacer
 
     $boton = 'inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold';  
 @endphp
@@ -9,12 +9,16 @@
     <x-interfaz.panel.cabecera :titulo="'Hola, ' . $primerNombre"
         :subtitulo="count($tareas) ? 'Tienes ' . count($tareas) . (count($tareas) === 1 ? ' tarea pendiente' : ' tareas pendientes') : 'No tienes tareas pendientes. ¡Todo al día!'">
         <x-slot:acciones>
-            <a href="{{ $ruta('logistica.index') }}" class="{{ $boton }} border border-stone-300 bg-white text-marca-950 hover:bg-stone-50">
-                + Petición logística
-            </a>
-            <a href="{{ $ruta('fundae.index') }}" class="{{ $boton }} border border-stone-300 bg-white text-marca-950 hover:bg-stone-50">
-                + Comunicación FUNDAE
-            </a>
+            @if ($ruta('logistica.index'))
+                <a href="{{ $ruta('logistica.index') }}" class="{{ $boton }} border border-stone-300 bg-white text-marca-950 hover:bg-stone-50">
+                    + Petición logística
+                </a>
+            @endif
+            @if ($ruta('fundae.index'))
+                <a href="{{ $ruta('fundae.index') }}" class="{{ $boton }} border border-stone-300 bg-white text-marca-950 hover:bg-stone-50">
+                    + Comunicación FUNDAE
+                </a>
+            @endif
             <a href="{{ $ruta('curso.crearFormulario') }}" class="{{ $boton }} bg-marca-800 text-white hover:bg-marca-900">
                 + Nuevo curso
             </a>

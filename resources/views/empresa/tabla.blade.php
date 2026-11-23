@@ -3,7 +3,9 @@
     @foreach ($empresas as $e)
         <x-tabla.fila>
             <td class="px-4 py-3 font-mono text-slate-700">{{ $e->cif }}</td>
-            <td class="px-4 py-3 font-medium text-slate-800">{{ $e->nombre }}</td>
+            <td class="px-4 py-3 font-medium text-slate-800">
+                <a href="{{ route('empresa.visualizar', $e) }}" class="font-semibold text-marca-900 hover:underline">{{ $e->nombre }}</a>
+            </td>
             <x-tabla.celda tipo="numero" :valor="$e->total_trabajadores" />
 
             {{-- ACCIONES --}}

@@ -13,11 +13,6 @@
         </x-slot:acciones>
     </x-interfaz.panel.cabecera>
 
-    @if (session('ok'))
-        <div class="mb-6 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
-            {{ session('ok') }}
-        </div>
-    @endif
 
     <x-interfaz.panel.tarjeta titulo="Listado de formaciones">
         @include('formacion.tabla')
