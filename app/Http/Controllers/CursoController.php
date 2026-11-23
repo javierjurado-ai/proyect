@@ -58,9 +58,14 @@ class CursoController extends Controller
             ->filter()
             ->implode(' ');
 
-        $curso->load('formacion');
-        $curso->load('presupuesto');
-        $curso->load('peticionLogistica');
+        // Cargamos las relaciones necesarias incluyendo los alumnos y sus datos personales
+        $curso->load([
+            'formacion',
+            'presupuesto',
+            'peticionLogistica',
+            'alumnos.persona',
+            'alumnos.empresa'
+        ]);
         return view('curso.visualizar', compact('curso', 'rol', 'nombre'));
     }
     public function crearTablaPorDocente($id)
@@ -195,7 +200,8 @@ class CursoController extends Controller
     {
         $datos = $request->validate([
             'formacion_id'            => 'required|integer|exists:formacion,id',
-            'codigo_curso'            => 'required|integer|min:1|unique:curso,codigo_curso',
+            'codigo_accion'           => 'required|string|max:45',
+            'codigo_grupo'            => 'required|string|max:45',
             'empresa_formadora'       => 'required|string|max:50',
             'fecha_inicio'            => 'required|date',
             'fecha_fin'               => 'required|date|after_or_equal:fecha_inicio',
@@ -205,8 +211,9 @@ class CursoController extends Controller
             'aula'                    => 'required|string|max:45',
             'aula_virtual'            => 'required|string|max:45',
             'tecnico_comunidad'       => 'required|string|max:45',
-            'observaciones'           => 'required|string|max:200',
-            'peticiones_logistica_id' => 'nullable|exists:peticiones_logistica,id',
+            'objetivos'               => 'required|string|max:500',
+            'contenido'               => 'required|string|max:1000',
+            'observaciones'           => 'nullable|string|max:200',
             'centro_id'               => 'nullable|exists:centro,id',
             'presupuesto_id'          => 'nullable|exists:presupuesto,id',
         ]);
@@ -217,7 +224,7 @@ class CursoController extends Controller
             ->route('curso.crearTablaCurso')
             ->with('ok', 'Curso guardado correctamente.');
     }
-    // Mostrar detalles de un curso
+    
     public function obtenerCursoPorID($id)
     {
         $curso = Curso::find($id);
@@ -322,5 +329,19 @@ class CursoController extends Controller
         return redirect()
             ->route('curso.crearTablaCurso')
             ->with('ok', 'Curso eliminado correctamente.');
+    }
+
+    // Elimina la relación del alumno con el curso (desmatricular)
+    public function eliminarCursoAlumno($cursoId, $cursoAlumnoId)
+    {
+        $cursoAlumno = CursoAlumno::where('curso_id', $cursoId)
+            ->where('id', $cursoAlumnoId)
+            ->firstOrFail();
+
+        $cursoAlumno->delete();
+
+        return redirect()
+            ->route('curso.visualizar', $cursoId)
+            ->with('ok', 'Alumno desmatriculado del curso correctamente.');
     }
 }

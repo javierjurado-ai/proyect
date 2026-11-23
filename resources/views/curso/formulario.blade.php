@@ -59,6 +59,18 @@
                         :value="$curso->codigo_curso ?? ''" />
 
                     <x-formulario.entrada
+                        name="codigo_accion"
+                        label="Código de acción *"
+                        maxlength="45"
+                        :value="$curso->codigo_accion ?? ''" />
+
+                    <x-formulario.entrada
+                        name="codigo_grupo"
+                        label="Código de grupo *"
+                        maxlength="45"
+                        :value="$curso->codigo_grupo ?? ''" />
+
+                    <x-formulario.entrada
                         name="empresa_formadora"
                         label="Empresa formadora *"
                         maxlength="100"
@@ -145,10 +157,26 @@
             </fieldset>
 
             <fieldset class="mb-8">
-                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Observaciones</legend>
+                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Contenidos y Objetivos</legend>
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-2 mb-5">
+                    <x-formulario.area
+                        name="objetivos"
+                        label="Objetivos *"
+                        maxlength="500"
+                        rows="3"
+                        :value="$curso->objetivos ?? ''" />
+
+                    <x-formulario.area
+                        name="contenido"
+                        label="Contenido *"
+                        maxlength="1000"
+                        rows="3"
+                        :value="$curso->contenido ?? ''" />
+                </div>
+                
                 <x-formulario.area
                     name="observaciones"
-                    label="Observaciones *"
+                    label="Observaciones"
                     maxlength="200"
                     rows="3"
                     :value="$curso->observaciones ?? ''" />

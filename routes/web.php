@@ -56,6 +56,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/persona/{id}', [PersonaController::class, 'actualizarPersona']);
     Route::delete('/persona/{id}', [PersonaController::class, 'eliminarPersona']);
 
+
     // Rutas para el controlador de comunicaciones FUNDAE
     Route::get('/comunicacionFundae/listar', [ComunicacionFundaeController::class, 'listarComunicacionesFundae']);
     Route::get('/comunicacionFundae/{id}', [ComunicacionFundaeController::class, 'obtenerComunicacionFundaePorID']);
@@ -118,7 +119,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/curso/{id}', [CursoController::class, 'eliminarCursoWeb'])->name('curso.destroy')->whereNumber('id');
     Route::get('/view/formulario/crearCurso', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
     Route::post('/view/formularioCurso', [CursoController::class, 'agregarCurso'])->name('curso.agregarCurso');
-    
+    Route::delete('/curso/{curso}/alumno/{cursoAlumno}', [CursoController::class, 'eliminarCursoAlumno'])->name('curso.alumno.destroy');
 
     // Rutas web para la gestión de Centros (Editar, Actualizar y Eliminar)
     Route::get('/view/listadoCentro', [CentroController::class, 'index'])->name('centro.index');
