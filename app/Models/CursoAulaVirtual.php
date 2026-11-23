@@ -20,7 +20,7 @@ class CursoAulaVirtual extends Model
         'conexion',
         'contacto',
         'telefono',
-        'bimoral',
+        'bimodal',
         'sin_participantes_en_centro',
         'sin_docentes_en_centro'
     ];
