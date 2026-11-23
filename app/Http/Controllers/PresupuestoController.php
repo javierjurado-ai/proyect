@@ -72,7 +72,7 @@ class PresupuestoController extends Controller
     {
         $presupuesto = Presupuesto::findOrFail($id);
 
-        $datos = $request->validate($this->reglas(), $this->mensajes());
+        $datos = $request->validate($this->reglas(false), $this->mensajes());
 
         $presupuesto->update($datos);
 
@@ -125,7 +125,7 @@ class PresupuestoController extends Controller
     {
         $presupuesto = Presupuesto::findOrFail($id);
 
-        $datos = $request->validate($this->reglas(), $this->mensajes());
+        $datos = $request->validate($this->reglas(false), $this->mensajes());
 
         $presupuesto->update($datos);
 
@@ -145,17 +145,17 @@ class PresupuestoController extends Controller
      *  AUXILIARES (compartidos por formulario y API)
      * ========================================================= */
 
-    private function reglas(): array
+    private function reglas(bool $creando = true): array
     {
         return [
             'numero_alumnos'      => ['required', 'integer', 'min:1'],
             'nombre_formacion'    => ['required', 'string', 'max:45'],
-            'horas_totales'       => ['required', 'integer', 'min:1'],
+            'horas_totales'       => ['required', 'numeric', 'min:1'],   // double en la BD
             'ubicacion_formacion' => ['required', 'string', 'max:90'],
-            'objetivos'           => ['required', 'string', 'max:150'],
-            'contenidos'          => ['required', 'string', 'max:450'],
+            // 'objetivos' y 'contenidos' ya no están aquí: ahora son curso.objetivos / curso.contenido
             'importe_bonificado'  => ['required', 'numeric', 'min:0', 'max:99999999.99', 'decimal:0,2'],
-            'fecha_bonificado'    => ['required', 'date', 'after_or_equal:today'],
+            // Al crear no puede ser pasada; al editar se respeta la que ya tenía
+            'fecha_bonificado'    => $creando ? ['required', 'date', 'after_or_equal:today'] : ['required', 'date'],
         ];
     }
 

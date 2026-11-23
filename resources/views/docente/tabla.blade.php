@@ -1,55 +1,41 @@
-<!DOCTYPE html>
-<html lang="es">
+@php
+    $total = method_exists($docentes, 'total') ? $docentes->total() : $docentes->count();
+    $tituloCurso = $curso->formacion?->nombre ?? ('Curso ' . $curso->codigo_accion . '/' . $curso->codigo_grupo);
+@endphp
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Docentes</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-</head>
+<x-interfaz.layout.app titulo="Docentes · {{ $tituloCurso }}" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
 
-<body class="min-h-screen bg-slate-100 px-4 py-10">
-    @php
-        $total = method_exists($docentes, 'total') ? $docentes->total() : $docentes->count();
-    @endphp
-
-    <x-tabla.tarjeta titulo="Docentes" subtitulo="{{ $total }} registrados">
+    <x-interfaz.panel.cabecera titulo="Docentes del curso" subtitulo="{{ $tituloCurso }} · {{ $total }} {{ $total === 1 ? 'docente' : 'docentes' }}">
         <x-slot:acciones>
+            <a href="{{ route('curso.visualizar', $curso) }}"
+               class="inline-flex items-center gap-1 rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-marca-950 hover:bg-stone-50">
+                ← Volver al curso
+            </a>
             <a href="{{ route('persona.create') }}"
-               class="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2 font-medium text-white hover:bg-blue-700">
-                + Nuevo docente
+               class="inline-flex items-center rounded-lg bg-marca-800 px-5 py-2 text-sm font-semibold text-white hover:bg-marca-900">
+                Nueva persona
             </a>
         </x-slot:acciones>
+    </x-interfaz.panel.cabecera>
 
-        @if (session('ok'))
-            <div class="mb-6 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
-                {{ session('ok') }}
-            </div>
-        @endif
-
-        <x-tabla.tabla vacio="Todavía no hay docentes guardados."
+    <x-interfaz.panel.tarjeta titulo="Listado de docentes">
+        <x-tabla.tabla vacio="Este curso todavía no tiene docentes."
             :columnas="['Nombre', 'DNI / NIE', 'Email', 'Teléfono', 'Nacimiento', 'Nacionalidad', ['LOPD', 'center']]">
-            @foreach ($docentes as $docente)
-                @php
-                    $lopd = $docente->LOPD->value ?? $docente->LOPD;
-                @endphp
-                <tr class="hover:bg-slate-50">
-                    <td class="px-4 py-3 font-medium text-slate-800">
-                        {{ $docente->nombre }} {{ $docente->primer_apellido }} {{ $docente->segundo_apellido }}
+            @foreach ($docentes as $persona)
+                @php $lopd = $persona->LOPD->value ?? $persona->LOPD; @endphp
+                <tr class="hover:bg-stone-50">
+                    <td class="px-4 py-3 font-semibold text-slate-900">
+                        {{ $persona->nombre }} {{ $persona->primer_apellido }} {{ $persona->segundo_apellido }}
                     </td>
-                    <td class="px-4 py-3 font-mono text-slate-700">{{ $docente->DNI ?? $docente->NIE ?? '—' }}</td>
-                    <td class="px-4 py-3 text-slate-700">{{ $docente->email ?? '—' }}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $docente->telefono ?? '—' }}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">
-                        {{ $docente->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
-                    </td>
-                    <td class="px-4 py-3 text-slate-700">{{ $docente->nacionalidad ?? '—' }}</td>
+                    <td class="px-4 py-3 font-mono text-slate-700">{{ $persona->DNI ?? $persona->NIE ?? '—' }}</td>
+                    <td class="px-4 py-3 text-slate-700">{{ $persona->email ?? '—' }}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $persona->telefono ?? '—' }}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $persona->fecha_nacimiento?->format('d/m/Y') ?? '—' }}</td>
+                    <td class="px-4 py-3 text-slate-700">{{ $persona->nacionalidad ?? '—' }}</td>
                     <td class="px-4 py-3 text-center">
-                        @if ($lopd === 'SI')
-                            <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">Sí</span>
-                        @else
-                            <span class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">No</span>
-                        @endif
+                        <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $lopd === 'SI' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                            {{ $lopd === 'SI' ? 'Sí' : 'No' }}
+                        </span>
                     </td>
                 </tr>
             @endforeach
@@ -58,7 +44,6 @@
         @if (method_exists($docentes, 'links'))
             <div class="mt-4">{{ $docentes->links() }}</div>
         @endif
-    </x-tabla.tarjeta>
-</body>
+    </x-interfaz.panel.tarjeta>
 
-</html>
+</x-interfaz.layout.app>

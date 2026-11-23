@@ -100,6 +100,8 @@ class InicioController extends Controller
             ->values();
 
         // FUNDAE y logística
+        // OJO: en la BD fecha_envio es NOT NULL, así que whereNull() siempre da 0.
+        // Hay que hacer la columna NULL (ver nota) para que "pendiente" funcione.
         $fundaePendientes = ComunicacionFundae::whereNull('fecha_envio')->count();
         $fundaeVencidas   = ComunicacionFundae::whereNull('fecha_envio')
             ->whereDate('fecha_limite', '<', $hoy)
@@ -137,8 +139,9 @@ class InicioController extends Controller
             'totalFormaciones'   => Formacion::count(),
             'totalAulas'         => Aula::count(),
             'totalCentros'       => Centro::count(),
-            'totalAlumnos'       => Rol::where('rol', 'ALUMNO')->distinct()->count('persona_id'),
-            'totalDocentes'      => Rol::where('rol', 'DOCENTE')->distinct()->count('persona_id'),
+            // El enum `rol` de la BD no tiene ALUMNO/DOCENTE: se cuentan por sus tablas
+            'totalAlumnos'       => DB::table('curso_alumno')->distinct()->count('persona_id'),
+            'totalDocentes'      => DB::table('curso_docente')->distinct()->count('persona_id'),
 
             'fundaePendientes'   => $fundaePendientes,
             'fundaeVencidas'     => $fundaeVencidas,
@@ -164,7 +167,12 @@ class InicioController extends Controller
         $finSemana    = $hoy->copy()->startOfWeek()->addDays(4);   // viernes
         $dentroDe7    = $hoy->copy()->addDays(7);
 
-        $nombreCurso = fn ($curso) => $curso?->formacion?->nombre ?? ('Curso ' . ($curso?->codigo_curso ?? ''));
+        // codigo_curso ya no existe: el curso se identifica por acción/grupo
+        $nombreCurso = fn ($curso) => $curso?->formacion?->nombre
+            ?? ('Curso ' . ($curso ? $curso->codigo_accion . '/' . $curso->codigo_grupo : ''));
+
+        // aula_virtual ya no es columna de curso: está en la tabla curso_aula_virtual
+        $conAulaVirtual = DB::table('curso_aula_virtual')->pluck('curso_id')->all();
 
         // --- Indicadores ---
         $cursosEnMarcha = Curso::whereDate('fecha_inicio', '<=', $hoy)
@@ -241,7 +249,7 @@ class InicioController extends Controller
         foreach ($proximos as $curso) {
             $empieza = 'Empieza el ' . $curso->fecha_inicio->locale('es')->isoFormat('dddd D/M');
 
-            if (! $curso->aula && ! $curso->aula_virtual) {
+            if (! $curso->aula && ! in_array($curso->id, $conAulaVirtual)) {
                 $tareas[] = ['etiqueta' => 'Sin aula', 'color' => 'ambar', 'titulo' => $nombreCurso($curso),
                     'detalle' => $empieza, 'accion' => 'Asignar aula', 'ruta' => 'curso.crearTablaCurso'];
             }
@@ -287,7 +295,7 @@ class InicioController extends Controller
                         'hora'   => $c->hora_inicio
                             ? substr($c->hora_inicio, 0, 5) . ($c->hora_final ? '–' . substr($c->hora_final, 0, 5) : '')
                             : 'Sin horario',
-                        'lugar'  => $c->aula ?: ($c->aula_virtual ? 'Aula virtual' : 'Sin aula'),
+                        'lugar'  => $c->aula ?: (in_array($c->id, $conAulaVirtual) ? 'Aula virtual' : 'Sin aula'),
                         'tarde'  => ($c->turno instanceof \BackedEnum ? $c->turno->value : $c->turno) === 'TARDE',
                     ])
                     ->values(),
