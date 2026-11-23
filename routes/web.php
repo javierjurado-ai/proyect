@@ -23,7 +23,6 @@ use Illuminate\Support\Facades\Auth;
     Route::get('/persona/iniciarSesion', [AuthController::class, 'mostrarInicioSesion'])->name('login');
 Route::post('/persona/iniciarSesion', [AuthController::class, 'iniciarSesion']);
 
-Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
 
 Route::post('/persona', [PersonaController::class, 'agregarPersona']);      
 Route::post('/persona/crearUsuario', [AuthController::class, 'crearUsuario'])->name('persona.crearUsuario');
@@ -37,15 +36,13 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::get('/', function () {
-        return view('curso.formulario');
-    });
+    // La portada lleva al inicio de cada rol
+    Route::get('/', fn () => redirect()->route('inicio.index'));
 
     Route::get('/probar-logistica', function () {
         return PeticionesLogistica::all();
     });
 
-    Route::resource('cursos', CursoController::class);
 
  
 
@@ -66,10 +63,10 @@ Route::middleware('auth')->group(function () {
 
     // Rutas para el controlador de créditos formativos
     Route::get('/credito', [CreditoFormativoController::class, 'listarCredito']);
-    Route::get('/credito/{id}', [CreditoFormativoController::class, 'obtenerCreditoPorID']);
+    Route::get('/credito/{id}', [CreditoFormativoController::class, 'obtenerCredito']);
     Route::post('/credito', [CreditoFormativoController::class, 'crearCredito']);
     Route::put('/credito/{id}', [CreditoFormativoController::class, 'actualizarCredito']);
-    Route::delete('/credito/{id}', [CreditoFormativoController::class, 'eliminarcredito']);
+    Route::delete('/credito/{id}', [CreditoFormativoController::class, 'eliminarCredito']);
 
     // Rutas para el controlador de peticiones logistica
     Route::get('/peticionesLogistica/listar', [PeticionesLogisticaController::class, 'listarPeticionesLogistica']);
@@ -98,6 +95,11 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/rol/{id}', [CentroController::class, 'agregarRolCoordinador']);
 
+    Route::get('/view/persona', [PersonaController::class, 'index'])->name('persona.index');
+    Route::get('/view/formularioPersona', [PersonaController::class, 'create'])->name('persona.crearFormulario');
+    Route::put('/persona/{id}', [PersonaController::class, 'update'])->name('persona.update');
+    
+    Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
     Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
 
     // Views
@@ -132,6 +134,7 @@ Route::middleware('auth')->group(function () {
     
     // Rutas web para la gestión de Empresas (Editar, Actualizar y Eliminar)
     Route::get('/view/listadoEmpresa', [EmpresaController::class, 'index'])->name('empresa.index');
+    Route::get('/view/empresa/{empresa}', [EmpresaController::class, 'visualizarEmpresa'])->name('empresa.visualizar')->whereNumber('empresa');
     Route::get('/view/formulario/crearEmpresa', [EmpresaController::class, 'mostrarFormulario'])->name('empresa.create');
     Route::post('/view/formulario/crearEmpresa', [EmpresaController::class, 'agregarEmpresa'])->name('empresa.store');
     Route::get('/view/formulario/editarEmpresa/{id}', [EmpresaController::class, 'vistaEditar'])->name('empresa.editar')->whereNumber('id');

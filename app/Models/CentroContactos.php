@@ -35,12 +35,4 @@ class CentroContactos extends Model
     {
         return $this->belongsTo(Curso::class, 'curso_id', 'id');
     }
-    public function curso(): BelongsTo
-    {
-        return $this->belongsTo(
-            Curso::class,
-            'curso_id',
-            'id'
-        );
-    }
 }

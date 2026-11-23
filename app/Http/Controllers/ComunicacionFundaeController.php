@@ -17,7 +17,7 @@ class ComunicacionFundaeController extends Controller
     {
         $comunicaciones = ComunicacionFundae::findOrFail($id);
 
-        return response()->json($comunicaciones, 201);
+        return response()->json($comunicaciones, 200);
     }
     public function agregarComunicacionFundae(Request $request)
     {
@@ -26,7 +26,6 @@ class ComunicacionFundaeController extends Controller
             'tipo' => ['required', Rule::enum(Tipo::class)],
             'fecha_limite' => ['required', 'date'],
             'fecha_envio' => ['required', 'date'],
-            'referencia' => ['required', 'string', 'max:60']
         ]);
 
         return response()->json(ComunicacionFundae::create($datos), 201);
@@ -41,7 +40,6 @@ class ComunicacionFundaeController extends Controller
             'tipo'          => ['required', Rule::enum(Tipo::class)],
             'fecha_limite'  => ['required', 'date'],
             'fecha_envio'   => ['required', 'date'],
-            'referencia'    => ['required', 'string', 'max:60'],
         ]);
 
         $comunicacion->update($datos);

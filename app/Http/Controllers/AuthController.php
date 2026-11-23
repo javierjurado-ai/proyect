@@ -44,20 +44,26 @@ class AuthController extends Controller
         ]);
     }
 
+    // Solo un administrador conectado puede crear usuarios (la ruta está dentro de 'auth')
     public function crearUsuario(Request $request)
     {
+        $rol = \App\Models\Rol::where('persona_id', Auth::user()->persona_id)->value('rol')?->value;
+        abort_unless($rol === 'ADMINISTRADOR', 403, 'Solo un administrador puede crear usuarios.');
+
         $datos = $request->validate([
             'usuario'    => ['required', 'string', 'max:45', 'unique:usuario,usuario'],
-            'contrasena' => ['required', 'max:250', 'confirmed'],
-            'persona_id' => ['required', 'exists:persona,id'],
+            'contrasena' => ['required', 'min:8', 'max:250', 'confirmed'],
+            // Una persona solo puede tener un usuario
+            'persona_id' => ['required', 'exists:persona,id', 'unique:usuario,persona_id'],
+        ], [
+            'persona_id.unique' => 'Esta persona ya tiene un usuario.',
+            'contrasena.min'    => 'La contraseña debe tener al menos :min caracteres.',
         ]);
 
-        $usuario = Usuario::create($datos);
+        Usuario::create($datos);
 
-        Auth::login($usuario);
-        $request->session()->regenerate();
-
-        return redirect('/persona/listar');
+        // El administrador sigue conectado como él mismo (antes se cambiaba al usuario nuevo)
+        return redirect('/persona/listar')->with('ok', 'Usuario creado correctamente.');
     }
 
     public function logout(Request $request)
