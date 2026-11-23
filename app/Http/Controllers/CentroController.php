@@ -247,6 +247,7 @@ class CentroController extends Controller
     {
         return [
             'centro_id'         => 'required|integer|exists:centro,id',
+            'curso_id'          => 'nullable|integer|exists:curso,id',
             'nombre'            => 'required|string|max:45',
             'contacto'          => ['required', Rule::enum(Contacto::class)],
             'telefono_personal' => 'nullable|string|max:45',
@@ -257,13 +258,16 @@ class CentroController extends Controller
     private function mensajes(): array
     {
         return [
-            'required'              => 'Este campo es obligatorio.',
-            'max'                   => 'Máximo :max caracteres.',
-            'email'                 => 'El email no es válido.',
-            'integer'               => 'Debe ser un número entero.',
-            'enum'                  => 'El valor elegido no es válido.',
-            'empresa_id.exists'     => 'La empresa elegida no existe.',
-            'codigo_postal.digits'  => 'El código postal debe tener 5 números.'
+            'required'             => 'Este campo es obligatorio.',
+            'max'                  => 'Máximo :max caracteres.',
+            'min'                  => 'El valor mínimo es :min.',
+            'email'                => 'El email no es válido.',
+            'integer'              => 'Debe ser un número entero.',
+            'enum'                 => 'El valor elegido no es válido.',
+            'empresa_id.exists'    => 'La empresa elegida no existe.',
+            'centro_id.exists'     => 'El centro elegido no existe.',
+            'curso_id.exists'      => 'El curso elegido no existe.',
+            'codigo_postal.digits' => 'El código postal debe tener 5 números.',
         ];
     }
 }

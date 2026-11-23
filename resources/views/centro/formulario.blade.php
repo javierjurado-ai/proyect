@@ -17,13 +17,6 @@
         </x-slot:acciones>
     </x-interfaz.panel.cabecera>
 
-    {{-- Mensaje de éxito --}}
-    @if (session('ok') || session('status'))
-        <div id="success-alert" role="status"
-             class="mb-6 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
-            {{ session('ok') ?? session('status') }}
-        </div>
-    @endif
 
     {{-- Error de API --}}
     @error('api')
@@ -65,7 +58,7 @@
 
                     <x-formulario.selector
                         name="empresa_id"
-                        label="Empresa *"
+                        label="Empresa (obligatoria si es externo)"
                         placeholder="Busca una empresa..."
                         :options="$empresas"
                         contenedor="md:col-span-2"

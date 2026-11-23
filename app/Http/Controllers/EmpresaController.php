@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CursoAlumno;
 use App\Models\Empresa;
 use App\Models\Persona;
 use App\Models\Rol;
@@ -41,6 +42,32 @@ class EmpresaController extends Controller
         $empresas = Empresa::orderBy('nombre')->paginate(15);
 
         return view('empresa.index', compact('empresas', 'rol', 'nombre'));
+    }
+
+    // Ficha de la empresa: datos, cursos, créditos, centros, costes y alumnos
+    public function visualizarEmpresa(Empresa $empresa)
+    {
+        $empresa->load([
+            'centros',
+            'creditosFormativos' => fn ($q) => $q->orderByDesc('año'),
+            'cursosGrupo'        => fn ($q) => $q->with('formacion')->orderByDesc('fecha_inicio'),
+            'costes.curso.formacion',
+            'informesRlt',
+        ]);
+
+        // Los datos personales de los alumnos solo los ven administrador y coordinador
+        $rol = Rol::where('persona_id', Auth::user()->persona_id)->value('rol')?->value;
+        $puedeVerAlumnos = in_array($rol, ['ADMINISTRADOR', 'COORDINADOR'], true);
+
+        $alumnos = $puedeVerAlumnos
+            ? CursoAlumno::where('empresa_id', $empresa->id)->with(['persona', 'curso.formacion'])->get()
+                ->sortBy(fn ($a) => $a->persona?->primer_apellido . ' ' . $a->persona?->nombre)->values()
+            : collect();
+
+        // Crédito del año en curso
+        $creditoActual = $empresa->creditosFormativos->firstWhere('año', today()->year);
+
+        return view('empresa.visualizar', compact('empresa', 'alumnos', 'puedeVerAlumnos', 'creditoActual'));
     }
 
     // Mostrar la vista del formulario de creación web

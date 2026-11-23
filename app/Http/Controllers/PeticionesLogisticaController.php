@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\PeticionesLogistica;
-use App\Models\enums\Estado;
+use App\Models\Enums\Estado;
+use Illuminate\Database\QueryException;
 use Illuminate\Validation\Rule;
 
 class PeticionesLogisticaController extends Controller
@@ -17,14 +18,14 @@ class PeticionesLogisticaController extends Controller
     {
         $peticionesLogistica = PeticionesLogistica::findOrFail($id);
 
-        return response()->json($peticionesLogistica, 201);
+        return response()->json($peticionesLogistica, 200);
     }
     public function agregarPeticionLogistica(Request $request)
     {
         $datos = $request->validate([
             'fecha'         => ['required', 'date'],
             'estado'        => ['required', Rule::enum(Estado::class)],
-            'observaciones' => ['nullable', 'string'],
+            'observaciones' => ['nullable', 'string', 'max:200'],
         ]);
 
         return response()->json(PeticionesLogistica::create($datos), 201);
@@ -37,7 +38,7 @@ class PeticionesLogisticaController extends Controller
         $datos = $request->validate([
             'fecha'         => ['required', 'date'],
             'estado'        => ['required', Rule::enum(Estado::class)],
-            'observaciones' => ['nullable', 'string'],
+            'observaciones' => ['nullable', 'string', 'max:200'],
         ]);
 
 
@@ -50,8 +51,13 @@ class PeticionesLogisticaController extends Controller
     {
         $comunicaciones = PeticionesLogistica::findOrFail($id);
 
-        $comunicaciones->delete();
-
-        return response()->json(['mensaje' => 'peticion logistica eliminada'], 200);
+        try {
+            $comunicaciones->delete();
+            return response()->json(['mensaje' => 'peticion logistica eliminada'], 200);
+        } catch (QueryException $e) {
+            return response()->json([
+                'mensaje' => 'No se puede eliminar: tiene productos o cursos asociados',
+            ], 409);
+        }
     }
 }

@@ -1,6 +1,6 @@
 @php
     // Enlace a una ruta solo si existe (algunas secciones aún no tienen página)
-    $ruta = fn (string $nombre) => \Illuminate\Support\Facades\Route::has($nombre) ? route($nombre) : '#';
+    $ruta = fn (string $nombre) => \Illuminate\Support\Facades\Route::has($nombre) ? route($nombre) : null; // null = página aún sin hacer
     $euros = fn ($n) => number_format((float) $n, 0, ',', '.') . ' €';
 
     $areas = [
@@ -67,10 +67,12 @@
 <x-interfaz.layout.app titulo="Inicio" :rol="$rol" :usuario="$nombre" :contadores="['fundae' => $fundaePendientes ?: null, 'logistica' => $logisticaPendiente ?: null, 'usuarios' => $usuariosSinRol ?: null]">
         <x-interfaz.panel.cabecera :titulo="'Hola, ' . $primerNombre" subtitulo="Resumen de toda la plataforma">
         <x-slot:acciones>
-            <a href="{{ $ruta('usuario.index') }}"
-               class="inline-flex items-center rounded-lg bg-marca-800 px-5 py-2 text-sm font-semibold text-white hover:bg-marca-900">
-                + Nuevo usuario
-            </a>
+            @if ($ruta('usuario.index'))
+                <a href="{{ $ruta('usuario.index') }}"
+                   class="inline-flex items-center rounded-lg bg-marca-800 px-5 py-2 text-sm font-semibold text-white hover:bg-marca-900">
+                    + Nuevo usuario
+                </a>
+            @endif
         </x-slot:acciones>
     </x-interfaz.panel.cabecera>
     {{-- Indicadores--}}
@@ -102,14 +104,16 @@
                     <h2 class="mb-4 text-lg font-bold text-marca-950">{{ $area['titulo'] }}</h2>
                     <div class="grid grid-cols-2 gap-3">
                         @foreach ($area['items'] as [$texto, $valor, $nombreRuta, $nota])
-                            <a href="{{ $ruta($nombreRuta) }}"
-                               class="flex flex-col gap-0.5 rounded-lg bg-stone-50 p-3 transition hover:bg-marca-50">
+                            @php $url = $ruta($nombreRuta); @endphp
+                            {{-- Si la página aún no existe, la tarjeta se muestra sin enlace --}}
+                            <{{ $url ? 'a' : 'div' }} @if ($url) href="{{ $url }}" @endif
+                               class="flex flex-col gap-0.5 rounded-lg bg-stone-50 p-3 {{ $url ? 'transition hover:bg-marca-50' : '' }}">
                                 <span class="text-2xl font-bold text-marca-950">{{ $valor }}</span>
                                 <span class="text-sm font-semibold text-slate-600">{{ $texto }}</span>
                                 @if ($nota)
                                     <span class="text-xs font-semibold {{ $nota[1] }}">{{ $nota[0] }}</span>
                                 @endif
-                            </a>
+                            </{{ $url ? 'a' : 'div' }}>
                         @endforeach
                     </div>
                 </div>

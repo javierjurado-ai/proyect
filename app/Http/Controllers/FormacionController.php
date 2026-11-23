@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Enums\Modalidad;
 use App\Models\Formacion;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -38,8 +37,7 @@ class FormacionController extends Controller
         $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
             ->filter()
             ->implode(' ');
-        $rol = Rol::where('persona_id', Auth::user()->persona_id)->value('rol')?->value;
-        $formaciones = Formacion::orderBy('nombre')->paginate(15);
+        $formaciones = Formacion::withCount('cursos')->orderBy('nombre')->paginate(15);
 
         return view('formacion.index', compact('formaciones', 'rol', 'nombre'));
     }
@@ -47,14 +45,7 @@ class FormacionController extends Controller
     // Guarda lo enviado desde el formulario y vuelve a la tabla
     public function store(Request $request)
     {
-        $datos = $request->validate([
-            'nombre'        => 'required|string|max:100',
-            'codigo_accion' => 'required|integer|min:1',
-            'modalidad'     => ['required', Rule::enum(Modalidad::class)],
-            'sector'        => 'required|string|max:60',
-            'horas_totales' => 'nullable|integer|min:1|max:9999',
-            'activo'        => 'nullable|boolean',
-        ]);
+        $datos = $request->validate($this->reglas());
 
         // Asegura que si no viene marcado se guarde como falso (0) o verdadero (1)
         $datos['activo'] = $request->has('activo') ? 1 : 0;
@@ -77,11 +68,7 @@ class FormacionController extends Controller
             ->filter()
             ->implode(' ');
 
-        $modalidades = collect(Modalidad::cases())->mapWithKeys(
-            fn($modalidad) => [$modalidad->value => ucfirst($modalidad->name)]
-        );
-
-        return view('formacion.formulario', compact('modalidades', 'rol', 'nombre'));
+        return view('formacion.formulario', compact('rol', 'nombre'));
     }
 
     // Muestra el formulario de edición con los datos de la formación
@@ -98,11 +85,7 @@ class FormacionController extends Controller
 
         $formacion = Formacion::findOrFail($id);
 
-        $modalidades = collect(Modalidad::cases())->mapWithKeys(
-            fn($modalidad) => [$modalidad->value => ucfirst($modalidad->name)]
-        );
-
-        return view('formacion.formulario', compact('formacion', 'modalidades', 'rol', 'nombre'));
+        return view('formacion.formulario', compact('formacion', 'rol', 'nombre'));
     }
 
     // Actualiza la formación enviada desde el formulario web
@@ -110,14 +93,7 @@ class FormacionController extends Controller
     {
         $formacion = Formacion::findOrFail($id);
 
-        $datos = $request->validate([
-            'nombre'        => 'required|string|max:100',
-            'codigo_accion' => 'required|integer|min:1',
-            'modalidad'     => ['required', Rule::enum(Modalidad::class)],
-            'sector'        => 'required|string|max:60',
-            'horas_totales' => 'nullable|integer|min:1|max:9999',
-            'activo'        => 'nullable|boolean',
-        ]);
+        $datos = $request->validate($this->reglas());
 
         // Asegura que si no viene marcado se guarde como falso (0) o verdadero (1)
         $datos['activo'] = $request->has('activo') ? 1 : 0;
@@ -171,16 +147,10 @@ class FormacionController extends Controller
     // Crear una nueva formación
     public function crearFormacion(Request $request)
     {
-        $datos = $request->validate([
-            'nombre'        => 'required|string|max:100',
-            'codigo_accion' => 'required|integer|min:1',
-            'modalidad'     => ['required', Rule::enum(Modalidad::class)],
-            'sector'        => 'required|string|max:60',
-            'horas_totales' => 'nullable|integer|min:1|max:9999',
-            'activo'        => 'nullable|boolean',
-        ]);
+        $datos = $request->validate($this->reglas());
 
-        $formacion = Formacion::create($datos);
+        // Si no se envía 'activo', la BD pone 1 por defecto
+        $formacion = Formacion::create(array_filter($datos, fn ($v) => $v !== null));
 
         return response()->json($formacion, 201);
     }
@@ -194,14 +164,7 @@ class FormacionController extends Controller
             return response()->json(['mensaje' => 'Formación no encontrada'], 404);
         }
 
-        $datos = $request->validate([
-            'nombre'        => 'required|string|max:100',
-            'codigo_accion' => 'required|integer|min:1',
-            'modalidad'     => ['required', Rule::enum(Modalidad::class)],
-            'sector'        => 'required|string|max:60',
-            'horas_totales' => 'nullable|integer|min:1|max:9999',
-            'activo'        => 'nullable|boolean',
-        ]);
+        $datos = $request->validate($this->reglas());
 
         $formacion->update($datos);
 
@@ -225,5 +188,20 @@ class FormacionController extends Controller
                 'mensaje' => 'No se puede eliminar: la formación tiene cursos asociados',
             ], 409);
         }
+    }
+
+    /* =========================================================
+     *  AUXILIARES
+     * ========================================================= */
+
+    // Columnas de la tabla formacion (ya no tiene 'modalidad' ni 'sector')
+    private function reglas(): array
+    {
+        return [
+            'nombre'        => 'required|string|max:100',
+            'codigo_accion' => 'nullable|integer|min:1',   // int NULL en la BD
+            'horas_totales' => 'nullable|numeric|min:1|max:9999',
+            'activo'        => 'nullable|boolean',
+        ];
     }
 }

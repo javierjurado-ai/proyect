@@ -1,61 +1,93 @@
-<!DOCTYPE html>
-<html lang="es">
+@php
+    $editando = isset($empresa);
+@endphp
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ isset($empresa) ? 'Editar Empresa' : 'Crear Empresa' }}</title>
-    <title>Crear Empresa</title>
-    <script>
-        const expira = Number(sessionStorage.getItem('expira')); 
+<x-interfaz.layout.app :titulo="$editando ? 'Editar empresa' : 'Nueva empresa'" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
 
-        if (!token || Date.now() / 1000 > expira) {
-            sessionStorage.clear();
-            window.location.href = '/persona/iniciarSesion';
-        }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-</head>
+    <x-interfaz.panel.cabecera
+        :titulo="$editando ? 'Editar empresa' : 'Nueva empresa'"
+        subtitulo="Los campos marcados con * son obligatorios">
+        <x-slot:acciones>
+            <a href="{{ route('empresa.index') }}"
+               class="inline-flex items-center gap-1 rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-marca-950 hover:bg-stone-50">
+                ← Volver a empresas
+            </a>
+        </x-slot:acciones>
+    </x-interfaz.panel.cabecera>
 
-<body class="min-h-screen bg-slate-100 px-4 py-10">
-    <x-formulario.tarjeta titulo="Empresa" subtitulo="Los campos marcados con * son obligatorios">
-        <form id="empresa-form" method="POST" action="{{ isset($empresa) ? route('empresa.actualizar', $empresa->id) : route('empresa.store') }}">
+    {{-- Resumen de errores (igual que en cursos, centros y formaciones) --}}
+    @if ($errors->any())
+        <div role="alert" class="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Revisa los campos marcados en rojo ({{ $errors->count() }} {{ $errors->count() === 1 ? 'error' : 'errores' }}).
+        </div>
+    @endif
+
+    <section class="rounded-xl border border-stone-200 bg-white p-6 lg:p-8">
+        <form id="empresa-form" method="POST"
+              action="{{ $editando ? route('empresa.actualizar', $empresa->id) : route('empresa.store') }}">
             @csrf
-            @if(isset($empresa))
+            @if ($editando)
                 @method('PUT')
             @endif
 
-            @if (session('success'))
-                <div id="success-alert" class="mb-6 rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-700 shadow-sm">
-                    {{ session('success') }}
+            <fieldset class="mb-8">
+                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Datos de la empresa</legend>
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+                    {{-- El componente ya usa old() primero: si hay un error se conserva lo escrito --}}
+                    <x-formulario.entrada
+                        name="cif"
+                        label="CIF *"
+                        placeholder="B12345678"
+                        maxlength="15"
+                        class="uppercase"
+                        :value="$empresa->cif ?? ''" />
+
+                    <x-formulario.entrada
+                        name="nombre"
+                        label="Nombre *"
+                        maxlength="100"
+                        contenedor="md:col-span-2"
+                        :value="$empresa->nombre ?? ''" />
+
+                    <x-formulario.entrada
+                        name="total_trabajadores"
+                        label="Total trabajadores"
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="0"
+                        :value="$empresa->total_trabajadores ?? ''" />
                 </div>
-            @endif
+            </fieldset>
 
-            @if ($errors->any())
-                <div class="mb-6 rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700 shadow-sm">
-                    <ul class="list-disc pl-5 space-y-1">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            <x-formulario.seccion titulo="Datos de la empresa">
-                <x-formulario.entrada name="cif" label="CIF *" placeholder="A12345678" maxlength="15" :value="$empresa?->cif ?? old('cif')" required />
-                <x-formulario.entrada name="nombre" label="Nombre *" maxlength="100"
-                    contenedor="md:col-span-2" :value="$empresa?->nombre ?? old('nombre')" required />
-
-                <x-formulario.entrada name="total_trabajadores" label="Total trabajadores" type="number" min="0"
-                    placeholder="0" :value="$empresa?->total_trabajadores ?? old('total_trabajadores')" />
-            </x-formulario.seccion>
-
-            <div class="flex justify-end gap-3">
-                <x-formulario.boton type="reset" variante="secundario">Limpiar</x-formulario.boton>
-                <x-formulario.boton type="submit">{{ isset($empresa) ? 'Actualizar empresa' : 'Guardar empresa' }}</x-formulario.boton>
+            <div class="flex flex-wrap justify-end gap-3">
+                <a href="{{ route('empresa.index') }}"
+                   class="inline-flex items-center justify-center rounded-lg px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-stone-100">
+                    Cancelar
+                </a>
+                <button type="reset"
+                        class="inline-flex items-center justify-center rounded-lg border border-stone-300 bg-white px-5 py-2 text-sm font-semibold text-marca-950 hover:bg-stone-50">
+                    Limpiar
+                </button>
+                <button type="submit"
+                        class="inline-flex items-center justify-center rounded-lg bg-marca-800 px-5 py-2 text-sm font-semibold text-white hover:bg-marca-900">
+                    {{ $editando ? 'Actualizar empresa' : 'Guardar empresa' }}
+                </button>
             </div>
         </form>
-    </x-formulario.tarjeta>
-</body>
+    </section>
 
-</html>
+    <script>
+        // El CIF se guarda en mayúsculas y sin espacios
+        const cif = document.getElementById('cif');
+        document.getElementById('empresa-form').addEventListener('submit', () => {
+            cif.value = cif.value.replace(/\s+/g, '').toUpperCase();
+        });
+
+        // El mensaje de éxito desaparece al empezar a escribir
+        document.getElementById('empresa-form').addEventListener('focusin', () => {
+            document.getElementById('success-alert')?.remove();
+        }, { once: true });
+    </script>
+
+</x-interfaz.layout.app>

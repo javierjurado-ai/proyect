@@ -108,7 +108,8 @@
             <div class="flex flex-col gap-2">
                 <div class="flex items-baseline justify-between gap-3">
                     <label for="contrasena" class="text-sm font-bold">Contraseña</label>
-                    <a href="#" class="text-sm font-semibold text-marca-700 underline hover:text-marca-900">¿Has olvidado tu contraseña?</a>
+                    {{-- No hay recuperación de contraseña: la restablece un administrador --}}
+                    <span class="text-xs text-slate-500" title="Un administrador puede restablecerla">¿Olvidaste la contraseña? Avisa a un administrador</span>
                 </div>
                 <div class="relative">
                     <input id="contrasena" name="contrasena" type="password" autocomplete="current-password" required
