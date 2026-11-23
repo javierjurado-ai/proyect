@@ -178,54 +178,65 @@
                 @endif
             </x-interfaz.panel.tarjeta>
         </x-slot:informacion>
-        {{-- Solo administrador y coordinador. Para el resto el slot queda vacío
-             y el componente de pestañas no muestra la pestaña. --}}
-        <x-slot:alumnos title="Alumnos ({{ $alumnos->count() }})">
-            @if ($puedeVerAlumnos)
-                @php
-                    $textos = [
-                        'MENOS_PRIMARIA' => 'Menos que primaria', 'PRIMARIA' => 'Primaria', 'ESO_EGB' => 'ESO / EGB',
-                        'BACHILLERATO_FP_MEDIO' => 'Bachillerato / FP medio', 'CP_NIVEL_3' => 'Cert. profesional nivel 3',
-                        'FP_SUPERIOR' => 'FP superior', 'GRADO_DIPLOMATURA' => 'Grado / Diplomatura',
-                        'LICENCIATURA_MASTER' => 'Licenciatura / Máster', 'DOCTORADO' => 'Doctorado', 'OTRAS' => 'Otras',
-                        'DIRECTIVO' => 'Directivo', 'MANDO_INTERMEDIO' => 'Mando intermedio', 'TECNICO' => 'Técnico',
-                        'TRABAJADOR_CUALIFICADO' => 'Trabajador cualificado', 'TRABAJADOR_BAJA_CUALIFICACION' => 'Baja cualificación',
-                    ];
-                @endphp
+        <x-slot:alumnos title="Alumnos">
+            <x-interfaz.panel.tarjeta titulo="Alumnos matriculados">
+                <div class="mb-4 flex items-center justify-between">
+                    <p class="text-sm text-slate-500">{{ $curso->alumnos->count() }} registrados</p>
+                    <a href="{{ route('persona.create') }}"
+                       class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
+                        + Nuevo alumno
+                    </a>
+                </div>
 
-                <x-interfaz.panel.tarjeta titulo="Alumnos inscritos">
-                    <x-tabla.tabla vacio="Este curso todavía no tiene alumnos inscritos."
-                        :columnas="['Alumno', 'DNI / NIE', 'Contacto', 'Empresa', 'Estudios', 'Categoría', ['Diploma', 'center']]">
-                        @foreach ($alumnos as $inscripcion)
-                            @php $p = $inscripcion->persona; @endphp
-                            <tr class="hover:bg-stone-50">
-                                <td class="px-4 py-3 font-semibold text-slate-900">
-                                    {{ $p?->primer_apellido }} {{ $p?->segundo_apellido }}, {{ $p?->nombre }}
-                                    @if ($inscripcion->certificado_discapacidad === 'SI')
-                                        <span class="ml-1 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-800">Discapacidad</span>
+                @if (session('ok'))
+                    <div class="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
+                        {{ session('ok') }}
+                    </div>
+                @endif
+
+                <x-tabla.tabla vacio="Todavía no hay alumnos matriculados en este curso."
+                    :columnas="['Nombre', 'DNI / NIE', 'Email', 'Teléfono', 'Nacimiento', 'Nacionalidad', ['LOPD', 'center'], ['Acciones', 'center']]">
+                    
+                    @foreach ($curso->alumnos as $cursoAlumno)
+                        @php
+                            $alumno = $cursoAlumno->persona;
+                            $lopd = $alumno?->LOPD?->value ?? $alumno?->LOPD ?? 'NO';
+                        @endphp
+                        
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-3 font-medium text-slate-800">
+                                {{ $alumno ? $alumno->nombre . ' ' . $alumno->primer_apellido . ' ' . $alumno->segundo_apellido : '—' }}
+                            </td>
+                            <td class="px-4 py-3 font-mono text-slate-700">{{ $alumno?->DNI ?? $alumno?->NIE ?? '—' }}</td>
+                            <td class="px-4 py-3 text-slate-700">{{ $alumno?->email ?? '—' }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $alumno?->telefono ?? '—' }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-slate-700">
+                                {{ $alumno?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($alumno->fecha_nacimiento)->format('d/m/Y') : '—' }}
+                            </td>
+                            <td class="px-4 py-3 text-slate-700">{{ $alumno?->nacionalidad ?? '—' }}</td>
+                            
+                            <td class="px-4 py-3 text-center">
+                                @if (strtoupper((string) $lopd) === 'SI')
+                                    <span class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">Sí</span>
+                                @else
+                                    <span class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">No</span>
+                                @endif
+                            </td>
+
+                            <td class="px-4 py-3 text-center whitespace-nowrap">
+                                <div class="inline-flex items-center gap-2">
+                                    @if($alumno)
+                                        <x-tabla.boton-editar :href="route('persona.edit', $alumno->id)" />
                                     @endif
-                                </td>
-                                <td class="px-4 py-3 font-mono text-slate-700">{{ $p?->DNI ?? $p?->NIE ?? '—' }}</td>
-                                <td class="px-4 py-3 text-slate-700">
-                                    <span class="block">{{ $p?->email ?? '—' }}</span>
-                                    <span class="block text-xs text-slate-500">{{ $p?->telefono }}</span>
-                                </td>
-                                <td class="px-4 py-3 text-slate-700">{{ $inscripcion->empresa?->nombre ?? '—' }}</td>
-                                <td class="px-4 py-3 text-slate-700">{{ $textos[$inscripcion->nivel_estudio] ?? $inscripcion->nivel_estudio }}</td>
-                                <td class="px-4 py-3 text-slate-700">{{ $textos[$inscripcion->categoria_profesional] ?? $inscripcion->categoria_profesional }}</td>
-                                <td class="px-4 py-3 text-center">
-                                    <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold
-                                        {{ $inscripcion->diploma === 'SI' ? 'bg-green-100 text-green-800' : 'bg-stone-100 text-slate-600' }}">
-                                        {{ $inscripcion->diploma === 'SI' ? 'Sí' : 'No' }}
-                                    </span>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </x-tabla.tabla>
-                </x-interfaz.panel.tarjeta>
-            @endif
+                                    
+                                    <x-tabla.boton-eliminar :action="route('curso.alumno.destroy', [$curso->id, $cursoAlumno->id])" />
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </x-tabla.tabla>
+            </x-interfaz.panel.tarjeta>
         </x-slot:alumnos>
-        
 
     </x-interfaz.layout.pestanas>
 

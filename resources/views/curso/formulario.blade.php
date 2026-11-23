@@ -71,6 +71,18 @@
                         :value="$curso->nivel_formacion ?? 0" />
 
                     <x-formulario.entrada
+                        name="codigo_accion"
+                        label="Código de acción *"
+                        maxlength="45"
+                        :value="$curso->codigo_accion ?? ''" />
+
+                    <x-formulario.entrada
+                        name="codigo_grupo"
+                        label="Código de grupo *"
+                        maxlength="45"
+                        :value="$curso->codigo_grupo ?? ''" />
+
+                    <x-formulario.entrada
                         name="empresa_formadora"
                         label="Empresa formadora *"
                         maxlength="50"
@@ -179,8 +191,8 @@
             </fieldset>
 
             <fieldset class="mb-8">
-                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Contenido del curso</legend>
-                <div class="grid grid-cols-1 gap-5">
+                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Contenidos y Objetivos</legend>
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-2 mb-5">
                     <x-formulario.area
                         name="objetivos"
                         label="Objetivos *"

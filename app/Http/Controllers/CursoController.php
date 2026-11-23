@@ -59,16 +59,15 @@ class CursoController extends Controller
         // Para el resto ni siquiera se consultan, así no llegan a la vista.
         $puedeVerAlumnos = in_array($usuario['rol'], ['ADMINISTRADOR', 'COORDINADOR'], true);
 
-        $alumnos = $puedeVerAlumnos
-            ? $curso->alumnos()->with(['persona', 'empresa'])->get()
-                ->sortBy(fn ($a) => $a->persona?->primer_apellido . ' ' . $a->persona?->nombre)
-                ->values()
-            : collect();
-
-        return view('curso.visualizar', array_merge(
-            compact('curso', 'alumnos', 'puedeVerAlumnos'),
-            $usuario
-        ));
+        // Cargamos las relaciones necesarias incluyendo los alumnos y sus datos personales
+        $curso->load([
+            'formacion',
+            'presupuesto',
+            'peticionLogistica',
+            'alumnos.persona',
+            'alumnos.empresa'
+        ]);
+        return view('curso.visualizar', compact('curso', 'rol', 'nombre'));
     }
 
     public function crearTablaPorDocente($id)
@@ -410,5 +409,19 @@ class CursoController extends Controller
             ->implode(' ');
 
         return compact('rol', 'nombre');
+    }
+
+    // Elimina la relación del alumno con el curso (desmatricular)
+    public function eliminarCursoAlumno($cursoId, $cursoAlumnoId)
+    {
+        $cursoAlumno = CursoAlumno::where('curso_id', $cursoId)
+            ->where('id', $cursoAlumnoId)
+            ->firstOrFail();
+
+        $cursoAlumno->delete();
+
+        return redirect()
+            ->route('curso.visualizar', $cursoId)
+            ->with('ok', 'Alumno desmatriculado del curso correctamente.');
     }
 }

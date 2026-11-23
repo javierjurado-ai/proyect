@@ -87,6 +87,11 @@ class PersonaController extends Controller
             ->route('persona.create')
             ->with('ok', 'Persona guardada correctamente.');
     }
+
+    public function editarWeb($id) {
+        $persona = Persona::findOrFail($id);
+        return view('persona.editar', compact('persona')); 
+    }
     /* =========================================================
      *  API (JSON)
      * ========================================================= */
