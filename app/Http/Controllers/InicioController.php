@@ -53,6 +53,11 @@ class InicioController extends Controller
                 ['primerNombre' => $persona->nombre],
                 $this->datosCoordinador()
             )),
+            'COMERCIAL' => view('comercial.index', array_merge(
+                compact('rol', 'nombre'),
+                ['primerNombre' => $persona->nombre],
+                $this->datosComercial()
+            )),
             default => view('panel.inicio', compact('rol', 'nombre')),
         };
     }
@@ -76,9 +81,9 @@ class InicioController extends Controller
         ])->count();
 
         // Crédito del año
-        $creditosAnio     = CreditoFormativo::with('empresa')->where('año', $anio)->get();
-        $creditoTotal     = (float) $creditosAnio->sum('importe_total');
-        $creditoConsumido = (float) $creditosAnio->sum('importe_consumido');
+        $creditosAnio      = CreditoFormativo::with('empresa')->where('año', $anio)->get();
+        $creditoTotal      = (float) $creditosAnio->sum('importe_total');
+        $creditoConsumido  = (float) $creditosAnio->sum('importe_consumido');
         $porcentajeCredito = $creditoTotal > 0 ? round(100 * $creditoConsumido / $creditoTotal) : 0;
 
         $creditoPorEmpresa = $creditosAnio
@@ -102,7 +107,7 @@ class InicioController extends Controller
         $logisticaPendiente = PeticionesLogistica::where('estado', 'PENDIENTE')->count();
 
         // Personas por rol
-        $rolesDeAcceso = ['ADMINISTRADOR', 'COORDINADOR', 'COMERCIAL'];
+        $rolesDeAcceso      = ['ADMINISTRADOR', 'COORDINADOR', 'COMERCIAL'];
         $personasConUsuario = Usuario::pluck('persona_id');
 
         // Cosas que revisar
@@ -155,8 +160,8 @@ class InicioController extends Controller
     private function datosCoordinador(): array
     {
         $hoy          = today();
-        $inicioSemana = $hoy->copy()->startOfWeek();   // lunes
-        $finSemana    = $hoy->copy()->startOfWeek()->addDays(4); // viernes
+        $inicioSemana = $hoy->copy()->startOfWeek();               // lunes
+        $finSemana    = $hoy->copy()->startOfWeek()->addDays(4);   // viernes
         $dentroDe7    = $hoy->copy()->addDays(7);
 
         $nombreCurso = fn ($curso) => $curso?->formacion?->nombre ?? ('Curso ' . ($curso?->codigo_curso ?? ''));
@@ -299,6 +304,28 @@ class InicioController extends Controller
             'aulasLibres'        => $aulasLibres,
             'tareas'             => $tareas,
             'semana'             => $semana,
+        ];
+    }
+
+    /**
+     * Datos del inicio del COMERCIAL: empresas, presupuestos y catálogo.
+     */
+    private function datosComercial(): array
+    {
+        $hoy = today();
+
+        return [
+            'anio'              => $hoy->year,
+            'diasParaFinDeAnio' => (int) $hoy->diffInDays($hoy->copy()->endOfYear()),
+
+            'totalEmpresas'     => Empresa::count(),
+            'totalPresupuestos' => Presupuesto::count(),
+            'importeTotal'      => (float) Presupuesto::sum('importe_bonificado'),
+            'totalFormaciones'  => Formacion::where('activo', true)->count(),
+
+            'presupuestos'      => Presupuesto::orderByDesc('id')->limit(5)->get(),
+            'empresas'          => Empresa::orderByDesc('id')->limit(5)->get(),
+            'destacadas'        => Formacion::where('activo', true)->orderByDesc('id')->limit(3)->get(),
         ];
     }
 }
