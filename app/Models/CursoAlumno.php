@@ -13,10 +13,22 @@ class CursoAlumno extends Model
     protected $keyType = 'int';
     public $timestamps = false;
 
+    // Todas estas columnas son NOT NULL en la BD.
+    // Los campos SI/NO y los enums (nivel_estudio, categoria_profesional)
+    // se guardan como texto con los valores exactos del ENUM de la BD.
     protected $fillable = [
         'curso_id',
         'persona_id',
-        'empresa_id'
+        'empresa_id',
+        'jornada_laboral',
+        'certificado_afectado_terrorismo',
+        'certificado_afectado_violencia_genero',
+        'certificado_discapacidad',
+        'nivel_estudio',
+        'categoria_profesional',
+        'erte',
+        'fijo_discontinuo',
+        'diploma',
     ];
 
     public function persona(): BelongsTo
@@ -24,13 +36,13 @@ class CursoAlumno extends Model
         return $this->belongsTo(Persona::class, 'persona_id', 'id');
     }
 
-   public function curso(): BelongsTo
+    public function curso(): BelongsTo
     {
         return $this->belongsTo(Curso::class, 'curso_id', 'id');
     }
+
     public function empresa(): BelongsTo
     {
         return $this->belongsTo(Empresa::class, 'empresa_id', 'id');
     }
-    
 }

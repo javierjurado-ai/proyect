@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -12,6 +13,10 @@ class Usuario extends Authenticatable
     protected $table = 'usuario';
     protected $primaryKey = 'id';
     public $timestamps = false;
+
+    // La tabla usuario no tiene columna remember_token.
+    // Sin esto, Auth::login($usuario, true) ("recordar") lanza error SQL.
+    protected $rememberTokenName = false;
 
     protected $fillable = [
         'usuario',
@@ -25,8 +30,20 @@ class Usuario extends Authenticatable
         'contrasena' => 'hashed',
     ];
 
+    // La columna de la contraseña se llama 'contrasena', no 'password'
     public function getAuthPassword()
     {
         return $this->contrasena;
+    }
+
+    // Laravel 11/12 usa este nombre al re-hashear la contraseña en el login
+    public function getAuthPasswordName()
+    {
+        return 'contrasena';
+    }
+
+    public function persona(): BelongsTo
+    {
+        return $this->belongsTo(Persona::class, 'persona_id', 'id');
     }
 }

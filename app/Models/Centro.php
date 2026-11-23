@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Enums\TipoCentro;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Centro extends Model
 {
@@ -11,10 +14,10 @@ class Centro extends Model
     protected $primaryKey = 'id';
     public $timestamps = false;
 
+    // 'responsable' ya no existe: ahora va en centro_contactos
     protected $fillable = [
         'empresa_id',
         'nombre',
-        'responsable',
         'direccion',
         'telefono',
         'email',
@@ -25,25 +28,33 @@ class Centro extends Model
         'tipo_centro',
     ];
 
-    protected $casts =[
-        'tipo_centro' => TipoCentro::class
+    protected $casts = [
+        'tipo_centro'       => TipoCentro::class,
+        'numero_total_aula' => 'integer',
     ];
 
-    // Relación: Un centro pertenece a una empresa
-    public function empresa()
+    // Un centro pertenece a una empresa (empresa_id puede ser NULL)
+    public function empresa(): BelongsTo
     {
         return $this->belongsTo(Empresa::class, 'empresa_id', 'id');
     }
 
-    // Relación: Un centro tiene muchos cursos
-    public function cursos()
+    // Un centro tiene muchos cursos
+    public function cursos(): HasMany
     {
         return $this->hasMany(Curso::class, 'centro_id', 'id');
     }
-    public function aulas()
-    {
-        return $this->hasMany(Curso::class, 'centro_id', 'id');
-    }
-    
 
+    // La tabla aulas no tiene centro_id: se llega a través de curso
+    // centro.id -> curso.centro_id -> aulas.curso_id
+    public function aulas(): HasManyThrough
+    {
+        return $this->hasManyThrough(Aula::class, Curso::class, 'centro_id', 'curso_id', 'id', 'id');
+    }
+
+    // Un centro tiene muchos contactos (coordinador / responsable)
+    public function contactos(): HasMany
+    {
+        return $this->hasMany(CentroContactos::class, 'centro_id', 'id');
+    }
 }
