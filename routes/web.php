@@ -94,6 +94,10 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/rol/{id}', [CentroController::class, 'agregarRolCoordinador']);
 
+    Route::get('/view/persona', [PersonaController::class, 'index'])->name('persona.index');
+    Route::get('/view/formularioPersona', [PersonaController::class, 'create'])->name('persona.crearFormulario');
+    Route::put('/persona/{id}', [PersonaController::class, 'update'])->name('persona.update');
+    
     Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
     Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
 
