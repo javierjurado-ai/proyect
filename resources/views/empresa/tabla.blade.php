@@ -1,41 +1,20 @@
-<!DOCTYPE html>
-<html lang="es">
+<x-tabla.tabla vacio="Todavía no hay empresas guardadas."
+    :columnas="['CIF', 'Nombre', ['Total trabajadores', 'right'], ['Acciones', 'center']]">
+    @foreach ($empresas as $e)
+        <x-tabla.fila>
+            <td class="px-4 py-3 font-mono text-slate-700">{{ $e->cif }}</td>
+            <td class="px-4 py-3 font-medium text-slate-800">
+                <a href="{{ route('empresa.visualizar', $e) }}" class="font-semibold text-marca-900 hover:underline">{{ $e->nombre }}</a>
+            </td>
+            <x-tabla.celda tipo="numero" :valor="$e->total_trabajadores" />
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Empresas</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-</head>
-
-<body class="min-h-screen bg-slate-100 px-4 py-10">
-    <x-tabla.tarjeta titulo="Empresas" subtitulo="{{ $empresas->total() }} registradas">
-        <x-slot:acciones>
-            <a href="{{ url('/empresa') }}"
-               class="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2 font-medium text-white hover:bg-blue-700">
-                + Nueva empresa
-            </a>
-        </x-slot:acciones>
-
-        @if (session('ok'))
-            <div class="mb-6 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
-                {{ session('ok') }}
-            </div>
-        @endif
-
-        <x-tabla.tabla vacio="Todavía no hay empresas guardadas."
-            :columnas="['CIF', 'Nombre', ['Total trabajadores', 'right']]">
-            @foreach ($empresas as $e)
-                <tr class="hover:bg-slate-50">
-                    <td class="px-4 py-3 font-mono text-slate-700">{{ $e->cif }}</td>
-                    <td class="px-4 py-3 font-medium text-slate-800">{{ $e->nombre }}</td>
-                    <td class="px-4 py-3 text-right text-slate-700">{{ $e->total_trabajadores ?? '—' }}</td>
-                </tr>
-            @endforeach
-        </x-tabla.tabla>
-
-        <div class="mt-4">{{ $empresas->links() }}</div>
-    </x-tabla.tarjeta>
-</body>
-
-</html>
+            {{-- ACCIONES --}}
+            <td class="px-4 py-3 text-center whitespace-nowrap">
+                <div class="inline-flex items-center gap-2">
+                    <x-tabla.boton-editar :href="route('empresa.editar', $e->id)" />
+                    <x-tabla.boton-eliminar :action="route('empresa.eliminar', $e->id)" />
+                </div>
+            </td>
+        </x-tabla.fila>
+    @endforeach
+</x-tabla.tabla>

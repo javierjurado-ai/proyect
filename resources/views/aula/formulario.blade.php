@@ -1,25 +1,28 @@
-<!DOCTYPE html>
-<html lang="es">
+<x-interfaz.layout.app :titulo="'Nueva aula'" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aula</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-</head>
+    <x-interfaz.panel.cabecera :titulo="'Nueva aula'" subtitulo="Los campos marcados con * son obligatorios">
+        <x-slot:acciones>
+            <a href="{{ route('inicio.index') }}"
+               class="inline-flex items-center gap-1 rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-marca-950 hover:bg-stone-50">
+                ← Volver al inicio
+            </a>
+        </x-slot:acciones>
+    </x-interfaz.panel.cabecera>
 
-<body class="min-h-screen bg-slate-100 px-4 py-10">
-    <x-formulario.tarjeta titulo="Aula" subtitulo="Los campos marcados con * son obligatorios">
+    @if ($errors->any())
+        <div role="alert" class="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Revisa los campos marcados en rojo ({{ $errors->count() }} {{ $errors->count() === 1 ? 'error' : 'errores' }}).
+        </div>
+    @endif
+
+    <section class="rounded-xl border border-stone-200 bg-white p-6 lg:p-8">
         <form id="formAula" method="POST" action="{{ route('aula.store') }}">
             @csrf
 
-            @if (session('ok'))
-                <div class="mb-6 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
-                    {{ session('ok') }}
-                </div>
-            @endif
 
-            <x-formulario.seccion titulo="Datos del aula">
+            <fieldset class="mb-8">
+                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Datos del aula</legend>
+                <div class="grid gap-5 grid-cols-1 md:grid-cols-3">
                 <x-formulario.entrada name="nombre_aula" label="Nombre del aula *" maxlength="45" required
                     contenedor="md:col-span-2" />
                 <x-formulario.seleccion name="curso_id" label="Curso *" :options="$cursos"
@@ -27,23 +30,40 @@
 
                 <x-formulario.entrada name="capacidad" label="Capacidad (personas) *" type="number" min="1" step="1" required />
                 <x-formulario.entrada name="dimension" label="Dimensión (m²)" type="number" min="0" step="1" />
-            </x-formulario.seccion>
+            </div>
+            </fieldset>
 
-            <x-formulario.seccion titulo="Estado y uso" columnas="2">
+            <fieldset class="mb-8">
+                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Estado y uso</legend>
+                <div class="grid gap-5 grid-cols-1 md:grid-cols-2">
                 <x-formulario.seleccion name="estado" label="Estado *" :options="$estados" required />
                 <x-formulario.seleccion name="uso_aula" label="Uso del aula *" :options="$usos" required />
-            </x-formulario.seccion>
+            </div>
+            </fieldset>
 
-            <x-formulario.seccion titulo="Observaciones" columnas="1">
+            <fieldset class="mb-8">
+                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Observaciones</legend>
+                <div class="grid gap-5 grid-cols-1">
                 <x-formulario.area name="observaciones" label="Observaciones" maxlength="450" rows="3" />
-            </x-formulario.seccion>
+            </div>
+            </fieldset>
 
-            <div class="flex justify-end gap-3">
-                <x-formulario.boton type="reset" variante="secundario">Limpiar</x-formulario.boton>
-                <x-formulario.boton type="submit">Guardar aula</x-formulario.boton>
+            <div class="flex flex-wrap justify-end gap-3">
+                <a href="{{ route('inicio.index') }}"
+                   class="inline-flex items-center justify-center rounded-lg px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-stone-100">
+                    Cancelar
+                </a>
+                <button type="reset"
+                        class="inline-flex items-center justify-center rounded-lg border border-stone-300 bg-white px-5 py-2 text-sm font-semibold text-marca-950 hover:bg-stone-50">
+                    Limpiar
+                </button>
+                <button type="submit"
+                        class="inline-flex items-center justify-center rounded-lg bg-marca-800 px-5 py-2 text-sm font-semibold text-white hover:bg-marca-900">
+                    Guardar aula
+                </button>
             </div>
         </form>
-    </x-formulario.tarjeta>
+    </section>
 
     <script>
         // Contador de caracteres de observaciones
@@ -54,6 +74,5 @@
             document.getElementById('formAula').addEventListener('reset', () => setTimeout(actualizar));
         });
     </script>
-</body>
 
-</html>
+</x-interfaz.layout.app>
