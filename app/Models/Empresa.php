@@ -57,4 +57,16 @@ class Empresa extends Model
     {
         return $this->belongsToMany(Curso::class, 'grupo_empresa', 'empresa_id', 'curso_id');
     }
+
+    // Coste de formación de la empresa en cada curso (tabla coste)
+    public function costes(): HasMany
+    {
+        return $this->hasMany(Coste::class, 'empresa_id', 'id');
+    }
+
+    // Informes de la representación legal de los trabajadores (tabla empresa_rlt)
+    public function informesRlt(): HasMany
+    {
+        return $this->hasMany(EmpresaRLT::class, 'empresa_id', 'id');
+    }
 }
