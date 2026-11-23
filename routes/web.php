@@ -157,5 +157,15 @@ Route::middleware('auth')->group(function () {
     Route::put('/view/formulario/actualizarPresupuesto/{id}', [PresupuestoController::class, 'update'])->name('presupuesto.update')->whereNumber('id');
     Route::delete('/presupuesto/{id}', [PresupuestoController::class, 'destroy'])->name('presupuesto.destroy')->whereNumber('id');
 
+    // Rutas para el módulo de Aulas
+    Route::get('/aulas', [CursoController::class, 'crearTablaAula'])->name('aula.index');
+    Route::get('/aula/crear', [CursoController::class, 'crearFormularioAula'])->name('aula.create');
+    Route::post('/aula/guardar', [CursoController::class, 'guardarAula'])->name('aula.store');
+
+    // Rutas para editar, actualizar y eliminar aulas
+    Route::get('/aula/{id}/editar', [CursoController::class, 'editarAulaFormulario'])->name('aula.edit');
+    Route::put('/aula/{id}', [CursoController::class, 'actualizarAula'])->name('aula.update');
+    Route::delete('/aula/{id}', [CursoController::class, 'eliminarAula'])->name('aula.destroy');
+
     Route::get('/view/inicio', [InicioController::class, 'mostrarPaginaInicio'])->name('inicio.index');
 });

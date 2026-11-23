@@ -93,6 +93,17 @@ class CursoController extends Controller
         return view('alumno.tabla', compact('alumnos', 'curso'));
     }
 
+    public function crearTablaAula(Request $request)
+    {
+        $datosUsuario = $this->datosUsuario();
+        $rol = $datosUsuario['rol'];
+        $nombre = $datosUsuario['nombre'];
+
+        $aulas = Aula::with('curso.formacion')->get();
+
+        return view('aula.tabla', compact('aulas', 'rol', 'nombre'));
+    }
+
     ////////////////////Roles////////////////////////////
     // OJO: el enum `rol` de la BD solo admite ADMINISTRADOR, COMERCIAL y COORDINADOR.
     // Estos dos métodos fallarán hasta que se amplíe el enum en la BD.
@@ -233,6 +244,72 @@ class CursoController extends Controller
         return redirect()
             ->route('aula.create')
             ->with('ok', 'Aula guardada correctamente.');
+    }
+
+    // Muestra el formulario de edición de un aula
+    public function editarAulaFormulario($id)
+    {
+        $aula = Aula::findOrFail($id);
+
+        $cursos = Curso::with('formacion')->orderBy('codigo_accion')->orderBy('codigo_grupo')->get()
+            ->mapWithKeys(fn ($c) => [
+                $c->id => $this->codigoCurso($c) . ($c->formacion ? ' - ' . $c->formacion->nombre : ''),
+            ]);
+
+        $estados = collect(EstadoAula::cases())
+            ->mapWithKeys(fn ($e) => [$e->value => ucfirst(strtolower($e->value))]);
+
+        $usos = collect(UsoAula::cases())
+            ->mapWithKeys(fn ($u) => [$u->value => ucfirst(strtolower($u->value))]);
+
+        return view('aula.formulario', compact('aula', 'cursos', 'estados', 'usos') + $this->datosUsuario());
+    }
+
+    // Actualiza el aula en la base de datos
+    public function actualizarAula(Request $request, $id)
+    {
+        $aula = Aula::findOrFail($id);
+
+        $datos = $request->validate([
+            'curso_id'      => 'nullable|integer|exists:curso,id',
+            'nombre_aula'   => 'required|string|max:45',
+            'capacidad'     => 'required|integer|min:1',
+            'estado'        => ['required', Rule::enum(EstadoAula::class)],
+            'uso_aula'      => ['required', Rule::enum(UsoAula::class)],
+            'dimension'     => 'required|integer|min:0',
+            'observaciones' => 'nullable|string|max:450',
+        ], [
+            'required'        => 'Este campo es obligatorio.',
+            'max'             => 'Máximo :max caracteres.',
+            'integer'         => 'Debe ser un número entero.',
+            'enum'            => 'El valor elegido no es válido.',
+            'curso_id.exists' => 'El curso elegido no existe.',
+            'capacidad.min'   => 'La capacidad debe ser al menos :min.',
+            'dimension.min'   => 'La dimensión no puede ser negativa.',
+        ]);
+
+        $aula->update($datos);
+
+        return redirect()
+            ->route('aula.index')
+            ->with('ok', 'Aula actualizada correctamente.');
+    }
+
+    // Elimina el aula
+    public function eliminarAula($id)
+    {
+        $aula = Aula::findOrFail($id);
+
+        try {
+            $aula->delete();
+            return redirect()
+                ->route('aula.index')
+                ->with('ok', 'Aula eliminada correctamente.');
+        } catch (QueryException $e) {
+            return redirect()
+                ->route('aula.index')
+                ->with('error', 'No se puede eliminar el aula porque tiene registros asociados.');
+        }
     }
 
     ///////////////////API////////////////////////

@@ -1,10 +1,10 @@
-<x-interfaz.layout.app :titulo="'Nueva aula'" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
+<x-interfaz.layout.app :titulo="isset($aula) ? 'Editar aula' : 'Nueva aula'" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
 
-    <x-interfaz.panel.cabecera :titulo="'Nueva aula'" subtitulo="Los campos marcados con * son obligatorios">
+    <x-interfaz.panel.cabecera :titulo="isset($aula) ? 'Editar aula' : 'Nueva aula'" subtitulo="Los campos marcados con * son obligatorios">
         <x-slot:acciones>
-            <a href="{{ route('inicio.index') }}"
+            <a href="{{ route('aula.index') }}"
                class="inline-flex items-center gap-1 rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-marca-950 hover:bg-stone-50">
-                ← Volver al inicio
+                ← Volver al listado
             </a>
         </x-slot:acciones>
     </x-interfaz.panel.cabecera>
@@ -16,40 +16,52 @@
     @endif
 
     <section class="rounded-xl border border-stone-200 bg-white p-6 lg:p-8">
-        <form id="formAula" method="POST" action="{{ route('aula.store') }}">
+        <form id="formAula" method="POST" action="{{ isset($aula) ? route('aula.update', $aula->id) : route('aula.store') }}">
             @csrf
-
+            @if(isset($aula))
+                @method('PUT')
+            @endif
 
             <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Datos del aula</legend>
                 <div class="grid gap-5 grid-cols-1 md:grid-cols-3">
-                <x-formulario.entrada name="nombre_aula" label="Nombre del aula *" maxlength="45" required
-                    contenedor="md:col-span-2" />
-                <x-formulario.seleccion name="curso_id" label="Curso *" :options="$cursos"
-                    placeholder="-- Selecciona un curso --" required />
+                    <x-formulario.entrada name="nombre_aula" label="Nombre del aula *" maxlength="45" required
+                        contenedor="md:col-span-2" :value="$aula->nombre_aula ?? ''" />
+                    
+                    <x-formulario.seleccion name="curso_id" label="Curso *" :options="$cursos"
+                        :value="$aula->curso_id ?? ''"
+                        placeholder="-- Selecciona un curso --" required />
 
-                <x-formulario.entrada name="capacidad" label="Capacidad (personas) *" type="number" min="1" step="1" required />
-                <x-formulario.entrada name="dimension" label="Dimensión (m²)" type="number" min="0" step="1" />
-            </div>
+                    <x-formulario.entrada name="capacidad" label="Capacidad (personas) *" type="number" min="1" step="1" required 
+                        :value="$aula->capacidad ?? ''" />
+                    
+                    <x-formulario.entrada name="dimension" label="Dimensión (m²)" type="number" min="0" step="1" 
+                        :value="$aula->dimension ?? ''" />
+                </div>
             </fieldset>
 
             <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Estado y uso</legend>
                 <div class="grid gap-5 grid-cols-1 md:grid-cols-2">
-                <x-formulario.seleccion name="estado" label="Estado *" :options="$estados" required />
-                <x-formulario.seleccion name="uso_aula" label="Uso del aula *" :options="$usos" required />
-            </div>
+                    <x-formulario.seleccion name="estado" label="Estado *" :options="$estados" 
+                        :value="isset($aula) ? $aula->estado?->value : ''" required />
+                    
+                    <x-formulario.seleccion name="uso_aula" label="Uso del aula *" :options="$usos" 
+                        :value="isset($aula) ? $aula->uso_aula?->value : ''" required />
+                </div>
             </fieldset>
 
             <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Observaciones</legend>
                 <div class="grid gap-5 grid-cols-1">
-                <x-formulario.area name="observaciones" label="Observaciones" maxlength="450" rows="3" />
-            </div>
+                    <x-formulario.area name="observaciones" label="Observaciones" maxlength="450" rows="3">
+                        {{ old('observaciones', $aula->observaciones ?? '') }}
+                    </x-formulario.area>
+                </div>
             </fieldset>
 
             <div class="flex flex-wrap justify-end gap-3">
-                <a href="{{ route('inicio.index') }}"
+                <a href="{{ route('aula.index') }}"
                    class="inline-flex items-center justify-center rounded-lg px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-stone-100">
                     Cancelar
                 </a>
@@ -59,7 +71,7 @@
                 </button>
                 <button type="submit"
                         class="inline-flex items-center justify-center rounded-lg bg-marca-800 px-5 py-2 text-sm font-semibold text-white hover:bg-marca-900">
-                    Guardar aula
+                    {{ isset($aula) ? 'Actualizar aula' : 'Guardar aula' }}
                 </button>
             </div>
         </form>
