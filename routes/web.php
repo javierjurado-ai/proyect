@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Auth;
 Route::post('/persona/iniciarSesion', [AuthController::class, 'iniciarSesion']);
 
 
-Route::post('/persona', [PersonaController::class, 'agregarPersona']);      
+  
 Route::post('/persona/crearUsuario', [AuthController::class, 'crearUsuario'])->name('persona.crearUsuario');
 
 /*
@@ -35,7 +35,7 @@ Route::post('/persona/crearUsuario', [AuthController::class, 'crearUsuario'])->n
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
-
+    
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // La portada lleva al inicio de cada rol
@@ -54,7 +54,8 @@ Route::middleware('auth')->group(function () {
     
     Route::put('/persona/{id}', [PersonaController::class, 'actualizarPersona']);
     Route::delete('/persona/{id}', [PersonaController::class, 'eliminarPersona']);
-
+    Route::post('/persona', [PersonaController::class, 'agregarPersona'])->name('persona.crearPersona');
+    Route::get('/persona/{curso}/crear', [PersonaController::class, 'create'])->name('persona.crear');    
 
     // Rutas para el controlador de comunicaciones FUNDAE
     Route::get('/comunicacionFundae/listar', [ComunicacionFundaeController::class, 'listarComunicacionesFundae']);
@@ -126,6 +127,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/view/formulario/crearCurso', [CursoController::class, 'crearFormulario'])->name('curso.crearFormulario');
     Route::post('/view/formularioCurso', [CursoController::class, 'agregarCurso'])->name('curso.agregarCurso');
     Route::delete('/curso/{curso}/alumno/{cursoAlumno}', [CursoController::class, 'eliminarCursoAlumno'])->name('curso.alumno.destroy');
+    Route::get('/curso/{curso}/alumnos', [CursoController::class, 'agregarAlumnos'])->name('curso.alumno.create');
 
     // Rutas web para la gestión de Centros (Editar, Actualizar y Eliminar)
     Route::get('/view/listadoCentro', [CentroController::class, 'index'])->name('centro.index');

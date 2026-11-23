@@ -72,7 +72,7 @@ class CursoController extends Controller
             'alumnos.persona',
             'alumnos.empresa'
         ]);
-        return view('curso.visualizar', compact('curso', 'rol', 'nombre','persona','nombre'));
+        return view('curso.visualizar', compact('curso', 'rol', 'nombre', 'persona', 'nombre'));
     }
 
     public function crearTablaPorDocente($id)
@@ -93,6 +93,15 @@ class CursoController extends Controller
         return view('alumno.tabla', compact('alumnos', 'curso'));
     }
 
+    public function agregarAlumnos(Curso $curso)
+    {
+        $personasDisponibles = Persona::whereNotIn(
+            'id',
+            $curso->alumnos()->select('persona_id')
+        )->get();
+
+        return view('curso.tablaPersona', compact('curso', 'personasDisponibles'));
+    }
     ////////////////////Roles////////////////////////////
     // OJO: el enum `rol` de la BD solo admite ADMINISTRADOR, COMERCIAL y COORDINADOR.
     // Estos dos métodos fallarán hasta que se amplíe el enum en la BD.
@@ -133,7 +142,7 @@ class CursoController extends Controller
         ]);
 
         // Si vienen vacíos, que la BD ponga sus valores por defecto
-        $datos = array_filter($datos, fn ($v) => $v !== null);
+        $datos = array_filter($datos, fn($v) => $v !== null);
         $datos['persona_id'] = Persona::findOrFail($id)->id;
 
         return response()->json(CursoDocente::create($datos), 201);
@@ -151,11 +160,23 @@ class CursoController extends Controller
             'certificado_afectado_violencia_genero' => ['required', $siNo],
             'certificado_discapacidad'              => ['required', $siNo],
             'nivel_estudio'                         => ['required', Rule::in([
-                'MENOS_PRIMARIA', 'PRIMARIA', 'ESO_EGB', 'BACHILLERATO_FP_MEDIO', 'CP_NIVEL_3',
-                'FP_SUPERIOR', 'GRADO_DIPLOMATURA', 'LICENCIATURA_MASTER', 'DOCTORADO', 'OTRAS',
+                'MENOS_PRIMARIA',
+                'PRIMARIA',
+                'ESO_EGB',
+                'BACHILLERATO_FP_MEDIO',
+                'CP_NIVEL_3',
+                'FP_SUPERIOR',
+                'GRADO_DIPLOMATURA',
+                'LICENCIATURA_MASTER',
+                'DOCTORADO',
+                'OTRAS',
             ])],
             'categoria_profesional'                 => ['required', Rule::in([
-                'DIRECTIVO', 'MANDO_INTERMEDIO', 'TECNICO', 'TRABAJADOR_CUALIFICADO', 'TRABAJADOR_BAJA_CUALIFICACION',
+                'DIRECTIVO',
+                'MANDO_INTERMEDIO',
+                'TECNICO',
+                'TRABAJADOR_CUALIFICADO',
+                'TRABAJADOR_BAJA_CUALIFICACION',
             ])],
             'erte'                                  => ['required', $siNo],
             'fijo_discontinuo'                      => ['required', $siNo],
@@ -194,15 +215,15 @@ class CursoController extends Controller
     {
         // [id => "acción/grupo - formación"] para el desplegable de cursos
         $cursos = Curso::with('formacion')->orderBy('codigo_accion')->orderBy('codigo_grupo')->get()
-            ->mapWithKeys(fn ($c) => [
+            ->mapWithKeys(fn($c) => [
                 $c->id => $this->codigoCurso($c) . ($c->formacion ? ' - ' . $c->formacion->nombre : ''),
             ]);
 
         $estados = collect(EstadoAula::cases())
-            ->mapWithKeys(fn ($e) => [$e->value => ucfirst(strtolower($e->value))]);
+            ->mapWithKeys(fn($e) => [$e->value => ucfirst(strtolower($e->value))]);
 
         $usos = collect(UsoAula::cases())
-            ->mapWithKeys(fn ($u) => [$u->value => ucfirst(strtolower($u->value))]);
+            ->mapWithKeys(fn($u) => [$u->value => ucfirst(strtolower($u->value))]);
 
         return view('aula.formulario', compact('cursos', 'estados', 'usos'));
     }
@@ -384,12 +405,12 @@ class CursoController extends Controller
         $centros     = Centro::orderBy('nombre')->pluck('nombre', 'id');
 
         $turnos = collect(Turno::cases())->mapWithKeys(
-            fn ($turno) => [$turno->value => ucfirst(strtolower($turno->value))]
+            fn($turno) => [$turno->value => ucfirst(strtolower($turno->value))]
         );
 
         // La modalidad ahora va en el curso (antes estaba en formación)
         $modalidades = collect(Modalidad::cases())->mapWithKeys(
-            fn ($m) => [$m->value => ucfirst(strtolower($m->value))]
+            fn($m) => [$m->value => ucfirst(strtolower($m->value))]
         );
 
         return compact('formaciones', 'centros', 'turnos', 'modalidades');
