@@ -6,6 +6,11 @@
         fn ($texto, $valor) => [$valor => mb_convert_case($valor, MB_CASE_TITLE, 'UTF-8')]
     );
 
+    // Modalidades: "TELEFORMACION" → "Teleformación"
+    $opcionesModalidad = collect($modalidades ?? [])->mapWithKeys(
+        fn ($texto, $valor) => [$valor => $valor === 'TELEFORMACION' ? 'Teleformación' : mb_convert_case($valor, MB_CASE_TITLE, 'UTF-8')]
+    );
+
     $fecha = fn ($f) => $f ? \Illuminate\Support\Carbon::parse($f)->format('Y-m-d') : '';
     $hora  = fn ($h) => $h ? substr($h, 0, 5) : '';
 @endphp
@@ -51,26 +56,38 @@
             <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Datos del curso</legend>
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+                    {{-- codigo_curso ya no existe: el curso se identifica por acción + grupo --}}
                     <x-formulario.entrada
-                        name="codigo_curso"
-                        label="Código *"
+                        name="codigo_accion"
+                        label="Código de acción *"
+                        maxlength="45"
+                        :value="$curso->codigo_accion ?? ''" />
+
+                    <x-formulario.entrada
+                        name="codigo_grupo"
+                        label="Código de grupo *"
+                        maxlength="45"
+                        :value="$curso->codigo_grupo ?? ''" />
+
+                    <x-formulario.entrada
+                        name="nivel_formacion"
+                        label="Nivel de formación"
                         type="number"
-                        min="1"
-                        :value="$curso->codigo_curso ?? ''" />
+                        min="0"
+                        max="127"
+                        :value="$curso->nivel_formacion ?? 0" />
 
                     <x-formulario.entrada
                         name="empresa_formadora"
                         label="Empresa formadora *"
-                        maxlength="100"
-                        contenedor="md:col-span-2"
+                        maxlength="50"
                         :value="$curso->empresa_formadora ?? ''" />
 
                     <x-formulario.selector
                         name="formacion_id"
-                        label="Formación *"
+                        label="Formación"
                         placeholder="Busca una formación..."
                         :options="$formaciones"
-                        contenedor="md:col-span-2"
                         :value="$curso->formacion_id ?? ''" />
 
                     <x-formulario.selector
@@ -79,6 +96,33 @@
                         placeholder="Busca un centro..."
                         :options="$centros"
                         :value="$curso->centro_id ?? ''" />
+                </div>
+            </fieldset>
+
+            <fieldset class="mb-8">
+                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Modalidad y horas</legend>
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+                    <x-formulario.radio
+                        name="modalidad"
+                        label="Modalidad *"
+                        :options="$opcionesModalidad"
+                        :value="old('modalidad', $curso->modalidad->value ?? $curso->modalidad ?? '')" />
+
+                    <x-formulario.entrada
+                        name="horas_presenciales"
+                        label="Horas presenciales"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        :value="$curso->horas_presenciales ?? ''" />
+
+                    <x-formulario.entrada
+                        name="horas_teleformacion"
+                        label="Horas teleformación"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        :value="$curso->horas_teleformacion ?? ''" />
                 </div>
             </fieldset>
 
@@ -129,12 +173,7 @@
                         placeholder="Ej.: Aula 3"
                         :value="$curso->aula ?? ''" />
 
-                    <x-formulario.entrada
-                        name="aula_virtual"
-                        label="Aula virtual *"
-                        maxlength="45"
-                        placeholder="Enlace o nombre de la sala"
-                        :value="$curso->aula_virtual ?? ''" />
+                    {{-- El aula virtual va ahora en su propia tabla (curso_aula_virtual) --}}
 
                     <x-formulario.entrada
                         name="tecnico_comunidad"
@@ -145,10 +184,29 @@
             </fieldset>
 
             <fieldset class="mb-8">
+                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Contenido del curso</legend>
+                <div class="grid grid-cols-1 gap-5">
+                    <x-formulario.area
+                        name="objetivos"
+                        label="Objetivos *"
+                        maxlength="500"
+                        rows="3"
+                        :value="$curso->objetivos ?? ''" />
+
+                    <x-formulario.area
+                        name="contenido"
+                        label="Contenido *"
+                        maxlength="1000"
+                        rows="6"
+                        :value="$curso->contenido ?? ''" />
+                </div>
+            </fieldset>
+
+            <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Observaciones</legend>
                 <x-formulario.area
                     name="observaciones"
-                    label="Observaciones *"
+                    label="Observaciones"
                     maxlength="200"
                     rows="3"
                     :value="$curso->observaciones ?? ''" />
@@ -200,10 +258,24 @@
         horaInicio.addEventListener('change', ajustarHoraFin);
         ajustarHoraFin();
 
-        // Contador de caracteres de observaciones
-        const obs = document.getElementById('observaciones');
-        const contador = document.querySelector('[data-contador="observaciones"]');
-        obs?.addEventListener('input', () => { if (contador) contador.textContent = obs.value.length; });
+        // Contador de caracteres de los textarea (objetivos, contenido, observaciones)
+        document.querySelectorAll('[data-contador]').forEach(span => {
+            const campo = document.getElementById(span.dataset.contador);
+            campo?.addEventListener('input', () => span.textContent = campo.value.length);
+        });
+
+        // Horas según modalidad: presencial → solo presenciales, teleformación → solo teleformación
+        const horasPres = document.getElementById('horas_presenciales');
+        const horasTele = document.getElementById('horas_teleformacion');
+        const ajustarHoras = () => {
+            const m = form.querySelector('input[name="modalidad"]:checked')?.value;
+            horasPres.disabled = m === 'TELEFORMACION';
+            horasTele.disabled = m === 'PRESENCIAL';
+            horasPres.required = m === 'PRESENCIAL' || m === 'MIXTA';
+            horasTele.required = m === 'TELEFORMACION' || m === 'MIXTA';
+        };
+        form.querySelectorAll('input[name="modalidad"]').forEach(r => r.addEventListener('change', ajustarHoras));
+        ajustarHoras();
 
         // El mensaje de éxito desaparece al empezar a escribir otro curso
         form.addEventListener('focusin', () => {

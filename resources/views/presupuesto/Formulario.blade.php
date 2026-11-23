@@ -30,7 +30,7 @@
             <x-formulario.seccion titulo="Formación">
                 <x-formulario.entrada name="nombre_formacion" label="Nombre de la formación *" maxlength="45"
                     contenedor="md:col-span-2" :value="$presupuesto?->nombre_formacion ?? old('nombre_formacion')" />
-                <x-formulario.entrada name="horas_totales" label="Horas totales *" type="number" min="1" step="1" 
+                <x-formulario.entrada name="horas_totales" label="Horas totales *" type="number" min="1" step="0.5" 
                     :value="$presupuesto?->horas_totales ?? old('horas_totales')" />
 
                 <x-formulario.entrada name="numero_alumnos" label="Número de alumnos *" type="number" min="1" step="1" 
@@ -39,12 +39,7 @@
                     contenedor="md:col-span-2" :value="$presupuesto?->ubicacion_formacion ?? old('ubicacion_formacion')" />
             </x-formulario.seccion>
 
-            <x-formulario.seccion titulo="Contenido" columnas="1">
-                <x-formulario.area name="objetivos" label="Objetivos *" maxlength="150" rows="3" 
-                    :value="$presupuesto?->objetivos ?? old('objetivos')" />
-                <x-formulario.area name="contenidos" label="Contenidos *" maxlength="450" rows="6" 
-                    :value="$presupuesto?->contenidos ?? old('contenidos')" />
-            </x-formulario.seccion>
+            {{-- Objetivos y contenidos ya no van en el presupuesto: ahora están en el curso --}}
 
             <x-formulario.seccion titulo="Bonificación" columnas="2">
                 <x-formulario.entrada name="importe_bonificado" label="Importe bonificado (€) *" type="number"
@@ -91,15 +86,6 @@
     </script>
     @endif
 
-    <script>
-        // Contador de caracteres de los textarea (objetivos, contenidos)
-        document.querySelectorAll('[data-contador]').forEach(span => {
-            const campo = document.getElementById(span.dataset.contador);
-            const actualizar = () => span.textContent = campo.value.length;
-            campo.addEventListener('input', actualizar);
-            document.getElementById('formPresupuesto').addEventListener('reset', () => setTimeout(actualizar));
-        });
-    </script>
 </body>
 
 </html>

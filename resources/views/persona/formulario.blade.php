@@ -58,9 +58,8 @@
                     contenedor="md:col-span-3" />
             </x-formulario.seccion>
 
-            <x-formulario.seccion titulo="Empresa y protección de datos" columnas="2">
-                <x-formulario.seleccion name="empresa_id" label="Empresa *" :options="$empresas"
-                    placeholder="-- Selecciona una empresa --" required />
+            {{-- persona ya no tiene empresa_id: la empresa se indica al apuntarla a un curso --}}
+            <x-formulario.seccion titulo="Protección de datos" columnas="2">
                 <x-formulario.radio name="LOPD" label="Acepta LOPD *" required
                     :options="['SI' => 'Sí', 'NO' => 'No']" />
             </x-formulario.seccion>
