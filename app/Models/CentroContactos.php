@@ -15,6 +15,7 @@ class CentroContactos extends Model
 
     protected $fillable = [
         'centro_id',
+        'curso_id',
         'nombre',
         'contacto',
         'telefono_personal',
@@ -30,6 +31,14 @@ class CentroContactos extends Model
         return $this->belongsTo(
             Centro::class,
             'centro_id',
+            'id'
+        );
+    }
+    public function curso(): BelongsTo
+    {
+        return $this->belongsTo(
+            Curso::class,
+            'curso_id',
             'id'
         );
     }
