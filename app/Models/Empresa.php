@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Empresa extends Model
 {
@@ -10,45 +12,61 @@ class Empresa extends Model
     public $timestamps = false;
     protected $primaryKey = 'id';
     protected $keyType = 'int';
-    
+
     protected $fillable = [
-        'cif', 
-        'nombre', 
+        'cif',
+        'nombre',
         'total_trabajadores',
     ];
 
     protected $casts = [
+        'total_trabajadores' => 'integer',
     ];
 
-    /**
-     * Una empresa tiene muchos centros de trabajo.
-     */
-    public function centros()
+    // Una empresa tiene muchos centros
+    public function centros(): HasMany
     {
         return $this->hasMany(Centro::class, 'empresa_id', 'id');
     }
 
-    /**
-     * Una empresa tiene muchas personas asociadas.
-     */
-    public function personas()
-    {
-        return $this->hasMany(Persona::class, 'empresa_id', 'id');
-    }
-
-    /**
-     * Una empresa tiene muchos créditos formativos.
-     */
-    public function creditosFormativos()
+    // Una empresa tiene muchos créditos formativos
+    public function creditosFormativos(): HasMany
     {
         return $this->hasMany(CreditoFormativo::class, 'empresa_id', 'id');
     }
 
-    /**
-     * Relación muchos a muchos con cursos a través de grupo_empresa.
-     */
-    public function cursosGrupo()
+    // persona ya no tiene empresa_id: la empresa va en curso_alumno / curso_docente
+    public function cursoAlumnos(): HasMany
+    {
+        return $this->hasMany(CursoAlumno::class, 'empresa_id', 'id');
+    }
+
+    public function cursoDocentes(): HasMany
+    {
+        return $this->hasMany(CursoDocente::class, 'empresa_id', 'id');
+    }
+
+    // Personas que han sido alumnos de esta empresa
+    public function alumnos(): BelongsToMany
+    {
+        return $this->belongsToMany(Persona::class, 'curso_alumno', 'empresa_id', 'persona_id')->distinct();
+    }
+
+    // Cursos del grupo (tabla grupo_empresa)
+    public function cursosGrupo(): BelongsToMany
     {
         return $this->belongsToMany(Curso::class, 'grupo_empresa', 'empresa_id', 'curso_id');
+    }
+
+    // Coste de formación de la empresa en cada curso (tabla coste)
+    public function costes(): HasMany
+    {
+        return $this->hasMany(Coste::class, 'empresa_id', 'id');
+    }
+
+    // Informes de la representación legal de los trabajadores (tabla empresa_rlt)
+    public function informesRlt(): HasMany
+    {
+        return $this->hasMany(EmpresaRLT::class, 'empresa_id', 'id');
     }
 }
