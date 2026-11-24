@@ -75,4 +75,16 @@ class Persona extends Model
     {
         return $this->belongsToMany(Empresa::class, 'curso_alumno', 'persona_id', 'empresa_id')->distinct();
     }
+
+    // Facturas que emite como docente autónomo
+    public function facturasComoDocente(): HasMany
+    {
+        return $this->hasMany(FacturaEmpresaProveedora::class, 'docente_id', 'id');
+    }
+
+    // Peticiones de material que ha hecho
+    public function peticionesLogistica(): HasMany
+    {
+        return $this->hasMany(PeticionesLogistica::class, 'solicitante_id', 'id');
+    }
 }
