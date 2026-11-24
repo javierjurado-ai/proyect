@@ -6,6 +6,9 @@
     $incrustado = $incrustado ?? false;
     $editando = $editando ?? false;
     $alumno = $alumno ?? null;
+    // Si viene $prefijo (ej. 'alumnos[__ID__]') los campos se llaman alumnos[__ID__][erte], etc.
+    $prefijo = $prefijo ?? null;
+    $n = fn(string $campo) => $prefijo ? "{$prefijo}[{$campo}]" : $campo;
 @endphp
 
 <section class="rounded-xl border border-stone-200 bg-white p-6 lg:p-8">
@@ -18,7 +21,7 @@
             @endif
         @endunless
 
-        @if ($incrustado)
+        @if ($incrustado && !$prefijo)
             <input type="hidden" name="curso_id" value="{{ $curso->id }}">
         @endif
 
@@ -34,7 +37,7 @@
                         :options="$personas" contenedor="md:col-span-2" :value="$alumno->persona_id ?? ''" />
                 @endunless
 
-                <x-formulario.selector name="empresa_id" label="Empresa *" placeholder="Busca una empresa..."
+                <x-formulario.selector :name="$n('empresa_id')" label="Empresa *" placeholder="Busca una empresa..."
                     :options="$empresas" contenedor="md:col-span-2" :value="$alumno->empresa_id ?? ''" />
             </div>
         </fieldset>
@@ -42,13 +45,13 @@
         <fieldset class="mb-8">
             <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Situación laboral</legend>
             <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                <x-formulario.seleccion name="jornada_laboral" label="Jornada laboral *" placeholder="-- Selecciona --"
+                <x-formulario.seleccion :name="$n('jornada_laboral')" label="Jornada laboral *" placeholder="-- Selecciona --"
                     :options="$lopd" :value="$alumno->jornada_laboral->value ?? ($alumno->jornada_laboral ?? '')" />
-                <x-formulario.seleccion name="categoria_profesional" label="Categoría profesional *" 
-                :options="$lopd" :value="$alumno->categoria_profesional->value ?? ($alumno->jornada_laboral ?? '')" />
-                <x-formulario.seleccion name="erte" label="ERTE *" 
+                <x-formulario.seleccion :name="$n('categoria_profesional')" label="Categoría profesional *" 
+                :options="$categoriasProfesional" :value="$alumno->categoria_profesional->value ?? ($alumno->categoria_profesional ?? '')" />
+                <x-formulario.seleccion :name="$n('erte')" label="ERTE *" 
                 :options="$lopd" :value="$alumno->erte->value ?? ($alumno->erte ?? '')" />
-                <x-formulario.seleccion name="fijo_discontinuo" label="Fijo discontinuo *" 
+                <x-formulario.seleccion :name="$n('fijo_discontinuo')" label="Fijo discontinuo *" 
                 :options="$lopd" :value="$alumno->fijo_discontinuo->value ?? ($alumno->fijo_discontinuo ?? '')" />
             </div>
         </fieldset>
@@ -57,15 +60,15 @@
             <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Formación y certificados
             </legend>
             <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                <x-formulario.seleccion name="nivel_estudio" label="Nivel de estudios *" :options="$nivelesEstudio"
-                    :value="$alumno->nivel_estudio ?? ''" />
-                <x-formulario.seleccion name="diploma" label="Diploma *" 
+                <x-formulario.seleccion :name="$n('nivel_estudio')" label="Nivel de estudios *" 
+                :options="$nivelesEstudio" :value="$alumno->nivel_estudio->value ?? ($alumno->nivel_estudio ?? '')" />
+                <x-formulario.seleccion :name="$n('diploma')" label="Diploma *" 
                 :options="$lopd" :value="$alumno->diploma->value ?? ($alumno->diploma ?? '')" />
-                <x-formulario.seleccion name="certificado_discapacidad" label="Certificado de discapacidad *"
+                <x-formulario.seleccion :name="$n('certificado_discapacidad')" label="Certificado de discapacidad *"
                     :options="$lopd" :value="$alumno->certificado_discapacidad->value ?? ($alumno->certificado_discapacidad ?? '')" />
-                <x-formulario.seleccion name="certificado_afectado_terrorismo" label="Afectado por terrorismo *"
+                <x-formulario.seleccion :name="$n('certificado_afectado_terrorismo')" label="Afectado por terrorismo *"
                     :options="$lopd" :value="$alumno->certificado_afectado_terrorismo->value ?? ($alumno->certificado_afectado_terrorismo ?? '')" />
-                <x-formulario.seleccion name="certificado_afectado_violencia_genero" label="Afectado por violencia de género *" 
+                <x-formulario.seleccion :name="$n('certificado_afectado_violencia_genero')" label="Afectado por violencia de género *" 
                 :options="$lopd" :value="$alumno->certificado_afectado_violencia_genero->value ?? ($alumno->certificado_afectado_violencia_genero ?? '')" />
             </div>
         </fieldset>

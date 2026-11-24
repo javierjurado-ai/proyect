@@ -22,6 +22,7 @@ use App\Models\Rol;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CursoController extends Controller
@@ -103,14 +104,14 @@ class CursoController extends Controller
             'id',
             $curso->alumnos()->select('persona_id')
         )->get();
-        $empresas = Empresa::all();
+        $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
         $lopd = collect(LOPD::cases())
             ->mapWithKeys(fn($l) => [$l->value => ucfirst(strtolower($l->value))]);
         $categoriasProfesional = collect(CategoriaProfesional::cases())
             ->mapWithKeys(fn($c) => [$c->value => ucfirst(strtolower($c->value))]);
         $nivelesEstudio = collect(NivelEstudio::cases())
             ->mapWithKeys(fn($c) => [$c->value => ucfirst(strtolower($c->value))]);
-        return view('curso.tablaPersona', compact('curso', 'personasDisponibles', 'empresas', 'lopd','categoriasProfesional','nivelesEstudio'));
+        return view('curso.tablaPersona', compact('curso', 'personasDisponibles', 'empresas', 'lopd', 'categoriasProfesional', 'nivelesEstudio'));
     }
     ////////////////////Roles////////////////////////////
     // OJO: el enum `rol` de la BD solo admite ADMINISTRADOR, COMERCIAL y COORDINADOR.
@@ -158,44 +159,65 @@ class CursoController extends Controller
         return response()->json(CursoDocente::create($datos), 201);
     }
 
-    public function agregarCursoAlumno(Request $request, $id)
+    public function guardarAlumnos(Request $request, Curso $curso)
     {
-        $siNo = Rule::in(['SI', 'NO']);
-
-        $datos = $request->validate([
-            'curso_id'                              => 'required|integer|exists:curso,id',
-            'empresa_id'                            => 'required|integer|exists:empresa,id',
-            'jornada_laboral'                       => ['required', $siNo],
-            'certificado_afectado_terrorismo'       => ['required', $siNo],
-            'certificado_afectado_violencia_genero' => ['required', $siNo],
-            'certificado_discapacidad'              => ['required', $siNo],
-            'nivel_estudio'                         => ['required', Rule::in([
-                'MENOS_PRIMARIA',
-                'PRIMARIA',
-                'ESO_EGB',
-                'BACHILLERATO_FP_MEDIO',
-                'CP_NIVEL_3',
-                'FP_SUPERIOR',
-                'GRADO_DIPLOMATURA',
-                'LICENCIATURA_MASTER',
-                'DOCTORADO',
-                'OTRAS',
-            ])],
-            'categoria_profesional'                 => ['required', Rule::in([
-                'DIRECTIVO',
-                'MANDO_INTERMEDIO',
-                'TECNICO',
-                'TRABAJADOR_CUALIFICADO',
-                'TRABAJADOR_BAJA_CUALIFICACION',
-            ])],
-            'erte'                                  => ['required', $siNo],
-            'fijo_discontinuo'                      => ['required', $siNo],
-            'diploma'                               => ['required', $siNo],
+        //para la función para visualizar la petición
+        //dd($request->input('alumnos'), (new \App\Models\Empresa)->getTable(), (new \App\Models\Empresa)->getKeyName());
+        $request->validate([
+            'alumnos'                                         => ['required', 'array', 'min:1'],
+            'alumnos.*.persona_id'                            => ['required', 'integer', 'distinct', Rule::exists((new Persona)->getTable(), 'id')],
+            'alumnos.*.empresa_id' => ['required', Rule::exists((new Empresa)->getTable(), (new Empresa)->getKeyName())],
+            'alumnos.*.jornada_laboral'                       => ['required', 'string'],
+            'alumnos.*.categoria_profesional'                 => ['required', 'string'],
+            'alumnos.*.erte'                                  => ['required', 'string'],
+            'alumnos.*.fijo_discontinuo'                      => ['required', 'string'],
+            'alumnos.*.nivel_estudio'                         => ['required', 'string'],
+            'alumnos.*.diploma'                               => ['required', 'string'],
+            'alumnos.*.certificado_discapacidad'              => ['required', 'string'],
+            'alumnos.*.certificado_afectado_terrorismo'       => ['required', 'string'],
+            'alumnos.*.certificado_afectado_violencia_genero' => ['required', 'string'],
+        ], [
+            'alumnos.required'   => 'Añade al menos un alumno.',
+            'alumnos.*.required' => 'Faltan datos de algún alumno.',
         ]);
 
-        $datos['persona_id'] = Persona::findOrFail($id)->id;
+        // Personas que ya están matriculadas en este curso (evita duplicados).
+        $yaMatriculadas = CursoAlumno::where('curso_id', $curso->id)
+            ->pluck('persona_id')
+            ->all();
 
-        return response()->json(CursoAlumno::create($datos), 201);
+        $guardados = 0;
+
+        DB::transaction(function () use ($request, $curso, $yaMatriculadas, &$guardados) {
+            foreach ($request->input('alumnos') as $datos) {
+                if (in_array((int) $datos['persona_id'], $yaMatriculadas, true)) {
+                    continue;
+                }
+
+                CursoAlumno::create([
+                    'curso_id'   => $curso->id, // viene de la ruta, no del formulario
+                    'persona_id' => $datos['persona_id'],
+                    'empresa_id' => $datos['empresa_id'],
+                    'jornada_laboral'                       => $datos['jornada_laboral'],
+                    'categoria_profesional'                 => $datos['categoria_profesional'],
+                    'erte'                                  => $datos['erte'],
+                    'fijo_discontinuo'                      => $datos['fijo_discontinuo'],
+                    'nivel_estudio'                         => $datos['nivel_estudio'],
+                    'diploma'                               => $datos['diploma'],
+                    'certificado_discapacidad'              => $datos['certificado_discapacidad'],
+                    'certificado_afectado_terrorismo'       => $datos['certificado_afectado_terrorismo'],
+                    'certificado_afectado_violencia_genero' => $datos['certificado_afectado_violencia_genero'],
+                ]);
+
+                $guardados++;
+            }
+        });
+
+        return redirect()
+            ->route('curso.visualizar', $curso)
+            ->with('status', $guardados === 1
+                ? 'Alumno agregado correctamente.'
+                : "{$guardados} alumnos agregados correctamente.");
     }
 
     ///////////////////Formulario////////////////////////

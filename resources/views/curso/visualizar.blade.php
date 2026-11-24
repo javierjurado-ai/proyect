@@ -241,9 +241,7 @@
 
                             <td class="px-4 py-3 text-center whitespace-nowrap">
                                 <div class="inline-flex items-center gap-2">
-                                    @if ($alumno)
-                                        <x-tabla.boton-editar :href="route('persona.edit', $alumno->id)" />
-                                    @endif
+                                   
 
                                     <x-tabla.boton-eliminar :action="route('curso.alumno.destroy', [$curso->id, $cursoAlumno->id])" />
                                 </div>
