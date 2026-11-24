@@ -187,7 +187,7 @@
             <x-interfaz.panel.tarjeta titulo="Alumnos matriculados">
                 <div class="mb-4 flex items-center justify-between">
                     <p class="text-sm text-slate-500">{{ $curso->alumnos->count() }} registrados</p>
-                    <a href="{{ route('curso.alumno.create', $curso) }}"
+                    <a href="{{ route('curso.alumno.store', $curso) }}"
                         class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
                         + Nuevo alumno
                     </a>
@@ -251,7 +251,74 @@
                 </x-tabla.tabla>
             </x-interfaz.panel.tarjeta>
         </x-slot:alumnos>
+        <x-slot:docentes title="Docentes">
+            <x-interfaz.panel.tarjeta titulo="Docentes trabajando">
+                <div class="mb-4 flex items-center justify-between">
+                    <p class="text-sm text-slate-500">{{ $curso->docentes->count() }} registrados</p>
+                    <a href="{{ route('curso.docente.store', $curso) }}"
+                        class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
+                        + Nuevo docente
+                    </a>
+                </div>
 
+                @if (session('ok'))
+                    <div class="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
+                        {{ session('ok') }}
+                    </div>
+                @endif
+
+                <x-tabla.tabla vacio="Todavía no hay alumnos matriculados en este curso." :columnas="[
+                    'Nombre',
+                    'DNI / NIE',
+                    'Email',
+                    'Teléfono',
+                    'Nacimiento',
+                    'Nacionalidad',
+                    ['LOPD', 'center'],
+                    ['Acciones', 'center'],
+                ]">
+
+                    @foreach ($curso->docentes as $cursoDocente)
+                        @php
+                            $docente = $cursoAlumno->persona;
+                            $lopd = $alumno?->LOPD?->value ?? ($alumno?->LOPD ?? 'NO');
+                        @endphp
+
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-3 font-medium text-slate-800">
+                                {{ $docente ? $docente->nombre . ' ' . $docente->primer_apellido . ' ' . $docente->segundo_apellido : '—' }}
+                            </td>
+                            <td class="px-4 py-3 font-mono text-slate-700">{{ $docente?->DNI ?? ($docente?->NIE ?? '—') }}
+                            </td>
+                            <td class="px-4 py-3 text-slate-700">{{ $docente?->email ?? '—' }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $docente?->telefono ?? '—' }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-slate-700">
+                                {{ $alumno?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
+                            </td>
+                            <td class="px-4 py-3 text-slate-700">{{ $docente?->nacionalidad ?? '—' }}</td>
+
+                            <td class="px-4 py-3 text-center">
+                                @if (strtoupper((string) $lopd) === 'SI')
+                                    <span
+                                        class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">Sí</span>
+                                @else
+                                    <span
+                                        class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">No</span>
+                                @endif
+                            </td>
+
+                            <td class="px-4 py-3 text-center whitespace-nowrap">
+                                <div class="inline-flex items-center gap-2">
+                                   
+
+                                    <x-tabla.boton-eliminar :action="route('curso.alumno.destroy', [$curso->id, $cursoAlumno->id])" />
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </x-tabla.tabla>
+            </x-interfaz.panel.tarjeta>
+        </x-slot:docentes>
     </x-interfaz.layout.pestanas>
 
 </x-interfaz.layout.app>
