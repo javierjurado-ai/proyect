@@ -15,7 +15,6 @@ class Curso extends Model
     protected $primaryKey = 'id';
     public $timestamps = false;
 
-    // Ya no existen 'codigo_curso' ni 'aula_virtual' (ahora tabla curso_aula_virtual)
     protected $fillable = [
         'codigo_accion',
         'codigo_grupo',
@@ -37,6 +36,7 @@ class Curso extends Model
         'centro_id',
         'presupuesto_id',
         'formacion_id',
+        //eliminar cuando se elimine la columna curso.peticiones_logistica_id
         'peticiones_logistica_id',
     ];
 
@@ -60,11 +60,6 @@ class Curso extends Model
     public function presupuesto(): BelongsTo
     {
         return $this->belongsTo(Presupuesto::class, 'presupuesto_id', 'id');
-    }
-
-    public function peticionLogistica(): BelongsTo
-    {
-        return $this->belongsTo(PeticionesLogistica::class, 'peticiones_logistica_id', 'id');
     }
 
     public function centro(): BelongsTo
@@ -97,6 +92,47 @@ class Curso extends Model
     public function contactosCentro(): HasMany
     {
         return $this->hasMany(CentroContactos::class, 'curso_id', 'id');
+    }
+
+    // Peticiones de material del curso (un curso puede tener varias)
+    // OBSOLETO: lo usan CursoController y curso/visualizar.blade.php.
+    // Quitar cuando se elimine curso.peticiones_logistica_id y se cambie a peticionesLogistica()
+    public function peticionLogistica(): BelongsTo
+    {
+        return $this->belongsTo(PeticionesLogistica::class, 'peticiones_logistica_id', 'id');
+    }
+
+    public function peticionesLogistica(): HasMany
+    {
+        return $this->hasMany(PeticionesLogistica::class, 'curso_id', 'id');
+    }
+
+    public function movimientosAlmacen(): HasMany
+    {
+        return $this->hasMany(MovimientoAlmacen::class, 'curso_id', 'id');
+    }
+
+    // Equipos con nº de serie que tiene prestados ahora
+    public function unidadesPrestadas(): HasMany
+    {
+        return $this->hasMany(ArticuloSerie::class, 'curso_id', 'id');
+    }
+
+    // Facturas emitidas a las empresas del curso
+    public function facturas(): HasMany
+    {
+        return $this->hasMany(Factura::class, 'curso_id', 'id');
+    }
+
+    // Facturas de proveedores / docentes imputadas al curso
+    public function facturasProveedora(): HasMany
+    {
+        return $this->hasMany(FacturaEmpresaProveedora::class, 'curso_id', 'id');
+    }
+
+    public function costes(): HasMany
+    {
+        return $this->hasMany(Coste::class, 'curso_id', 'id');
     }
 
     // Empresas del grupo (tabla grupo_empresa)

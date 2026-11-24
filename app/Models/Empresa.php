@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Enums\RolEmpresa;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,11 +18,21 @@ class Empresa extends Model
     protected $fillable = [
         'cif',
         'nombre',
+        'direccion',
+        'codigo_postal',
+        'municipio',
+        'provincia',
+        'email_facturacion',
+        'dias_vencimiento',
+        'telefono',
         'total_trabajadores',
+        'activo',
     ];
 
     protected $casts = [
         'total_trabajadores' => 'integer',
+        'dias_vencimiento'   => 'integer',
+        'activo'             => 'boolean',
     ];
 
     // Una empresa tiene muchos centros
@@ -68,5 +80,52 @@ class Empresa extends Model
     public function informesRlt(): HasMany
     {
         return $this->hasMany(EmpresaRLT::class, 'empresa_id', 'id');
+    }
+
+    // --- Roles: FORMADORA, CLIENTE, PROVEEDOR (tabla empresa_rol) ---
+
+    public function roles(): HasMany
+    {
+        return $this->hasMany(EmpresaRol::class, 'empresa_id', 'id');
+    }
+
+    // $empresa->tieneRol(RolEmpresa::Proveedor)
+    public function tieneRol(RolEmpresa $rol): bool
+    {
+        return $this->roles()->where('rol', $rol->value)->exists();
+    }
+
+    // Empresa::conRol(RolEmpresa::Cliente)->get()
+    public function scopeConRol(Builder $query, RolEmpresa $rol): Builder
+    {
+        return $query->whereHas('roles', fn (Builder $q) => $q->where('rol', $rol->value));
+    }
+
+    // --- Facturación ---
+
+    // Facturas que le emitimos (como CLIENTE)
+    public function facturas(): HasMany
+    {
+        return $this->hasMany(Factura::class, 'empresa_id', 'id');
+    }
+
+    // Facturas que nos emite (como PROVEEDOR / FORMADORA)
+    public function facturasProveedora(): HasMany
+    {
+        return $this->hasMany(FacturaEmpresaProveedora::class, 'empresa_id', 'id');
+    }
+
+    // --- Almacén ---
+
+    // Artículos de los que es proveedor habitual
+    public function articulos(): HasMany
+    {
+        return $this->hasMany(Articulo::class, 'proveedor_habitual_id', 'id');
+    }
+
+    // Entradas de almacén por compras a esta empresa
+    public function movimientosAlmacen(): HasMany
+    {
+        return $this->hasMany(MovimientoAlmacen::class, 'proveedor_id', 'id');
     }
 }

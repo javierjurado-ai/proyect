@@ -51,6 +51,18 @@ class Centro extends Model
         return $this->hasMany(Aula::class, 'centro_id', 'id');
     }
 
+    // Almacenes situados en el centro
+    public function almacenes(): HasMany
+    {
+        return $this->hasMany(Almacen::class, 'centro_id', 'id');
+    }
+
+    // Peticiones de material que van a este centro
+    public function peticionesLogistica(): HasMany
+    {
+        return $this->hasMany(PeticionesLogistica::class, 'centro_id', 'id');
+    }
+
     // Un centro tiene muchos contactos (coordinador / responsable)
     public function contactos(): HasMany
     {
