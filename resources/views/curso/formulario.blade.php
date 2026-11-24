@@ -69,19 +69,7 @@
                         min="0"
                         max="3"
                         :value="$curso->nivel_formacion ?? 0" />
-
-                    <x-formulario.entrada
-                        name="codigo_accion"
-                        label="Código de acción *"
-                        maxlength="45"
-                        :value="$curso->codigo_accion ?? ''" />
-
-                    <x-formulario.entrada
-                        name="codigo_grupo"
-                        label="Código de grupo *"
-                        maxlength="45"
-                        :value="$curso->codigo_grupo ?? ''" />
-
+                    
                     <x-formulario.entrada
                         name="empresa_formadora"
                         label="Empresa formadora *"

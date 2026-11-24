@@ -126,6 +126,31 @@ class CentroController extends Controller
     }
 
     /* =========================================================
+     *  VISTA DETALLADA DE CENTRO (web)
+     * ========================================================= */
+
+    // Muestra la vista con pestañas (Información y Aulas) de un centro
+    public function visualizarCentro(Request $request, Centro $centro)
+    {
+        $centro->load(['empresa', 'contactos']);
+        
+        $datosUsuario = $this->datosUsuario();
+        $rol = $datosUsuario['rol'];
+        $nombre = $datosUsuario['nombre'];
+
+        return view('centro.visualizar', compact('centro', 'rol', 'nombre'));
+    }
+
+    // Devuelve la sub-tabla de aulas asociadas a este centro (para la pestaña "Aulas")
+    public function crearTablaPorAula($id)
+    {
+        $centro = Centro::with('aulas.curso.formacion')->findOrFail($id);
+        $aulas = $centro->aulas;
+
+        return view('centro.aulas-tabla', compact('aulas', 'centro'));
+    }
+
+    /* =========================================================
      *  FORMULARIO DE CONTACTOS DE CENTRO (web)
      * ========================================================= */
 

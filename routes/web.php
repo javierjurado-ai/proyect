@@ -131,6 +131,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/view/formulario/actualizarCentro/{id}', [CentroController::class, 'actualizarCentroWeb'])->name('centro.update')->whereNumber('id');
     Route::delete('/centro/{id}', [CentroController::class, 'eliminarCentroWeb'])->name('centro.destroy')->whereNumber('id');
 
+    // Rutas para la visualización detallada y pestañas de Centros
+    Route::get('/view/centro/{centro}', [CentroController::class, 'visualizarCentro'])->name('centro.visualizar');
+    Route::get('/view/centro/{centro}/aulas', [CentroController::class, 'crearTablaPorAula'])->name('centro.aulas');
+
     
     // Rutas web para la gestión de Empresas (Editar, Actualizar y Eliminar)
     Route::get('/view/listadoEmpresa', [EmpresaController::class, 'index'])->name('empresa.index');
