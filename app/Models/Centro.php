@@ -45,11 +45,10 @@ class Centro extends Model
         return $this->hasMany(Curso::class, 'centro_id', 'id');
     }
 
-    // La tabla aulas no tiene centro_id: se llega a través de curso
-    // centro.id -> curso.centro_id -> aulas.curso_id
-    public function aulas(): HasManyThrough
+       // Un centro tiene muchas aulas directamente por centro_id
+    public function aulas(): HasMany
     {
-        return $this->hasManyThrough(Aula::class, Curso::class, 'centro_id', 'curso_id', 'id', 'id');
+        return $this->hasMany(Aula::class, 'centro_id', 'id');
     }
 
     // Un centro tiene muchos contactos (coordinador / responsable)
