@@ -1,17 +1,19 @@
+
+Agregar alumnos.blade · PHP
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 @php
     $tituloCurso = $curso->formacion?->nombre ?? ('Curso ' . $curso->codigo_accion . '/' . $curso->codigo_grupo);
     $action = route('curso.alumno.create', $curso);
-
+ 
     $lista = $personasDisponibles->map(fn ($p) => [
         'id'     => $p->id,
         'nombre' => trim($p->nombre . ' ' . $p->primer_apellido . ' ' . $p->segundo_apellido),
         'doc'    => $p->DNI ?: ($p->NIE ?: ''),
     ])->values();
 @endphp
-
+ 
 <x-interfaz.layout.app titulo="Agregar alumnos · {{ $tituloCurso }}" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
-
+ 
     <x-interfaz.panel.cabecera titulo="Agregar alumnos" subtitulo="{{ $tituloCurso }}">
         <x-slot:acciones>
             <a href="{{ route('curso.visualizar', $curso) }}"
@@ -24,30 +26,31 @@
             </a>
         </x-slot:acciones>
     </x-interfaz.panel.cabecera>
-
-    <x-interfaz.panel.tarjeta titulo="Personas disponibles">
-        <form method="POST" action="{{ $action }}"
-            x-data="{
-                personas: @js($lista),
-                elegidos: [],
-                buscar: '',
-                get disponibles() {
-                    const q = this.buscar.toLowerCase();
-                    return this.personas.filter(p =>
-                        !this.elegidos.some(e => e.id === p.id) &&
-                        (p.nombre + ' ' + p.doc).toLowerCase().includes(q));
-                },
-                agregar(p) { this.elegidos.push(p); },
-                quitar(p) { this.elegidos = this.elegidos.filter(e => e.id !== p.id); }
-            }">
-            @csrf
-
+ 
+    {{-- Un único <form>: personas elegidas + datos de matrícula --}}
+    <form method="POST" action="{{ $action }}"
+        x-data="{
+            personas: @js($lista),
+            elegidos: [],
+            buscar: '',
+            get disponibles() {
+                const q = this.buscar.toLowerCase();
+                return this.personas.filter(p =>
+                    !this.elegidos.some(e => e.id === p.id) &&
+                    (p.nombre + ' ' + p.doc).toLowerCase().includes(q));
+            },
+            agregar(p) { this.elegidos.push(p); },
+            quitar(p) { this.elegidos = this.elegidos.filter(e => e.id !== p.id); }
+        }">
+        @csrf
+ 
+        <x-interfaz.panel.tarjeta titulo="Personas disponibles">
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {{-- Disponibles --}}
                 <div>
                     <input type="search" x-model="buscar" placeholder="Buscar por nombre o DNI..."
                         class="mb-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-
+ 
                     <ul class="max-h-80 divide-y divide-stone-200 overflow-y-auto rounded-lg border border-stone-200">
                         <template x-for="p in disponibles" :key="p.id">
                             <li>
@@ -63,13 +66,13 @@
                         </li>
                     </ul>
                 </div>
-
+ 
                 {{-- Elegidos --}}
                 <div>
                     <h3 class="mb-3 py-2 text-sm font-semibold text-slate-700">
                         Alumnos a agregar (<span x-text="elegidos.length"></span>)
                     </h3>
-
+ 
                     <ul class="max-h-80 divide-y divide-stone-200 overflow-y-auto rounded-lg border border-stone-200">
                         <template x-for="p in elegidos" :key="p.id">
                             <li class="flex items-center justify-between px-3 py-2 text-sm">
@@ -85,14 +88,20 @@
                     </ul>
                 </div>
             </div>
-
-            <div class="mt-5 flex justify-end">
-                <button type="submit" :disabled="elegidos.length === 0"
-                    class="inline-flex items-center rounded-lg bg-marca-800 px-5 py-2 text-sm font-semibold text-white hover:bg-marca-900 disabled:cursor-not-allowed disabled:opacity-50">
-                    Guardar alumnos
-                </button>
-            </div>
-        </form>
-    </x-interfaz.panel.tarjeta>
-
+        </x-interfaz.panel.tarjeta>
+ 
+        <div class="mt-6">
+            <x-interfaz.panel.tarjeta titulo="Datos de matrícula (se aplican a todos los alumnos elegidos)">
+                @include('curso.formularioAlumno', ['incrustado' => true])
+ 
+                <div class="mt-5 flex justify-end">
+                    <button type="submit" :disabled="elegidos.length === 0"
+                        class="inline-flex items-center rounded-lg bg-marca-800 px-5 py-2 text-sm font-semibold text-white hover:bg-marca-900 disabled:cursor-not-allowed disabled:opacity-50">
+                        Guardar alumnos
+                    </button>
+                </div>
+            </x-interfaz.panel.tarjeta>
+        </div>
+    </form>
+ 
 </x-interfaz.layout.app>

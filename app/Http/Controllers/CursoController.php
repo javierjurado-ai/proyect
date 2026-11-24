@@ -7,8 +7,12 @@ use App\Models\Centro;
 use App\Models\Curso;
 use App\Models\CursoAlumno;
 use App\Models\CursoDocente;
+use App\Models\Empresa;
+use App\Models\Enums\CategoriaProfesional;
 use App\Models\Enums\EstadoAula;
+use App\Models\enums\LOPD;
 use App\Models\Enums\Modalidad;
+use App\Models\Enums\NivelEstudio;
 use App\Models\Enums\TipoRol;
 use App\Models\Enums\Turno;
 use App\Models\Enums\UsoAula;
@@ -99,8 +103,14 @@ class CursoController extends Controller
             'id',
             $curso->alumnos()->select('persona_id')
         )->get();
-
-        return view('curso.tablaPersona', compact('curso', 'personasDisponibles'));
+        $empresas = Empresa::all();
+        $lopd = collect(LOPD::cases())
+            ->mapWithKeys(fn($l) => [$l->value => ucfirst(strtolower($l->value))]);
+        $categoriasProfesional = collect(CategoriaProfesional::cases())
+            ->mapWithKeys(fn($c) => [$c->value => ucfirst(strtolower($c->value))]);
+        $nivelesEstudio = collect(NivelEstudio::cases())
+            ->mapWithKeys(fn($c) => [$c->value => ucfirst(strtolower($c->value))]);
+        return view('curso.tablaPersona', compact('curso', 'personasDisponibles', 'empresas', 'lopd','categoriasProfesional','nivelesEstudio'));
     }
     ////////////////////Roles////////////////////////////
     // OJO: el enum `rol` de la BD solo admite ADMINISTRADOR, COMERCIAL y COORDINADOR.
