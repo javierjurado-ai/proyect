@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Models\Enums\DiaSemana;
-use App\Models\Enums\TurnoDocente;
+use App\Models\Enums\Turno;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -23,7 +23,7 @@ class DocenteCalendario extends Model
     ];
 
     protected $casts = [
-        'turno'      => TurnoDocente::class,
+        'turno'      => Turno::class,
         'dia_semana' => DiaSemana::class,
     ];
 

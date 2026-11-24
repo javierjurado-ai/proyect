@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Curso;
 use App\Models\Empresa;
 use App\Models\Persona;
 use App\Models\enums\Genero;
@@ -70,8 +71,8 @@ class PersonaController extends Controller
 
         // [id => nombre] de la tabla empresa para el desplegable
         $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
-
-        return view('persona.formulario', compact('generos', 'empresas','lopd','rol','persona','nombre'));
+        $volver = $request->old('volver', url()->previous());
+        return view('persona.formulario', compact('generos', 'empresas', 'lopd', 'rol', 'nombre','volver'));
     }
 
     // Guarda lo enviado desde el formulario y vuelve con mensaje
@@ -88,9 +89,10 @@ class PersonaController extends Controller
             ->with('ok', 'Persona guardada correctamente.');
     }
 
-    public function editarWeb($id) {
+    public function editarWeb($id)
+    {
         $persona = Persona::findOrFail($id);
-        return view('persona.editar', compact('persona')); 
+        return view('persona.editar', compact('persona'));
     }
     /* =========================================================
      *  API (JSON)
@@ -137,9 +139,30 @@ class PersonaController extends Controller
 
         $datos = $request->validate($this->reglas(), $this->mensajes());
 
-        $persona = Persona::create($datos);
+        Persona::create($datos);
 
-        return response()->json($persona, 201);
+        $volver = $request->input('volver');
+
+        // Solo se aceptan URLs de este mismo sitio (evita redirecciones a webs externas)
+        $host = parse_url((string) $volver, PHP_URL_HOST);
+        $esInterna = is_string($volver)
+            && $volver !== ''
+            && ($host === null || $host === $request->getHost())
+            && ! str_starts_with($volver, '//');
+
+        return redirect($esInterna ? $volver : route('formacion.index'))
+            ->with('ok', 'Persona guardada correctamente.');
+    }
+    public function agregarPersonaPorAlumno(Request $request, Curso $curso)
+    {
+        $this->normalizarDocumento($request);
+
+        $datos = $request->validate($this->reglas(), $this->mensajes());
+
+        Persona::create($datos);
+
+        return redirect("/curso/{$curso->id}/alumnos")
+            ->with('ok', 'Persona guardada correctamente.');
     }
 
     public function actualizarPersona(Request $request, $id)

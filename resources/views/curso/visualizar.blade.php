@@ -1,5 +1,6 @@
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
-<x-interfaz.layout.app titulo="Curso {{ $curso->codigo_accion }}/{{ $curso->codigo_grupo }}" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
+<x-interfaz.layout.app titulo="Curso {{ $curso->codigo_accion }}/{{ $curso->codigo_grupo }}" :rol="$rol"
+    :usuario="$nombre" :contadores="$contadores ?? []">
 
     <x-interfaz.panel.cabecera titulo="{{ $curso->formacion?->nombre ?? 'Curso' }}"
         subtitulo="Acción {{ $curso->codigo_accion }} · Grupo {{ $curso->codigo_grupo }}">
@@ -34,7 +35,8 @@
                     </div>
                     <div>
                         <dt class="text-slate-500">Modalidad</dt>
-                        <dd>{{ $modalidad === 'TELEFORMACION' ? 'Teleformación' : ($modalidad ? ucfirst(strtolower($modalidad)) : '—') }}</dd>
+                        <dd>{{ $modalidad === 'TELEFORMACION' ? 'Teleformación' : ($modalidad ? ucfirst(strtolower($modalidad)) : '—') }}
+                        </dd>
                     </div>
                     <div>
                         <dt class="text-slate-500">Horas</dt>
@@ -115,7 +117,8 @@
                         <div>
                             <dt class="text-slate-500">Estado</dt>
                             <dd>
-                                <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold
+                                <span
+                                    class="rounded-full px-2.5 py-0.5 text-xs font-semibold
                                     {{ $formacion->activo ? 'bg-green-100 text-green-800' : 'bg-slate-200 text-slate-700' }}">
                                     {{ $formacion->activo ? 'Activa' : 'Inactiva' }}
                                 </span>
@@ -167,7 +170,8 @@
                         </div>
                         <div>
                             <dt class="text-slate-500">Estado de la petición</dt>
-                            <dd>{{ $peticionLogistica->estado ? ucfirst(strtolower(str_replace('_', ' ', $peticionLogistica->estado->value))) : '—' }}</dd>
+                            <dd>{{ $peticionLogistica->estado ? ucfirst(strtolower(str_replace('_', ' ', $peticionLogistica->estado->value))) : '—' }}
+                            </dd>
                         </div>
                         <div>
                             <dt class="text-slate-500">Observaciones</dt>
@@ -183,8 +187,8 @@
             <x-interfaz.panel.tarjeta titulo="Alumnos matriculados">
                 <div class="mb-4 flex items-center justify-between">
                     <p class="text-sm text-slate-500">{{ $curso->alumnos->count() }} registrados</p>
-                    <a href="{{ route('persona.create') }}"
-                       class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
+                    <a href="{{ route('curso.alumno.create', $curso) }}"
+                        class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
                         + Nuevo alumno
                     </a>
                 </div>
@@ -195,41 +199,50 @@
                     </div>
                 @endif
 
-                <x-tabla.tabla vacio="Todavía no hay alumnos matriculados en este curso."
-                    :columnas="['Nombre', 'DNI / NIE', 'Email', 'Teléfono', 'Nacimiento', 'Nacionalidad', ['LOPD', 'center'], ['Acciones', 'center']]">
-                    
+                <x-tabla.tabla vacio="Todavía no hay alumnos matriculados en este curso." :columnas="[
+                    'Nombre',
+                    'DNI / NIE',
+                    'Email',
+                    'Teléfono',
+                    'Nacimiento',
+                    'Nacionalidad',
+                    ['LOPD', 'center'],
+                    ['Acciones', 'center'],
+                ]">
+
                     @foreach ($curso->alumnos as $cursoAlumno)
                         @php
                             $alumno = $cursoAlumno->persona;
-                            $lopd = $alumno?->LOPD?->value ?? $alumno?->LOPD ?? 'NO';
+                            $lopd = $alumno?->LOPD?->value ?? ($alumno?->LOPD ?? 'NO');
                         @endphp
-                        
+
                         <tr class="hover:bg-slate-50">
                             <td class="px-4 py-3 font-medium text-slate-800">
                                 {{ $alumno ? $alumno->nombre . ' ' . $alumno->primer_apellido . ' ' . $alumno->segundo_apellido : '—' }}
                             </td>
-                            <td class="px-4 py-3 font-mono text-slate-700">{{ $alumno?->DNI ?? $alumno?->NIE ?? '—' }}</td>
+                            <td class="px-4 py-3 font-mono text-slate-700">{{ $alumno?->DNI ?? ($alumno?->NIE ?? '—') }}
+                            </td>
                             <td class="px-4 py-3 text-slate-700">{{ $alumno?->email ?? '—' }}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $alumno?->telefono ?? '—' }}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-slate-700">
                                 {{ $alumno?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($alumno->fecha_nacimiento)->format('d/m/Y') : '—' }}
                             </td>
                             <td class="px-4 py-3 text-slate-700">{{ $alumno?->nacionalidad ?? '—' }}</td>
-                            
+
                             <td class="px-4 py-3 text-center">
                                 @if (strtoupper((string) $lopd) === 'SI')
-                                    <span class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">Sí</span>
+                                    <span
+                                        class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">Sí</span>
                                 @else
-                                    <span class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">No</span>
+                                    <span
+                                        class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">No</span>
                                 @endif
                             </td>
 
                             <td class="px-4 py-3 text-center whitespace-nowrap">
                                 <div class="inline-flex items-center gap-2">
-                                    @if($alumno)
-                                        <x-tabla.boton-editar :href="route('persona.edit', $alumno->id)" />
-                                    @endif
-                                    
+                                   
+
                                     <x-tabla.boton-eliminar :action="route('curso.alumno.destroy', [$curso->id, $cursoAlumno->id])" />
                                 </div>
                             </td>

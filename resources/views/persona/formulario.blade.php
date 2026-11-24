@@ -6,10 +6,6 @@
     $opcionesGenero = collect($generos)->mapWithKeys(
         fn($texto, $valor) => [$valor => mb_convert_case($valor, MB_CASE_TITLE, 'UTF-8')],
     );
-    $opcionesLopd = collect($lopd)->mapWithKeys(function ($c) {
-        $valor = $c instanceof \BackedEnum ? $c->value : $c;
-        return [$valor => strtoupper($valor) === 'SI' ? 'Sí' : 'No'];
-    });
 @endphp
 
 <x-interfaz.layout.app :titulo="$editando ? 'Editar formación' : 'Nueva formación'" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
@@ -17,9 +13,9 @@
     <x-interfaz.panel.cabecera :titulo="$editando ? 'Editar formación' : 'Nueva formación'" subtitulo="Los campos marcados con * son obligatorios">
         <x-slot:acciones>
             @if (\Illuminate\Support\Facades\Route::has('formacion.index'))
-                <a href="{{ route('formacion.index') }}"
+                <a href="{{ $volver }}"
                     class="inline-flex items-center gap-1 rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-marca-950 hover:bg-stone-50">
-                    ← Volver a formaciones
+                    ← Volver
                 </a>
             @endif
         </x-slot:acciones>
@@ -43,14 +39,25 @@
     {{-- Resumen de errores --}}
     @if ($errors->any() && !$errors->has('api'))
         <div role="alert" class="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
-            Revisa los campos marcados en rojo ({{ $errors->count() }}
-            {{ $errors->count() === 1 ? 'error' : 'errores' }}).
+            <p class="font-semibold">
+                Revisa los siguientes campos ({{ $errors->count() }}
+                {{ $errors->count() === 1 ? 'error' : 'errores' }}):
+            </p>
+            <ul class="mt-2 list-disc pl-5">
+                @foreach ($errors->messages() as $campo => $mensajes)
+                    @foreach ($mensajes as $mensaje)
+                        <li><span class="font-mono text-xs">{{ $campo }}</span>: {{ $mensaje }}</li>
+                    @endforeach
+                @endforeach
+            </ul>
         </div>
     @endif
 
     <section class="rounded-xl border border-stone-200 bg-white p-6 lg:p-8">
-        <form id="formacion-form" method="POST">
+        <form id="formacion-form" method="POST"
+            action="{{ $editando ? route('persona.update', $persona->id) : route('persona.crearPersona') }}">
             @csrf
+            <input type="hidden" name="volver" value="{{ $volver ?? '' }}">
             @if ($editando)
                 @method('PUT')
             @endif
@@ -99,13 +106,13 @@
                         :value="$persona->numero_seguridad_social ?? ''" />
 
                     <x-formulario.seleccion name="LOPD" label="LOPD *" placeholder="-- Selecciona --"
-                        :options="$opcionesLopd" :value="$persona->LOPD->value ?? ($persona->LOPD ?? '')" />
+                        :options="$lopd" :value="$persona->LOPD->value ?? ($persona->LOPD ?? '')" />
                 </div>
             </fieldset>
 
             <div class="flex flex-wrap justify-end gap-3">
                 @if (\Illuminate\Support\Facades\Route::has('formacion.index'))
-                    <a href="{{ route('formacion.index') }}"
+                    <a href="{{ $volver ?: route('formacion.index') }}"
                         class="inline-flex items-center justify-center rounded-lg px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-stone-100">
                         Cancelar
                     </a>
