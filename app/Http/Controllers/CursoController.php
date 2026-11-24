@@ -8,11 +8,13 @@ use App\Models\Curso;
 use App\Models\CursoAlumno;
 use App\Models\CursoDocente;
 use App\Models\Empresa;
+use App\Models\Enums\Categoria;
 use App\Models\Enums\CategoriaProfesional;
 use App\Models\Enums\EstadoAula;
 use App\Models\enums\LOPD;
 use App\Models\Enums\Modalidad;
 use App\Models\Enums\NivelEstudio;
+use App\Models\Enums\TipoContrato;
 use App\Models\Enums\TipoRol;
 use App\Models\Enums\Turno;
 use App\Models\Enums\UsoAula;
@@ -75,7 +77,8 @@ class CursoController extends Controller
             'presupuesto',
             'peticionLogistica',
             'alumnos.persona',
-            'alumnos.empresa'
+            'alumnos.empresa',
+            'docentes.persona'
         ]);
         return view('curso.visualizar', compact('curso', 'rol', 'nombre', 'persona', 'nombre'));
     }
@@ -122,7 +125,22 @@ class CursoController extends Controller
             ->mapWithKeys(fn($c) => [$c->value => ucfirst(strtolower($c->value))]);
         $nivelesEstudio = collect(NivelEstudio::cases())
             ->mapWithKeys(fn($c) => [$c->value => ucfirst(strtolower($c->value))]);
-        return view('curso.tablaPersona', compact('curso', 'personasDisponibles', 'empresas', 'lopd', 'categoriasProfesional', 'nivelesEstudio'));
+        return view('curso.tablaAlumno', compact('curso', 'personasDisponibles', 'empresas', 'lopd', 'categoriasProfesional', 'nivelesEstudio'));
+    }
+    public function agregarDocentes(Curso $curso)
+    {
+        $personasDisponibles = Persona::whereNotIn(
+            'id',
+            $curso->alumnos()->select('persona_id')
+        )->get();
+        $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
+        $lopd = collect(LOPD::cases())
+            ->mapWithKeys(fn($l) => [$l->value => ucfirst(strtolower($l->value))]);
+        $categorias = collect(Categoria::cases())
+            ->mapWithKeys(fn($c) => [$c->value => ucfirst(strtolower($c->value))]);
+        $contratos = collect(TipoContrato::cases())
+            ->mapWithKeys(fn($c) => [$c->value => ucfirst(strtolower($c->value))]);
+        return view('curso.tablaDocente', compact('curso', 'personasDisponibles', 'empresas', 'lopd', 'categorias', 'contratos'));
     }
     ////////////////////Roles////////////////////////////
     // OJO: el enum `rol` de la BD solo admite ADMINISTRADOR, COMERCIAL y COORDINADOR.
@@ -230,7 +248,67 @@ class CursoController extends Controller
                 ? 'Alumno agregado correctamente.'
                 : "{$guardados} alumnos agregados correctamente.");
     }
+    public function guardarDocentes(Request $request, Curso $curso)
+    {
+        // Para ver lo que llega:
+        // dd($request->input('docentes'));
 
+        $request->validate([
+            'docentes'                      => ['required', 'array', 'min:1'],
+            'docentes.*.persona_id'         => ['required', 'integer', 'distinct', Rule::exists((new Persona)->getTable(), (new Persona)->getKeyName())],
+            'docentes.*.empresa_id'         => ['required', Rule::exists((new Empresa)->getTable(), (new Empresa)->getKeyName())],
+            'docentes.*.categoria'          => ['required', 'string', 'max:45'],
+            'docentes.*.tipo_contrato'      => ['required', 'string'],
+            'docentes.*.convenio'           => ['required', 'string', 'max:45'],
+            'docentes.*.IBAN'               => ['required', 'string', 'max:45'],
+            'docentes.*.numero_horas'       => ['required', 'numeric', 'min:0'],
+            'docentes.*.horas_presenciales' => ['nullable', 'numeric', 'min:0'],
+            'docentes.*.horas_virtuales'    => ['nullable', 'numeric', 'min:0'],
+            'docentes.*.fecha_inicio'       => ['required', 'date'],
+            'docentes.*.fecha_fin'          => ['required', 'date', 'after_or_equal:docentes.*.fecha_inicio'],
+        ], [
+            'docentes.required'   => 'Añade al menos un docente.',
+            'docentes.*.required' => 'Faltan datos de algún docente.',
+        ]);
+
+        // Personas que ya son docentes de este curso (evita duplicados).
+        $yaAsignados = CursoDocente::where('curso_id', $curso->id)
+            ->pluck('persona_id')
+            ->all();
+
+        $guardados = 0;
+
+        DB::transaction(function () use ($request, $curso, $yaAsignados, &$guardados) {
+            foreach ($request->input('docentes') as $datos) {
+                if (in_array((int) $datos['persona_id'], $yaAsignados, true)) {
+                    continue;
+                }
+
+                CursoDocente::create([
+                    'curso_id'           => $curso->id, // viene de la ruta, no del formulario
+                    'persona_id'         => $datos['persona_id'],
+                    'empresa_id'         => $datos['empresa_id'],
+                    'categoria'          => $datos['categoria'],
+                    'tipo_contrato'      => $datos['tipo_contrato'],
+                    'convenio'           => $datos['convenio'],
+                    'IBAN'               => $datos['IBAN'],
+                    'numero_horas'       => $datos['numero_horas'],
+                    'horas_presenciales' => $datos['horas_presenciales'] ?? null,
+                    'horas_virtuales'    => $datos['horas_virtuales'] ?? null,
+                    'fecha_inicio'       => $datos['fecha_inicio'],
+                    'fecha_fin'          => $datos['fecha_fin'],
+                ]);
+
+                $guardados++;
+            }
+        });
+
+        return redirect()
+            ->route('curso.visualizar', $curso)
+            ->with('status', $guardados === 1
+                ? 'Docente agregado correctamente.'
+                : "{$guardados} docentes agregados correctamente.");
+    }
     ///////////////////Formulario////////////////////////
     public function crearFormulario()
     {
