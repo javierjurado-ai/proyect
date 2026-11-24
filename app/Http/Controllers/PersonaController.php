@@ -12,6 +12,7 @@ use App\Models\Rol;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class PersonaController extends Controller
 {
@@ -164,6 +165,32 @@ class PersonaController extends Controller
         return redirect("/curso/{$curso->id}/alumnos")
             ->with('ok', 'Persona guardada correctamente.');
     }
+    public function agregarAlumnos(Request $request, Curso $curso)
+{
+    $datos = $request->validate([
+        'personas'   => ['required', 'array', 'min:1'],
+        'personas.*' => ['integer', 'distinct', 'exists:personas,id'],
+    ], [
+        'personas.required' => 'Selecciona al menos una persona.',
+    ]);
+
+    DB::transaction(function () use ($datos, $curso) {
+        foreach ($datos['personas'] as $personaId) {
+            // 1. Rol de alumno (ajusta el enum a tu código)
+            Rol::firstOrCreate([
+                'persona_id' => $personaId,
+                'rol'        => TipoRol::Alumno,
+            ]);
+
+            // 2. Vincular la persona con el curso (ajusta la relación a la tuya)
+            $curso->alumnos()->syncWithoutDetaching([$personaId]);
+        }
+    });
+
+    return redirect()
+        ->route('curso.visualizar', $curso)
+        ->with('ok', count($datos['personas']) . ' alumno(s) agregados al curso.');
+}
 
     public function actualizarPersona(Request $request, $id)
     {
