@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\CursoAlumno;
 use App\Models\Empresa;
+use App\Models\EmpresaRol;
+use App\Models\Enums\RolEmpresa;
 use App\Models\Persona;
 use App\Models\Rol;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
@@ -89,13 +92,15 @@ class EmpresaController extends Controller
     {
         $empresa = Empresa::findOrFail($id);
 
-        $datos = $request->validate([
-            'cif'                => ['required', 'string', 'max:15', Rule::unique('empresa', 'cif')->ignore($empresa->id)],
-            'nombre'             => 'required|string|max:100',
-            'total_trabajadores' => 'nullable|integer|min:0',
-        ]);
+        $datos = $request->validate($this->reglas($empresa->id));
 
-        $empresa->update($datos);
+        DB::transaction(function () use ($empresa, $datos) {
+            $empresa->update(collect($datos)->except('roles')->all());
+            // Los roles solo se cambian si vienen en la petición
+            if (array_key_exists('roles', $datos)) {
+                $this->sincronizarRoles($empresa, $datos['roles']);
+            }
+        });
 
         return redirect()
             ->route('empresa.index')
@@ -108,7 +113,11 @@ class EmpresaController extends Controller
         $empresa = Empresa::findOrFail($id);
 
         try {
-            $empresa->delete();
+            DB::transaction(function () use ($empresa) {
+                // Los roles no son datos: se quitan para que no impidan borrar la empresa
+                $empresa->roles()->delete();
+                $empresa->delete();
+            });
             return redirect()
                 ->route('empresa.index')
                 ->with('ok', 'Empresa eliminada correctamente.');
@@ -123,16 +132,22 @@ class EmpresaController extends Controller
      *  API REST
      * ========================================================= */
 
-    // Listar todas las empresas
-    public function listarEmpresa()
+    // Listar todas las empresas con sus roles (?rol=PROVEEDOR para filtrar)
+    public function listarEmpresa(Request $request)
     {
-        return response()->json(Empresa::all());
+        $empresas = Empresa::with('roles')
+            ->when($request->filled('rol') && RolEmpresa::tryFrom($request->rol),
+                fn ($q) => $q->conRol(RolEmpresa::from($request->rol)))
+            ->orderBy('nombre')
+            ->get();
+
+        return response()->json($empresas);
     }
 
     // Mostrar una empresa en concreto
     public function obtenerEmpresaPorID($id)
     {
-        $empresa = Empresa::find($id);
+        $empresa = Empresa::with('roles')->find($id);
 
         if (! $empresa) {
             return response()->json(['mensaje' => 'Empresa no encontrada'], 404);
@@ -144,13 +159,15 @@ class EmpresaController extends Controller
     // Crear una empresa (sirve tanto para la web como para la API)
     public function agregarEmpresa(Request $request)
     {
-        $datos = $request->validate([
-            'cif'                => 'required|string|max:15|unique:empresa,cif',
-            'nombre'             => 'required|string|max:100',
-            'total_trabajadores' => 'nullable|integer|min:0',
-        ]);
+        $datos = $request->validate($this->reglas());
 
-        $empresa = Empresa::create($datos);
+        $empresa = DB::transaction(function () use ($datos) {
+            $empresa = Empresa::create(collect($datos)->except('roles')->all());
+            // Si no se indican roles, se crea como CLIENTE (lo que eran todas hasta ahora)
+            $this->sincronizarRoles($empresa, $datos['roles'] ?? [RolEmpresa::Cliente->value]);
+
+            return $empresa;
+        });
 
         // Si la petición espera JSON (Postman, fetch, etc.), devuelve el JSON
         if ($request->expectsJson()) {
@@ -172,13 +189,15 @@ class EmpresaController extends Controller
             return response()->json(['mensaje' => 'Empresa no encontrada'], 404);
         }
 
-        $datos = $request->validate([
-            'cif'                => ['required', 'string', 'max:15', Rule::unique('empresa', 'cif')->ignore($empresa->id)],
-            'nombre'             => 'required|string|max:100',
-            'total_trabajadores' => 'nullable|integer|min:0',
-        ]);
+        $datos = $request->validate($this->reglas($empresa->id));
 
-        $empresa->update($datos);
+        DB::transaction(function () use ($empresa, $datos) {
+            $empresa->update(collect($datos)->except('roles')->all());
+            // Los roles solo se cambian si vienen en la petición
+            if (array_key_exists('roles', $datos)) {
+                $this->sincronizarRoles($empresa, $datos['roles']);
+            }
+        });
 
         return response()->json($empresa);
     }
@@ -193,12 +212,49 @@ class EmpresaController extends Controller
         }
 
         try {
-            $empresa->delete();
+            DB::transaction(function () use ($empresa) {
+                // Los roles no son datos: se quitan para que no impidan borrar la empresa
+                $empresa->roles()->delete();
+                $empresa->delete();
+            });
             return response()->json(['mensaje' => 'Empresa eliminada']);
         } catch (QueryException $e) {
             return response()->json([
                 'mensaje' => 'No se puede eliminar: la empresa tiene datos relacionados',
             ], 409);
+        }
+    }
+
+    /* =========================================================
+     *  AUXILIARES
+     * ========================================================= */
+
+    private function reglas(?int $id = null): array
+    {
+        return [
+            'cif'                => ['required', 'string', 'max:15', Rule::unique('empresa', 'cif')->ignore($id)],
+            'nombre'             => 'required|string|max:100',
+            'direccion'          => 'nullable|string|max:150',
+            'codigo_postal'      => 'nullable|string|size:5',
+            'municipio'          => 'nullable|string|max:45',
+            'provincia'          => 'nullable|string|max:45',
+            'email_facturacion'  => 'nullable|email|max:100',
+            'dias_vencimiento'   => 'sometimes|integer|min:0|max:365',
+            'telefono'           => 'nullable|string|max:20',
+            'total_trabajadores' => 'nullable|integer|min:0',
+            'activo'             => 'sometimes|boolean',
+            'roles'              => 'sometimes|array|min:1',
+            'roles.*'            => ['distinct', Rule::enum(RolEmpresa::class)],
+        ];
+    }
+
+    // Deja a la empresa exactamente con los roles indicados
+    private function sincronizarRoles(Empresa $empresa, array $roles): void
+    {
+        $empresa->roles()->whereNotIn('rol', $roles)->delete();
+
+        foreach ($roles as $rol) {
+            EmpresaRol::firstOrCreate(['empresa_id' => $empresa->id, 'rol' => $rol]);
         }
     }
 }
