@@ -220,7 +220,8 @@
                             <td class="px-4 py-3 font-medium text-slate-800">
                                 {{ $alumno ? $alumno->nombre . ' ' . $alumno->primer_apellido . ' ' . $alumno->segundo_apellido : '—' }}
                             </td>
-                            <td class="px-4 py-3 font-mono text-slate-700">{{ $alumno?->DNI ?? ($alumno?->NIE ?? '—') }}
+                            <td class="px-4 py-3 font-mono text-slate-700">
+                                {{ $alumno?->DNI ?? ($alumno?->NIE ?? '—') }}
                             </td>
                             <td class="px-4 py-3 text-slate-700">{{ $alumno?->email ?? '—' }}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $alumno?->telefono ?? '—' }}</td>
@@ -241,7 +242,7 @@
 
                             <td class="px-4 py-3 text-center whitespace-nowrap">
                                 <div class="inline-flex items-center gap-2">
-                                   
+
 
                                     <x-tabla.boton-eliminar :action="route('curso.alumno.destroy', [$curso->id, $cursoAlumno->id])" />
                                 </div>
@@ -288,10 +289,12 @@
                             <td class="px-4 py-3 font-medium text-slate-800">
                                 {{ $docente ? $docente->nombre . ' ' . $docente->primer_apellido . ' ' . $docente->segundo_apellido : '—' }}
                             </td>
-                            <td class="px-4 py-3 font-mono text-slate-700">{{ $docente?->DNI ?? ($docente?->NIE ?? '—') }}
+                            <td class="px-4 py-3 font-mono text-slate-700">
+                                {{ $docente?->DNI ?? ($docente?->NIE ?? '—') }}
                             </td>
                             <td class="px-4 py-3 text-slate-700">{{ $docente?->email ?? '—' }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $docente?->telefono ?? '—' }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $docente?->telefono ?? '—' }}
+                            </td>
                             <td class="px-4 py-3 whitespace-nowrap text-slate-700">
                                 {{ $alumno?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
                             </td>
@@ -309,7 +312,7 @@
 
                             <td class="px-4 py-3 text-center whitespace-nowrap">
                                 <div class="inline-flex items-center gap-2">
-                                   
+
 
                                     <x-tabla.boton-eliminar :action="route('curso.alumno.destroy', [$curso->id, $cursoAlumno->id])" />
                                 </div>
@@ -319,6 +322,9 @@
                 </x-tabla.tabla>
             </x-interfaz.panel.tarjeta>
         </x-slot:docentes>
+        <x-slot:productos title="Productos">
+            <p>Aquí va productos :)</p>
+        </x-slot:productos>
     </x-interfaz.layout.pestanas>
 
 </x-interfaz.layout.app>

@@ -29,6 +29,9 @@
         <x-interfaz.layout.menu-enlace :rol="$rol" ruta="centro.index" roles="ADMINISTRADOR,COORDINADOR">Centros</x-interfaz.layout.menu-enlace>
         <x-interfaz.layout.menu-enlace :rol="$rol" ruta="alumno.index" roles="ADMINISTRADOR,COORDINADOR">Alumnos</x-interfaz.layout.menu-enlace>
         <x-interfaz.layout.menu-enlace :rol="$rol" ruta="docente.index" roles="ADMINISTRADOR,COORDINADOR">Docentes</x-interfaz.layout.menu-enlace>
+        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="almacen.index" roles="ADMINISTRADOR,COORDINADOR">Almacen</x-interfaz.layout.menu-enlace>
+        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="pedidosLogistica.index" roles="ADMINISTRADOR,COORDINADOR">Pedidos Logistica</x-interfaz.layout.menu-enlace>
+        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="pedidosLogistica.index" roles="ADMINISTRADOR,COORDINADOR">Compras</x-interfaz.layout.menu-enlace>
         <x-interfaz.layout.menu-enlace :rol="$rol" ruta="logistica.index" roles="ADMINISTRADOR,COORDINADOR" :contador="$contadores['logistica'] ?? null">Logística</x-interfaz.layout.menu-enlace>
         <x-interfaz.layout.menu-enlace :rol="$rol" ruta="fundae.index" roles="ADMINISTRADOR,COORDINADOR" :contador="$contadores['fundae'] ?? null">Comunicaciones FUNDAE</x-interfaz.layout.menu-enlace>
 
