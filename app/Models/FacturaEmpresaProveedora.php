@@ -85,6 +85,15 @@ class FacturaEmpresaProveedora extends Model
         return $this->hasMany(MovimientoAlmacen::class, 'factura_empresa_proveedora_id', 'id');
     }
 
+    // Recalcula base, IVA y total (base + IVA − retención) sumando las líneas y los guarda
+    public function recalcularTotales(): void
+    {
+        $this->base_imponible = round((float) $this->lineas()->sum('base'), 2);
+        $this->total_iva      = round((float) $this->lineas()->sum('cuota_iva'), 2);
+        $this->total          = round((float) $this->base_imponible + (float) $this->total_iva - (float) $this->retencion_irpf, 2);
+        $this->save();
+    }
+
     // Nombre del emisor, sea empresa o docente: $factura->nombre_emisor
     public function getNombreEmisorAttribute(): ?string
     {

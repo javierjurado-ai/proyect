@@ -17,6 +17,7 @@ class PeticionesLogistica extends Model
         'curso_id',
         'solicitante_id',
         'almacen_id',
+        'almacen_destino_id',
         'centro_id',
         'fecha',
         'fecha_necesaria',
@@ -53,6 +54,17 @@ class PeticionesLogistica extends Model
     public function almacen(): BelongsTo
     {
         return $this->belongsTo(Almacen::class, 'almacen_id', 'id');
+    }
+
+    // Traspaso: almacén al que va el material (null = petición para un curso)
+    public function almacenDestino(): BelongsTo
+    {
+        return $this->belongsTo(Almacen::class, 'almacen_destino_id', 'id');
+    }
+
+    public function esTraspaso(): bool
+    {
+        return $this->almacen_destino_id !== null;
     }
 
     // A dónde va

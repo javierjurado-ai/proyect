@@ -9,4 +9,5 @@ enum TipoRol: string
     case Administrador = 'ADMINISTRADOR';
     case Comercial = 'COMERCIAL';
     case Coordinador = 'COORDINADOR';
+    case Logistica = 'LOGISTA';
 }
