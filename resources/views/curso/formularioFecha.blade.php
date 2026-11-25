@@ -5,13 +5,13 @@
     $hora  = fn ($h) => $h ? substr($h, 0, 5) : '';
 @endphp
 
-<x-interfaz.layout.app :titulo="$editando ? 'Editar día' : 'Nuevo día'" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
+<x-interfaz.layout.app :titulo="$editando ? 'Modificar día' : 'Nuevo día'" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
 
     <x-interfaz.panel.cabecera
-        :titulo="$editando ? 'Editar día' : 'Nuevo día'"
-        subtitulo="Los campos marcados con * son obligatorios">
+        :titulo="$editando ? 'Modificar día' : 'Nuevo día'"
+        :subtitulo="($curso->formacion?->nombre ?? 'Curso') . ' · Los campos marcados con * son obligatorios'">
         <x-slot:acciones>
-            <a 
+            <a href="{{ route('curso.visualizar', [$curso, 'pestana' => 'calendario']) }}"
                class="inline-flex items-center gap-1 rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-marca-950 hover:bg-stone-50">
                 ← Volver al curso
             </a>
@@ -78,7 +78,7 @@
             </fieldset>
 
             <div class="flex flex-wrap justify-end gap-3">
-                <a
+                <a href="{{ route('curso.visualizar', [$curso, 'pestana' => 'calendario']) }}"
                    class="inline-flex items-center justify-center rounded-lg px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-stone-100">
                     Cancelar
                 </a>
