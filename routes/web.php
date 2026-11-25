@@ -188,8 +188,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/aula/{id}', [CursoController::class, 'actualizarAula'])->name('aula.update');
         Route::delete('/aula/{id}', [CursoController::class, 'eliminarAula'])->name('aula.destroy');
 
-        // Guardar el aula desde el centro (el centro va en la URL)
-        Route::post('/view/centro/{centro_id}/aula/guardar', [CursoController::class, 'guardarAula'])->name('aula.store');
+        // Crear y guardar un aula desde el centro (el centro va en la URL)
+        Route::get('/view/centro/{centro_id}/aula/crear', [CursoController::class, 'crearFormularioAula'])->name('aula.create')->whereNumber('centro_id');
+        Route::post('/view/centro/{centro_id}/aula/guardar', [CursoController::class, 'guardarAula'])->name('aula.store')->whereNumber('centro_id');
 
 
         // Alumnos y docentes (solo administrador y coordinador; lo comprueba el controlador)
