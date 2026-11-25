@@ -15,6 +15,7 @@ class Aula extends Model
 
     protected $fillable = [
         'nombre_aula',
+        'centro_id',
         'capacidad',
         'estado',
         'uso_aula',

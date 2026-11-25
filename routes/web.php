@@ -49,15 +49,7 @@ Route::middleware('auth')->group(function () {
 
 
 
-
-    // Rutas para el controlador de persona
-    Route::get('/persona/listar', [PersonaController::class, 'listarPersona']);
-    Route::get('/persona/{id}', [PersonaController::class, 'obtenerUsuarioPorID']);
-
-    Route::put('/persona/{id}', [PersonaController::class, 'actualizarPersona']);
-    Route::delete('/persona/{id}', [PersonaController::class, 'eliminarPersona']);
-    Route::post('/persona', [PersonaController::class, 'agregarPersona'])->name('persona.crearPersona');
-    Route::get('/persona/{curso}/crear', [PersonaController::class, 'create'])->name('persona.crear');
+    
 
     // Rutas para el controlador de comunicaciones FUNDAE
     Route::get('/comunicacionFundae/listar', [ComunicacionFundaeController::class, 'listarComunicacionesFundae']);
@@ -98,23 +90,27 @@ Route::middleware('auth')->group(function () {
     Route::put('/centro-contactos/{id}', [CentroController::class, 'actualizarContacto']);
     Route::delete('/centro-contactos/{id}', [CentroController::class, 'eliminarContacto']);
 
-    Route::post('/rol/{id}', [CentroController::class, 'agregarRolCoordinador']);
+    // Rutas web para el controlador de persona
+    Route::get('/persona/listar', [PersonaController::class, 'listarPersona']);
+    Route::get('/persona/{id}', [PersonaController::class, 'obtenerUsuarioPorID']);
+    Route::put('/persona/{id}', [PersonaController::class, 'update'])->name('persona.update');
+    Route::delete('/persona/{id}', [PersonaController::class, 'eliminarPersona']);
 
     Route::get('/view/persona', [PersonaController::class, 'index'])->name('persona.index');
     Route::get('/view/formularioPersona', [PersonaController::class, 'create'])->name('persona.crearFormulario');
-    Route::put('/persona/{id}', [PersonaController::class, 'update'])->name('persona.update');
-
-    Route::get('/view/logistica', [PeticionesLogisticaController::class, 'index'])->name('logistica.index');
-
     Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
     Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
+
+    Route::post('/rol/{id}', [CentroController::class, 'agregarRolCoordinador']);
+
+   
 
     // Views
 
     Route::get('/view/formulario/crearTablaDocente/{id}', [CursoController::class, 'crearTablaPorDocente'])->name('curso.crearTablaPorDocente');
     Route::get('/view/formulario/crearTablaAlumno/{id}', [CursoController::class, 'crearTablaPorAlumno'])->name('curso.crearTablaPorAlumno');
-    Route::get('/view/formulario/crearAula', [CursoController::class, 'crearFormularioAula'])->name('aula.create');
-    Route::post('/view/formularioAula', [CursoController::class, 'guardarAula'])->name('aula.store');
+   
+
 
     // Formulario web de Contactos de Centro
     Route::get('/view/formulario/crearContactoCentro', [CentroController::class, 'crearContactoFormulario'])->name('centro_contactos.create');
@@ -178,13 +174,21 @@ Route::middleware('auth')->group(function () {
 
     // Rutas para el módulo de Aulas
     Route::get('/aulas', [CursoController::class, 'crearTablaAula'])->name('aula.index');
-    Route::get('/aula/crear', [CursoController::class, 'crearFormularioAula'])->name('aula.create');
-    Route::post('/aula/guardar', [CursoController::class, 'guardarAula'])->name('aula.store');
+    
+    
 
     // Rutas para editar, actualizar y eliminar aulas
     Route::get('/aula/{id}/editar', [CursoController::class, 'editarAulaFormulario'])->name('aula.edit');
     Route::put('/aula/{id}', [CursoController::class, 'actualizarAula'])->name('aula.update');
     Route::delete('/aula/{id}', [CursoController::class, 'eliminarAula'])->name('aula.destroy');
+
+    // Ruta para mostrar el formulario de creación de un aula asociada a un centro específico
+    Route::get('/view/centro/{centro_id}/aula/crear', [CursoController::class, 'crearFormularioAula'])->name('aula.create');
+
+    // Ruta para guardar el aula (puede mantener su estructura POST enviando el centro_id oculto o en la URL)
+    Route::post('/view/centro/{centro_id}/aula/guardar', [CursoController::class, 'guardarAula'])->name('aula.store');
+    
+    
 
     Route::get('/view/inicio', [InicioController::class, 'mostrarPaginaInicio'])->name('inicio.index');
 
@@ -193,4 +197,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/view/alumnos/{persona}', [AlumnoController::class, 'visualizar'])->name('alumno.visualizar')->whereNumber('persona');
     Route::get('/view/docentes', [DocenteController::class, 'index'])->name('docente.index');
     Route::get('/view/docentes/{persona}', [DocenteController::class, 'visualizar'])->name('docente.visualizar')->whereNumber('persona');
+
+    Route::get('/view/logistica', [PeticionesLogisticaController::class, 'index'])->name('logistica.index');
+    Route::get('/view/comunicacionFundae', [ComunicacionFundaeController::class, 'index'])->name('fundae.index');
 });

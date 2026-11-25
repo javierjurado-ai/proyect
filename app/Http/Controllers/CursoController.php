@@ -334,9 +334,12 @@ class CursoController extends Controller
     }
 
     ///////////////////Aulas////////////////////////
-    // Muestra el formulario de alta de aulas
-    public function crearFormularioAula()
+    
+    // Muestra el formulario de alta de aulas asociado a un centro
+    public function crearFormularioAula($centro_id)
     {
+        $centro = Centro::findOrFail($centro_id);
+
         // [id => "acción/grupo - formación"] para el desplegable de cursos
         $cursos = Curso::with('formacion')->orderBy('codigo_accion')->orderBy('codigo_grupo')->get()
             ->mapWithKeys(fn($c) => [
@@ -349,19 +352,22 @@ class CursoController extends Controller
         $usos = collect(UsoAula::cases())
             ->mapWithKeys(fn($u) => [$u->value => ucfirst(strtolower($u->value))]);
 
-        return view('aula.formulario', compact('cursos', 'estados', 'usos'));
+        // Pasamos el $centro a la vista junto con los datos de usuario
+        return view('centro.formulario-aula', compact('centro', 'cursos', 'estados', 'usos') + $this->datosUsuario());
     }
 
-    // Guarda el aula enviada desde el formulario
-    public function guardarAula(Request $request)
+    // Guarda el aula asociada a un centro
+    public function guardarAula(Request $request, $centro_id)
     {
+        $centro = Centro::findOrFail($centro_id);
+
         $datos = $request->validate([
-            'curso_id'      => 'nullable|integer|exists:curso,id', // en la BD puede ser NULL
+            'curso_id'      => 'nullable|integer|exists:curso,id',
             'nombre_aula'   => 'required|string|max:45',
             'capacidad'     => 'required|integer|min:1',
             'estado'        => ['required', Rule::enum(EstadoAula::class)],
             'uso_aula'      => ['required', Rule::enum(UsoAula::class)],
-            'dimension'     => 'required|integer|min:0', // NOT NULL en la BD
+            'dimension'     => 'required|integer|min:0',
             'observaciones' => 'nullable|string|max:450',
         ], [
             'required'        => 'Este campo es obligatorio.',
@@ -373,10 +379,14 @@ class CursoController extends Controller
             'dimension.min'   => 'La dimensión no puede ser negativa.',
         ]);
 
+        // Asignamos el centro_id antes de crear el aula
+        $datos['centro_id'] = $centro->id;
+
         Aula::create($datos);
 
+        // Redirigimos de vuelta a la pestaña del centro
         return redirect()
-            ->route('aula.create')
+            ->to("/view/centro/{$centro->id}")
             ->with('ok', 'Aula guardada correctamente.');
     }
 
@@ -384,6 +394,9 @@ class CursoController extends Controller
     public function editarAulaFormulario($id)
     {
         $aula = Aula::findOrFail($id);
+
+        // Recuperamos opcionalmente el centro asociado si lo tiene
+        $centro = $aula->centro_id ? Centro::find($aula->centro_id) : null;
 
         $cursos = Curso::with('formacion')->orderBy('codigo_accion')->orderBy('codigo_grupo')->get()
             ->mapWithKeys(fn($c) => [
@@ -396,7 +409,7 @@ class CursoController extends Controller
         $usos = collect(UsoAula::cases())
             ->mapWithKeys(fn($u) => [$u->value => ucfirst(strtolower($u->value))]);
 
-        return view('aula.formulario', compact('aula', 'cursos', 'estados', 'usos') + $this->datosUsuario());
+        return view('centro.formulario-aula', compact('aula', 'centro', 'cursos', 'estados', 'usos') + $this->datosUsuario());
     }
 
     public function crearFormularioDia(Curso $curso)
@@ -429,24 +442,43 @@ class CursoController extends Controller
             'dimension.min'   => 'La dimensión no puede ser negativa.',
         ]);
 
+        // Guardamos el centro_id antes de actualizar
+        $centroId = $aula->centro_id;
+
         $aula->update($datos);
 
-        return redirect()
-            ->route('aula.index')
-            ->with('ok', 'Aula actualizada correctamente.');
+        // Si pertenece a un centro, lo devolvemos explícitamente a la vista de ese centro
+        if ($centroId) {
+            return redirect()->to("/view/centro/{$centroId}")->with('success', 'Aula actualizada correctamente.');
+        }
+
+        return redirect()->route('aula.index')->with('success', 'Aula actualizada correctamente.');
     }
 
     // Elimina el aula
     public function eliminarAula($id)
     {
         $aula = Aula::findOrFail($id);
+        
+        // Guardamos el centro_id ANTES de borrar el registro
+        $centroId = $aula->centro_id;
 
         try {
             $aula->delete();
+
+            if ($centroId) {
+                return redirect()->to("/view/centro/{$centroId}")->with('ok', 'Aula eliminada correctamente.');
+            }
+
             return redirect()
                 ->route('aula.index')
                 ->with('ok', 'Aula eliminada correctamente.');
+                
         } catch (QueryException $e) {
+            if ($centroId) {
+                return redirect()->to("/view/centro/{$centroId}")->with('error', 'No se puede eliminar el aula porque tiene registros asociados.');
+            }
+
             return redirect()
                 ->route('aula.index')
                 ->with('error', 'No se puede eliminar el aula porque tiene registros asociados.');
