@@ -182,8 +182,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/aula/{id}', [CursoController::class, 'actualizarAula'])->name('aula.update');
     Route::delete('/aula/{id}', [CursoController::class, 'eliminarAula'])->name('aula.destroy');
 
-    // Ruta para mostrar el formulario de creación de un aula asociada a un centro específico
-    Route::get('/view/centro/{centro_id}/aula/crear', [CursoController::class, 'crearFormularioAula'])->name('aula.create');
 
     // Ruta para guardar el aula (puede mantener su estructura POST enviando el centro_id oculto o en la URL)
     Route::post('/view/centro/{centro_id}/aula/guardar', [CursoController::class, 'guardarAula'])->name('aula.store');

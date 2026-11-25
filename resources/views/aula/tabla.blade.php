@@ -2,7 +2,7 @@
 
     <x-interfaz.panel.cabecera :titulo="'Aulas'" subtitulo="Gestión y control de aulas disponibles">
         <x-slot:acciones>
-            <a href="{{ route('aula.create') }}"
+            <a 
                class="inline-flex items-center gap-1 rounded-lg bg-marca-800 px-4 py-2 text-sm font-semibold text-white hover:bg-marca-900">
                 + Nueva aula
             </a>
