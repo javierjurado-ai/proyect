@@ -15,30 +15,21 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'token.temporal' => \App\Http\Middleware\TokenTemporal::class,
+            'rol'            => \App\Http\Middleware\ComprobarRol::class,
         ]);
 
         // Rutas JSON (Postman) que no piden token CSRF.
         // OJO: Laravel decide solo por la dirección, no por el método. Por eso NO están
-        // 'persona', 'empresa', 'formacion', 'centro', 'presupuesto' ni 'curso/{id}':
+        // 'persona', 'empresa', 'formacion', 'centro', '   presupuesto' ni 'curso/{id}':
         // comparten dirección con los formularios y botones de borrar de la web, que sí
         // deben llevar CSRF.
         $middleware->validateCsrfTokens(except: [
-            'credito',
-            'credito/*',
-            'comunicacionFundae',
-            'comunicacionFundae/*',
-            'peticionesLogistica',
-            'peticionesLogistica/*',
-            'centro-contactos/*',
-            'api/centro-contactos',
-            'curso/rolDocente/*',
-            'curso/CursoDocente/*',
-            'curso/rolAlumno/*',
-            'curso/CursoAlumno/*',
-            'persona/iniciarSesion',
-            'persona/crearUsuario',
-            'credito',
-            'credito/*',
+            'credito', 'credito/*',
+            'comunicacionFundae', 'comunicacionFundae/*',
+            'peticionesLogistica', 'peticionesLogistica/*',
+            'centro-contactos/*', 'api/centro-contactos',
+            'curso/rolDocente/*', 'curso/CursoDocente/*',
+            'curso/rolAlumno/*', 'curso/CursoAlumno/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -46,19 +37,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
             return $request->is(
                 'persona/iniciarSesion',
-                'credito',
-                'credito/*',
-                'comunicacionFundae',
-                'comunicacionFundae/*',
-                'peticionesLogistica',
-                'peticionesLogistica/*',
-                'centro-contactos/*',
-                'api/centro-contactos',
-                'curso/listar',
-                'curso/rolDocente/*',
-                'curso/CursoDocente/*',
-                'curso/rolAlumno/*',
-                'curso/CursoAlumno/*'
+                'credito', 'credito/*',
+                'comunicacionFundae', 'comunicacionFundae/*',
+                'peticionesLogistica', 'peticionesLogistica/*',
+                'centro-contactos/*', 'api/centro-contactos',
+                'curso/listar', 'curso/rolDocente/*', 'curso/CursoDocente/*',
+                'curso/rolAlumno/*', 'curso/CursoAlumno/*'
             ) || $request->expectsJson();
         });
     })->create();

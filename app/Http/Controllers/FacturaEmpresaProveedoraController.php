@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Almacen;
+use App\Models\Articulo;
+use App\Models\Curso;
 use App\Models\Empresa;
 use App\Models\Enums\EstadoFacturaProveedora;
 use App\Models\Enums\FormaPago;
@@ -10,23 +13,78 @@ use App\Models\Enums\RolEmpresa;
 use App\Models\Enums\TipoCoste;
 use App\Models\Enums\TipoMovimiento;
 use App\Models\FacturaEmpresaProveedora;
+use App\Models\Rol;
 use App\Services\AlmacenService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
-
+// Facturas RECIBIDAS de empresas proveedoras / formadoras o de docentes autónomos.
+// Ciclo: PENDIENTE → PAGADA, o ANULADA si se registró por error.
+// Un LOGISTA solo ve y gestiona las facturas que ha registrado él (persona_id).
 class FacturaEmpresaProveedoraController extends Controller
 {
+    use Concerns\DatosUsuario;
+
     public function __construct(private AlmacenService $almacenService)
     {
+    }
+
+    /* =========================================================
+     *  VISTAS WEB: COMPRAS
+     * ========================================================= */
+
+    // Listado de compras (?estado=pendientes|pagadas). Un LOGISTA solo ve las suyas.
+    public function index(Request $request)
+    {
+        [$rol, $nombre] = $this->rolYNombre();
+        $filtro = $request->query('estado', 'todas');
+
+        $todas = $this->consulta()->with(['empresa', 'docente', 'lineas'])->orderByDesc('fecha')->orderByDesc('id')->get();
+        $sinPagar = $todas->where('estado', EstadoFacturaProveedora::Pendiente);
+
+        $compras = match ($filtro) {
+            'pendientes' => $sinPagar,
+            'pagadas'    => $todas->where('estado', EstadoFacturaProveedora::Pagada),
+            default      => $todas,
+        };
+
+        $resumen = [
+            'sinPagar'      => $sinPagar->count(),
+            'vencenSemana'  => $sinPagar->filter(fn ($f) => $f->fecha_vencimiento && $f->fecha_vencimiento->lte(today()->addDays(7)))->count(),
+            'pendiente'     => (float) $sinPagar->sum('total'),
+            'esteMes'       => $todas->filter(fn ($f) => $f->fecha->isSameMonth(today()))->count(),
+        ];
+        $pestanas = [
+            'todas'      => ['Todas', $todas->count()],
+            'pendientes' => ['Sin pagar', $sinPagar->count()],
+            'pagadas'    => ['Pagadas', $todas->where('estado', EstadoFacturaProveedora::Pagada)->count()],
+        ];
+
+        return view('compras.index', compact('rol', 'nombre', 'compras', 'filtro', 'resumen', 'pestanas'));
+    }
+
+    // Formulario para registrar una compra (factura de proveedor con entrada en almacén)
+    public function crearFormulario(Request $request)
+    {
+        [$rol, $nombre] = $this->rolYNombre();
+
+        $proveedores = Empresa::where('activo', true)
+            ->where(fn ($q) => $q->conRol(RolEmpresa::Proveedor)->orWhere(fn ($q) => $q->conRol(RolEmpresa::Formadora)))
+            ->orderBy('nombre')->get();
+        $almacenes = Almacen::where('activo', true)->orderBy('nombre')->get();
+        $almacenId = (int) $request->query('almacen_id', $this->misAlmacenes()->first()?->id);
+        $articulos = Articulo::where('activo', true)->orderBy('nombre')->get();
+        $cursos = Curso::with('formacion')->whereDate('fecha_fin', '>=', today()->subMonths(3))->orderBy('fecha_inicio')->get();
+
+        return view('compras.formulario', compact('rol', 'nombre', 'proveedores', 'almacenes', 'almacenId', 'articulos', 'cursos'));
     }
 
     // Listar (?estado=, ?empresa_id=, ?docente_id=, ?curso_id=, ?vencidas=1)
     public function listarFacturasProveedora(Request $request)
     {
-        $facturas = FacturaEmpresaProveedora::with(['empresa', 'docente', 'curso.formacion'])
+        $facturas = $this->consulta()->with(['empresa', 'docente', 'curso.formacion'])
             ->when($request->filled('estado'), fn ($q) => $q->where('estado', $request->estado))
             ->when($request->filled('empresa_id'), fn ($q) => $q->where('empresa_id', $request->empresa_id))
             ->when($request->filled('docente_id'), fn ($q) => $q->where('docente_id', $request->docente_id))
@@ -45,7 +103,7 @@ class FacturaEmpresaProveedoraController extends Controller
     // Obtener una factura con sus líneas y las entradas de almacén que generó
     public function obtenerFacturaProveedoraPorID($id)
     {
-        $factura = FacturaEmpresaProveedora::with(['empresa', 'docente', 'curso.formacion', 'lineas.articulo', 'movimientos'])
+        $factura = $this->consulta()->with(['empresa', 'docente', 'curso.formacion', 'lineas.articulo', 'movimientos'])
             ->find($id);
 
         if (! $factura) {
@@ -60,15 +118,18 @@ class FacturaEmpresaProveedoraController extends Controller
     // Para artículos con nº de serie, cada unidad se indica en lineas.*.numeros_serie[].
     public function agregarFacturaProveedora(Request $request)
     {
+        $this->prepararFormulario($request);
+
         $datos = $request->validate($this->reglas() + [
             'generar_entrada'          => 'sometimes|boolean',
             'almacen_id'               => 'required_if:generar_entrada,true,1|nullable|integer|exists:almacen,id',
             'lineas.*.numeros_serie'   => 'nullable|array',
             'lineas.*.numeros_serie.*' => 'string|max:60',
         ]);
+        $datos['retencion_irpf'] ??= 0; // el campo vacío del formulario llega como null
 
         if ($error = $this->comprobarEmisor($datos, $request)) {
-            return $error;
+            return $request->expectsJson() ? $error : back()->withInput()->withErrors(['empresa_id' => $error->getData()->mensaje]);
         }
 
         $factura = DB::transaction(function () use ($datos, $request) {
@@ -91,6 +152,11 @@ class FacturaEmpresaProveedoraController extends Controller
             return $factura;
         });
 
+        if (! $request->expectsJson()) {
+            return redirect()->route('compra.index')->with('exito', 'Compra ' . $factura->numero_factura . ' registrada'
+                . ($factura->movimientos()->exists() ? ' y material dado de entrada en el almacén.' : '.'));
+        }
+
         return response()->json($factura->load('lineas', 'movimientos'), 201);
     }
 
@@ -98,7 +164,7 @@ class FacturaEmpresaProveedoraController extends Controller
     // Si ya generó entrada de almacén, no se pueden cambiar las líneas.
     public function actualizarFacturaProveedora(Request $request, $id)
     {
-        $factura = FacturaEmpresaProveedora::find($id);
+        $factura = $this->consulta()->find($id);
 
         if (! $factura) {
             return response()->json(['mensaje' => 'Factura no encontrada'], 404);
@@ -111,6 +177,9 @@ class FacturaEmpresaProveedoraController extends Controller
         }
 
         $datos = $request->validate($this->reglas($factura->id));
+        if (array_key_exists('retencion_irpf', $datos)) {
+            $datos['retencion_irpf'] ??= 0;
+        }
 
         if ($error = $this->comprobarEmisor($datos, $request)) {
             return $error;
@@ -131,13 +200,15 @@ class FacturaEmpresaProveedoraController extends Controller
     // Marcar como pagada
     public function marcarPagada(Request $request, $id)
     {
-        $factura = FacturaEmpresaProveedora::find($id);
+        $factura = $this->consulta()->find($id);
 
         if (! $factura) {
             return response()->json(['mensaje' => 'Factura no encontrada'], 404);
         }
         if ($factura->estado !== EstadoFacturaProveedora::Pendiente) {
-            return response()->json(['mensaje' => 'La factura no está pendiente de pago'], 409);
+            return $request->expectsJson()
+                ? response()->json(['mensaje' => 'La factura no está pendiente de pago'], 409)
+                : back()->withErrors(['compra' => 'La factura no está pendiente de pago']);
         }
 
         $datos = $request->validate([
@@ -147,13 +218,17 @@ class FacturaEmpresaProveedoraController extends Controller
 
         $factura->update($datos + ['estado' => EstadoFacturaProveedora::Pagada]);
 
+        if (! $request->expectsJson()) {
+            return back()->with('exito', 'Compra ' . $factura->numero_factura . ' marcada como pagada.');
+        }
+
         return response()->json($factura);
     }
 
     // Anular una factura registrada por error (se conserva, no se borra)
     public function anularFacturaProveedora(Request $request, $id)
     {
-        $factura = FacturaEmpresaProveedora::find($id);
+        $factura = $this->consulta()->find($id);
 
         if (! $factura) {
             return response()->json(['mensaje' => 'Factura no encontrada'], 404);
@@ -176,7 +251,7 @@ class FacturaEmpresaProveedoraController extends Controller
     // Eliminar (solo PENDIENTE y sin entrada de almacén). Si ya está pagada, se anula.
     public function eliminarFacturaProveedora($id)
     {
-        $factura = FacturaEmpresaProveedora::find($id);
+        $factura = $this->consulta()->find($id);
 
         if (! $factura) {
             return response()->json(['mensaje' => 'Factura no encontrada'], 404);
@@ -196,6 +271,43 @@ class FacturaEmpresaProveedoraController extends Controller
     /* =========================================================
      *  AUXILIARES
      * ========================================================= */
+
+    // Desde el formulario: quita filas vacías, convierte "PORT-1, PORT-2" en lista
+    // y el checkbox de entrada en booleano
+    private function prepararFormulario(Request $request): void
+    {
+        if ($request->expectsJson() || ! is_array($request->input('lineas'))) {
+            return;
+        }
+        $lineas = [];
+        foreach ($request->input('lineas') as $l) {
+            if (empty($l['concepto']) && empty($l['articulo_id'])) {
+                continue;
+            }
+            if (empty($l['concepto']) && ! empty($l['articulo_id'])) {
+                $l['concepto'] = Articulo::whereKey($l['articulo_id'])->value('nombre');
+            }
+            if (isset($l['numeros_serie']) && is_string($l['numeros_serie'])) {
+                $ns = array_values(array_filter(array_map('trim', preg_split('/[\s,;]+/', $l['numeros_serie']))));
+                $l['numeros_serie'] = $ns ?: null;
+            }
+            $lineas[] = array_filter($l, fn ($v) => $v !== '' && $v !== null);
+        }
+        $request->merge(['lineas' => $lineas, 'generar_entrada' => $request->boolean('generar_entrada')]);
+    }
+
+    // Todas las facturas, o solo las propias si quien entra es LOGISTA
+    // (y no tiene además otro rol con acceso completo)
+    private function consulta()
+    {
+        $personaId = Auth::user()->persona_id;
+        $roles = Rol::where('persona_id', $personaId)->pluck('rol')->map(fn ($r) => $r->value ?? $r);
+
+        $soloPropias = $roles->contains('LOGISTA') && $roles->intersect(['ADMINISTRADOR', 'COMERCIAL'])->isEmpty();
+
+        return FacturaEmpresaProveedora::query()
+            ->when($soloPropias, fn ($q) => $q->where('persona_id', $personaId));
+    }
 
     private function reglas(?int $id = null): array
     {
