@@ -6,6 +6,7 @@ use App\Models\Aula;
 use App\Models\Centro;
 use App\Models\Curso;
 use App\Models\CursoAlumno;
+use App\Models\CursoContacto;
 use App\Models\CursoDocente;
 use App\Models\Empresa;
 use App\Models\Enums\Categoria;
@@ -51,7 +52,9 @@ class CursoController extends Controller
             ->filter()
             ->implode(' ');
 
-        $cursos = Curso::with('formacion')->get();
+        $cursos = Curso::with('formacion')
+            ->whereIn('id', CursoContacto::where('persona_id', $personaId)->select('curso_id'))
+            ->get();
 
         return view('curso.index', compact('cursos', 'rol', 'nombre'));
     }
@@ -383,15 +386,15 @@ class CursoController extends Controller
         $aula = Aula::findOrFail($id);
 
         $cursos = Curso::with('formacion')->orderBy('codigo_accion')->orderBy('codigo_grupo')->get()
-            ->mapWithKeys(fn ($c) => [
+            ->mapWithKeys(fn($c) => [
                 $c->id => $this->codigoCurso($c) . ($c->formacion ? ' - ' . $c->formacion->nombre : ''),
             ]);
 
         $estados = collect(EstadoAula::cases())
-            ->mapWithKeys(fn ($e) => [$e->value => ucfirst(strtolower($e->value))]);
+            ->mapWithKeys(fn($e) => [$e->value => ucfirst(strtolower($e->value))]);
 
         $usos = collect(UsoAula::cases())
-            ->mapWithKeys(fn ($u) => [$u->value => ucfirst(strtolower($u->value))]);
+            ->mapWithKeys(fn($u) => [$u->value => ucfirst(strtolower($u->value))]);
 
         return view('aula.formulario', compact('aula', 'cursos', 'estados', 'usos') + $this->datosUsuario());
     }
@@ -465,7 +468,22 @@ class CursoController extends Controller
     {
         $datos = $request->validate($this->reglas($request), $this->mensajes());
 
-        Curso::create($datos);
+        // La persona de contacto es la del usuario que ha iniciado sesión.
+        $personaId = Auth::user()->persona_id;
+
+        DB::transaction(function () use ($datos, $personaId) {
+            // El curso se crea solo con sus propios campos.
+            $curso = Curso::create(
+                collect($datos)->except(['coordinador', 'actividad'])->all()
+            );
+
+            // Contacto con el id del curso recién creado y la persona del usuario.
+            CursoContacto::create([
+                'curso_id'   => $curso->id,
+                'persona_id' => $personaId,
+                'actividad'  => 1,
+            ]);
+        });
 
         return redirect()
             ->route('curso.crearTablaCurso')

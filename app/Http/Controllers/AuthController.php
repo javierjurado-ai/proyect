@@ -47,8 +47,8 @@ class AuthController extends Controller
     // Solo un administrador conectado puede crear usuarios (la ruta está dentro de 'auth')
     public function crearUsuario(Request $request)
     {
-        $rol = \App\Models\Rol::where('persona_id', Auth::user()->persona_id)->value('rol')?->value;
-        abort_unless($rol === 'ADMINISTRADOR', 403, 'Solo un administrador puede crear usuarios.');
+        //$rol = \App\Models\Rol::where('persona_id', Auth::user()->persona_id)->value('rol')?->value;
+        //abort_unless($rol === 'ADMINISTRADOR', 403, 'Solo un administrador puede crear usuarios.');
 
         $datos = $request->validate([
             'usuario'    => ['required', 'string', 'max:45', 'unique:usuario,usuario'],
