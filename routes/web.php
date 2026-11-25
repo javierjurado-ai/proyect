@@ -27,8 +27,8 @@ Route::get('/persona/iniciarSesion', [AuthController::class, 'mostrarInicioSesio
 Route::post('/persona/iniciarSesion', [AuthController::class, 'iniciarSesion']);
 
 
-
 Route::post('/persona/crearUsuario', [AuthController::class, 'crearUsuario'])->name('persona.crearUsuario');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -38,7 +38,7 @@ Route::post('/persona/crearUsuario', [AuthController::class, 'crearUsuario'])->n
 Route::middleware('auth')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
+    
     // La portada lleva al inicio de cada rol
     Route::get('/', fn() => redirect()->route('inicio.index'));
 
