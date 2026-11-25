@@ -139,7 +139,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/curso/{curso}/docentes', [CursoController::class, 'agregarDocentes'])->name('curso.docente.create');
         Route::post('/curso/{curso}/docentes', [CursoController::class, 'guardarDocentes'])->name('curso.docente.store');
         Route::get('/curso/{curso}/calendario/crear', [CursoController::class, 'crearFormularioDia'])->name('curso.dia.create');
-        Route::post('/curso/{curso}/calendario', [CursoController::class, 'store'])->name('curso.calendario.store');
+        Route::post('/curso/{curso}/calendario', [CursoController::class, 'guardarDia'])->name('curso.calendario.store');
+        Route::post('/curso/{curso}/calendario/generar', [CursoController::class, 'generarDias'])->name('curso.calendario.generar');
+        Route::get('/curso/{curso}/calendario/{dia}/editar', [CursoController::class, 'editarFormularioDia'])->name('curso.calendario.edit')->whereNumber('dia');
+        Route::put('/curso/{curso}/calendario/{dia}', [CursoController::class, 'actualizarDia'])->name('curso.calendario.update')->whereNumber('dia');
+        Route::delete('/curso/{curso}/calendario/{dia}', [CursoController::class, 'cancelarDia'])->name('curso.calendario.destroy')->whereNumber('dia');
 
         // Rutas web para la gestión de Centros (Editar, Actualizar y Eliminar)
         Route::get('/view/listadoCentro', [CentroController::class, 'index'])->name('centro.index');
