@@ -15,8 +15,9 @@
         ->sortBy('fecha')
         ->flatMap(function ($dia) use ($curso) {
             $fecha = $dia->fecha->toDateString();
-            $tramos = collect([[$dia->hora_inicio1, $dia->hora_fin1], [$dia->hora_inicio2, $dia->hora_fin2]])
-                ->filter(fn($t) => $t[0] && $t[1]);
+            $tramos = collect([[$dia->hora_inicio1, $dia->hora_fin1], [$dia->hora_inicio2, $dia->hora_fin2]])->filter(
+                fn($t) => $t[0] && $t[1],
+            );
 
             // Datos que usa la barra de acciones al seleccionar el día
             $datosDia = [
@@ -26,12 +27,14 @@
                 'cancelar' => route('curso.calendario.destroy', [$curso, $dia]),
             ];
 
-            return $tramos->map(fn($t) => [
-                'title' => substr($t[0], 0, 5) . ' – ' . substr($t[1], 0, 5),
-                'start' => $fecha . 'T' . substr($t[0], 0, 5),
-                'end' => $fecha . 'T' . substr($t[1], 0, 5),
-                'extendedProps' => $datosDia,
-            ]);
+            return $tramos->map(
+                fn($t) => [
+                    'title' => substr($t[0], 0, 5) . ' – ' . substr($t[1], 0, 5),
+                    'start' => $fecha . 'T' . substr($t[0], 0, 5),
+                    'end' => $fecha . 'T' . substr($t[1], 0, 5),
+                    'extendedProps' => $datosDia,
+                ],
+            );
         })
         ->values();
 
@@ -428,8 +431,24 @@
                     </x-tabla.tabla>
                     @if ($curso->peticionesLogistica->isNotEmpty())
                         <form method="POST" action="{{ route('curso.logistica.enviar', $curso) }}"
-                            class="mt-4 flex justify-end">
+                            class="mt-4 flex flex-wrap items-end gap-4">
                             @csrf
+                            <input type="hidden" name="curso_id" value="{{ $curso->id }}">
+                            <input type="hidden" name="direccion_envio"
+                                value="{{ $curso->centro->direccion ?? '' }}">
+
+                            <div class="min-w-[220px] flex-1">
+                                <label class="mb-1 block text-sm font-medium text-slate-700">Curso</label>
+                                <input type="text" value="{{ $curso->codigo_accion ?? '' }} / {{$curso->codigo_grupo ?? ''}} - {{$curso->formacion->nombre ?? ''}}" disabled
+                                    class="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-sm text-slate-600">
+                            </div>
+
+                            <div class="min-w-[220px] flex-1">
+                                <label class="mb-1 block text-sm font-medium text-slate-700">Dirección de envío</label>
+                                <input type="text" value="{{ $curso->centro->direccion ?? '' }}" disabled
+                                    class="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-sm text-slate-600">
+                            </div>
+
                             <button type="submit"
                                 class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
                                 Enviar productos
