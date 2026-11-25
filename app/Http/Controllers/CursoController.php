@@ -265,7 +265,7 @@ class CursoController extends Controller
             'docentes.*.persona_id'         => ['required', 'integer', 'distinct', Rule::exists((new Persona)->getTable(), (new Persona)->getKeyName())],
             'docentes.*.empresa_id'         => ['required', Rule::exists((new Empresa)->getTable(), (new Empresa)->getKeyName())],
             'docentes.*.categoria'          => ['required', 'string', 'max:45'],
-            'docentes.*.tipo_contrato'      => ['required', 'string'],
+            'docentes.*.tipo_contrato'      => ['required', Rule::enum(TipoContrato::class)],
             'docentes.*.convenio'           => ['required', 'string', 'max:45'],
             'docentes.*.IBAN'               => ['required', 'string', 'max:45'],
             'docentes.*.numero_horas'       => ['required', 'numeric', 'min:0'],
@@ -276,6 +276,7 @@ class CursoController extends Controller
         ], [
             'docentes.required'   => 'Añade al menos un docente.',
             'docentes.*.required' => 'Faltan datos de algún docente.',
+            'docentes.*.tipo_contrato.enum' => 'El tipo de contrato elegido no es válido.',
         ]);
 
         // Personas que ya son docentes de este curso (evita duplicados).
@@ -939,7 +940,7 @@ class CursoController extends Controller
         $cursoAlumno->delete();
 
         return redirect()
-            ->route('curso.visualizar', $curso)
+            ->route('curso.visualizar', $cursoId)
             ->with('ok', 'Alumno desmatriculado del curso correctamente.');
     }
 }
