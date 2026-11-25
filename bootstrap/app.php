@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'centro-contactos/*', 'api/centro-contactos',
             'curso/rolDocente/*', 'curso/CursoDocente/*',
             'curso/rolAlumno/*', 'curso/CursoAlumno/*',
+            
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
