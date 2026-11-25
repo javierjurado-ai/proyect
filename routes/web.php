@@ -131,7 +131,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/curso/{curso}/docentes', [CursoController::class, 'guardarDocentes'])->name('curso.docente.store');
     Route::get('/curso/{curso}/calendario/crear', [CursoController::class, 'crearFormularioDia'])->name('curso.dia.create');
     Route::post('/curso/{curso}/calendario', [CursoController::class, 'store'])->name('curso.calendario.store');
-
+    Route::get('/curso/{curso}/formularioLogistica', [CursoController::class, 'crearFormularioLogistica'])->name('curso.logistica.store');
+    Route::post('/curso/{curso}/carrito', [CursoController::class, 'crearPeticionLogistica'])->name('curso.logistica.create');
+    Route::post('/curso/{curso}/logistica/enviar', [CursoController::class, 'enviarPeticionesLogistica'])->name('curso.logistica.enviar');
 
     // Rutas web para la gestión de Centros (Editar, Actualizar y Eliminar)
     Route::get('/view/listadoCentro', [CentroController::class, 'index'])->name('centro.index');
