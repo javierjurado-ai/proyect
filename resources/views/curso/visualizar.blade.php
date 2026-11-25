@@ -8,6 +8,45 @@
     $horaInicio = $curso->hora_inicio ? substr($curso->hora_inicio, 0, 5) : null;
     $horaFinal = $curso->hora_final ? substr($curso->hora_final, 0, 5) : null;
     $horario = $horaInicio ? $horaInicio . ($horaFinal ? ' – ' . $horaFinal : '') : 'Sin horario';
+
+    // Eventos del calendario: un evento por tramo horario de cada día guardado
+    // (cualquier día de la semana, también sábados y domingos)
+    $eventosCalendario = $curso->calendario
+        ->sortBy('fecha')
+        ->flatMap(function ($dia) use ($curso) {
+            $fecha = $dia->fecha->toDateString();
+            $tramos = collect([[$dia->hora_inicio1, $dia->hora_fin1], [$dia->hora_inicio2, $dia->hora_fin2]])
+                ->filter(fn($t) => $t[0] && $t[1]);
+
+            // Datos que usa la barra de acciones al seleccionar el día
+            $datosDia = [
+                'dia' => $dia->id,
+                'horario' => $tramos->map(fn($t) => substr($t[0], 0, 5) . ' – ' . substr($t[1], 0, 5))->implode(' y '),
+                'editar' => route('curso.calendario.edit', [$curso, $dia]),
+                'cancelar' => route('curso.calendario.destroy', [$curso, $dia]),
+            ];
+
+            return $tramos->map(fn($t) => [
+                'title' => substr($t[0], 0, 5) . ' – ' . substr($t[1], 0, 5),
+                'start' => $fecha . 'T' . substr($t[0], 0, 5),
+                'end' => $fecha . 'T' . substr($t[1], 0, 5),
+                'extendedProps' => $datosDia,
+            ]);
+        })
+        ->values();
+
+    // Periodo del curso como fondo, para ver de un vistazo qué días entran
+    if ($curso->fecha_inicio && $curso->fecha_fin) {
+        $eventosCalendario->push([
+            'start' => \Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString(),
+            'end' => \Illuminate\Support\Carbon::parse($curso->fecha_fin)->addDay()->toDateString(),
+            'display' => 'background',
+            'classNames' => ['periodo-curso'],
+        ]);
+    }
+
+    $eventosCalendario = $eventosCalendario->all();
+    $diasConSesion = $curso->calendario->count();
 @endphp
 <x-interfaz.layout.app titulo="Curso {{ $curso->codigo_accion }}/{{ $curso->codigo_grupo }}" :rol="$rol"
     :usuario="$nombre" :contadores="$contadores ?? []">
@@ -22,14 +61,7 @@
         </x-slot:acciones>
     </x-interfaz.panel.cabecera>
 
-    @php
-        $formacion = $curso->formacion;
-        $presupuesto = $curso->presupuesto;
-        $peticionLogistica = $curso->peticionLogistica;
-        $modalidad = $curso->modalidad->value ?? $curso->modalidad;
-    @endphp
-
-    <x-interfaz.layout.pestanas>
+    <x-interfaz.layout.pestanas :inicial="request('pestana') === 'calendario' ? 'calendario' : null">
 
         {{-- Curso --}}
         <x-slot:informacion title="Información">
@@ -69,13 +101,7 @@
                     </div>
                     <div>
                         <dt class="text-slate-500">Horario</dt>
-                        <dd>
-                            @if ($curso->hora_inicio)
-                                {{ substr($curso->hora_inicio, 0, 5) }}{{ $curso->hora_final ? ' – ' . substr($curso->hora_final, 0, 5) : '' }}
-                            @else
-                                —
-                            @endif
-                        </dd>
+                        <dd>{{ $horaInicio ? $horario : '—' }}</dd>
                     </div>
                     <div>
                         <dt class="text-slate-500">Inicio</dt>
@@ -278,7 +304,7 @@
                     </div>
                 @endif
 
-                <x-tabla.tabla vacio="Todavía no hay alumnos matriculados en este curso." :columnas="[
+                <x-tabla.tabla vacio="Todavía no hay docentes en este curso." :columnas="[
                     'Nombre',
                     'DNI / NIE',
                     'Email',
@@ -291,8 +317,8 @@
 
                     @foreach ($curso->docentes as $cursoDocente)
                         @php
-                            $docente = $cursoAlumno->persona;
-                            $lopd = $alumno?->LOPD?->value ?? ($alumno?->LOPD ?? 'NO');
+                            $docente = $cursoDocente->persona;
+                            $lopd = $docente?->LOPD?->value ?? ($docente?->LOPD ?? 'NO');
                         @endphp
 
                         <tr class="hover:bg-slate-50">
@@ -306,7 +332,7 @@
                             <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $docente?->telefono ?? '—' }}
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-slate-700">
-                                {{ $alumno?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
+                                {{ $docente?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
                             </td>
                             <td class="px-4 py-3 text-slate-700">{{ $docente?->nacionalidad ?? '—' }}</td>
 
@@ -324,7 +350,6 @@
                                 <div class="inline-flex items-center gap-2">
 
 
-                                    <x-tabla.boton-eliminar :action="route('curso.alumno.destroy', [$curso->id, $cursoAlumno->id])" />
                                 </div>
                             </td>
                         </tr>

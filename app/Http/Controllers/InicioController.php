@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Articulo;
 use App\Models\Aula;
 use App\Models\Centro;
 use App\Models\ComunicacionFundae;
 use App\Models\CreditoFormativo;
 use App\Models\Curso;
 use App\Models\Empresa;
+use App\Models\FacturaEmpresaProveedora;
 use App\Models\Formacion;
 use App\Models\Persona;
 use App\Models\PeticionesLogistica;
+use App\Models\PeticionProducto;
 use App\Models\Presupuesto;
 use App\Models\Rol;
 use App\Models\Usuario;
@@ -57,6 +60,11 @@ class InicioController extends Controller
                 compact('rol', 'nombre'),
                 ['primerNombre' => $persona->nombre],
                 $this->datosComercial()
+            )),
+            'LOGISTA' => view('logista.index', array_merge(
+                compact('rol', 'nombre'),
+                ['primerNombre' => $persona->nombre],
+                $this->datosLogista($personaId)
             )),
             default => view('panel.inicio', compact('rol', 'nombre')),
         };
@@ -109,7 +117,7 @@ class InicioController extends Controller
         $logisticaPendiente = PeticionesLogistica::where('estado', 'PENDIENTE')->count();
 
         // Personas por rol
-        $rolesDeAcceso      = ['ADMINISTRADOR', 'COORDINADOR', 'COMERCIAL'];
+        $rolesDeAcceso      = ['ADMINISTRADOR', 'COORDINADOR', 'COMERCIAL', 'LOGISTA'];
         $personasConUsuario = Usuario::pluck('persona_id');
 
         // Cosas que revisar
@@ -160,6 +168,81 @@ class InicioController extends Controller
     /**
      * Datos del inicio del COORDINADOR: lo urgente del día a día.
      */
+    /**
+     * Datos del inicio del LOGISTA: peticiones por servir, material fuera,
+     * stock bajo mínimo y sus compras pendientes de pago.
+     */
+    private function datosLogista(int $personaId): array
+    {
+        $hoy = today();
+        $nombreCurso = fn ($curso) => $curso?->formacion?->nombre
+            ?? ($curso ? 'Curso ' . $curso->codigo_accion . '/' . $curso->codigo_grupo : 'Sin curso');
+
+        // Peticiones por servir, de la más urgente a la menos
+        $porServir = PeticionesLogistica::with('curso.formacion', 'centro', 'peticionProductos.articulo')
+            ->whereNull('almacen_destino_id')
+            ->whereIn('estado', ['PENDIENTE', 'EN_PROCESO'])
+            ->orderByRaw('fecha_necesaria IS NULL, fecha_necesaria')
+            ->get();
+
+        $peticiones = $porServir->take(6)->map(function ($p) use ($hoy, $nombreCurso) {
+            $fecha = $p->fecha_necesaria;
+            $dias  = $fecha ? $hoy->diffInDays($fecha, false) : null;
+
+            return [
+                'id'       => $p->id,
+                'etiqueta' => $p->estado->value === 'EN_PROCESO' ? 'En proceso' : 'Pendiente',
+                'color'    => $dias !== null && $dias <= 2 ? 'rojo' : ($p->estado->value === 'EN_PROCESO' ? 'azul' : 'ambar'),
+                'titulo'   => $nombreCurso($p->curso) . ($p->centro ? ' · ' . $p->centro->nombre : ''),
+                'detalle'  => ! $fecha ? 'Sin fecha'
+                    : ($dias < 0 ? 'Se necesitaba el ' . $fecha->format('d/m') . ' · ¡atrasada!'
+                    : ($dias == 0 ? 'Se necesita hoy' : 'Se necesita el ' . $fecha->format('d/m/Y') . ' (en ' . (int) $dias . ' días)')),
+            ];
+        })->values()->all();
+
+        $urgentes = $porServir->filter(fn ($p) => $p->fecha_necesaria && $hoy->diffInDays($p->fecha_necesaria, false) <= 2)->count();
+
+        // Material retornable fuera del almacén
+        $materialFuera = (int) PeticionProducto::whereHas('articulo', fn ($q) => $q->where('retornable', 'SI'))
+            ->sum(DB::raw('cantidad_servida - cantidad_devuelta'));
+
+        $devolucionesAtrasadas = PeticionesLogistica::whereIn('estado', ['ENTREGADA', 'EN_PROCESO'])
+            ->whereDate('fecha_devolucion_prevista', '<', $hoy)
+            ->whereHas('peticionProductos', fn ($q) => $q->whereColumn('cantidad_devuelta', '<', 'cantidad_servida'))
+            ->count();
+
+        // Artículos bajo mínimo
+        $bajoMinimo = Articulo::where('activo', true)
+            ->where('stock_minimo', '>', 0)
+            ->withSum('stock as stock_total', 'cantidad')
+            ->get()
+            ->filter(fn ($a) => (int) $a->stock_total < $a->stock_minimo)
+            ->values();
+
+        // Sus compras pendientes de pago
+        $comprasPendientes = FacturaEmpresaProveedora::where('persona_id', $personaId)
+            ->where('estado', 'PENDIENTE')
+            ->count();
+
+        // Traspasos que otros almacenes piden a los suyos (o a todos si no es responsable de ninguno)
+        $misAlmacenes = \App\Models\Almacen::where('responsable_id', $personaId)->pluck('id');
+        $traspasosPorEnviar = PeticionesLogistica::whereNotNull('almacen_destino_id')
+            ->whereIn('estado', ['PENDIENTE', 'EN_PROCESO'])
+            ->when($misAlmacenes->isNotEmpty(), fn ($q) => $q->whereIn('almacen_id', $misAlmacenes))
+            ->count();
+
+        return [
+            'traspasosPorEnviar'    => $traspasosPorEnviar,
+            'porServir'             => $porServir->count(),
+            'urgentes'              => $urgentes,
+            'materialFuera'         => $materialFuera,
+            'devolucionesAtrasadas' => $devolucionesAtrasadas,
+            'bajoMinimo'            => $bajoMinimo,
+            'comprasPendientes'     => $comprasPendientes,
+            'peticiones'            => $peticiones,
+        ];
+    }
+
     private function datosCoordinador(): array
     {
         $hoy          = today();

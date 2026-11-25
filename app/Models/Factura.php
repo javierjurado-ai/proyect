@@ -115,4 +115,13 @@ class Factura extends Model
     {
         return round((float) $this->total - $this->cobrado, 2);
     }
+
+    // Recalcula base, IVA y total sumando las líneas y los guarda
+    public function recalcularTotales(): void
+    {
+        $this->base_imponible = round((float) $this->lineas()->sum('base'), 2);
+        $this->total_iva      = round((float) $this->lineas()->sum('cuota_iva'), 2);
+        $this->total          = round((float) $this->base_imponible + (float) $this->total_iva, 2);
+        $this->save();
+    }
 }
