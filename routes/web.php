@@ -20,6 +20,7 @@ use App\Http\Controllers\ArticuloController;
 use App\Http\Controllers\MovimientoAlmacenController;
 use App\Http\Controllers\FacturaController;
 use App\Http\Controllers\FacturaEmpresaProveedoraController;
+use App\Models\Curso;
 use Illuminate\Support\Facades\Auth;
 
 /*
@@ -119,8 +120,6 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/view/formulario/crearTablaDocente/{id}', [CursoController::class, 'crearTablaPorDocente'])->name('curso.crearTablaPorDocente');
         Route::get('/view/formulario/crearTablaAlumno/{id}', [CursoController::class, 'crearTablaPorAlumno'])->name('curso.crearTablaPorAlumno');
-        Route::get('/view/formulario/crearAula', [CursoController::class, 'crearFormularioAula'])->name('aula.create');
-        Route::post('/view/formularioAula', [CursoController::class, 'guardarAula'])->name('aula.store');
 
         // Formulario web de Contactos de Centro
         Route::get('/view/formulario/crearContactoCentro', [CentroController::class, 'crearContactoFormulario'])->name('centro_contactos.create');
@@ -139,6 +138,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/curso/{curso}/alumnos', [CursoController::class, 'guardarAlumnos'])->name('curso.alumno.store');
         Route::get('/curso/{curso}/docentes', [CursoController::class, 'agregarDocentes'])->name('curso.docente.create');
         Route::post('/curso/{curso}/docentes', [CursoController::class, 'guardarDocentes'])->name('curso.docente.store');
+        Route::get('/curso/{curso}/calendario/crear', [CursoController::class, 'crearFormularioDia'])->name('curso.dia.create');
+        Route::post('/curso/{curso}/calendario', [CursoController::class, 'store'])->name('curso.calendario.store');
 
         // Rutas web para la gestión de Centros (Editar, Actualizar y Eliminar)
         Route::get('/view/listadoCentro', [CentroController::class, 'index'])->name('centro.index');
@@ -181,13 +182,14 @@ Route::middleware('auth')->group(function () {
 
         // Rutas para el módulo de Aulas
         Route::get('/aulas', [CursoController::class, 'crearTablaAula'])->name('aula.index');
-        Route::get('/aula/crear', [CursoController::class, 'crearFormularioAula'])->name('aula.create');
-        Route::post('/aula/guardar', [CursoController::class, 'guardarAula'])->name('aula.store');
 
         // Rutas para editar, actualizar y eliminar aulas
         Route::get('/aula/{id}/editar', [CursoController::class, 'editarAulaFormulario'])->name('aula.edit');
         Route::put('/aula/{id}', [CursoController::class, 'actualizarAula'])->name('aula.update');
         Route::delete('/aula/{id}', [CursoController::class, 'eliminarAula'])->name('aula.destroy');
+
+        // Guardar el aula desde el centro (el centro va en la URL)
+        Route::post('/view/centro/{centro_id}/aula/guardar', [CursoController::class, 'guardarAula'])->name('aula.store');
 
 
         // Alumnos y docentes (solo administrador y coordinador; lo comprueba el controlador)
@@ -195,6 +197,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/view/alumnos/{persona}', [AlumnoController::class, 'visualizar'])->name('alumno.visualizar')->whereNumber('persona');
         Route::get('/view/docentes', [DocenteController::class, 'index'])->name('docente.index');
         Route::get('/view/docentes/{persona}', [DocenteController::class, 'visualizar'])->name('docente.visualizar')->whereNumber('persona');
+
+        // Comunicaciones FUNDAE
+        Route::get('/view/comunicacionFundae', [ComunicacionFundaeController::class, 'index'])->name('fundae.index');
     });
 
     /*
