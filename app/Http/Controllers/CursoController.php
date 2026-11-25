@@ -6,6 +6,7 @@ use App\Models\Aula;
 use App\Models\Centro;
 use App\Models\Curso;
 use App\Models\CursoAlumno;
+use App\Models\CursoContacto;
 use App\Models\CursoDocente;
 use App\Models\Empresa;
 use App\Models\Enums\Categoria;
@@ -51,7 +52,9 @@ class CursoController extends Controller
             ->filter()
             ->implode(' ');
 
-        $cursos = Curso::with('formacion')->get();
+        $cursos = Curso::with('formacion')
+            ->whereIn('id', CursoContacto::where('persona_id', $personaId)->select('curso_id'))
+            ->get();
 
         return view('curso.index', compact('cursos', 'rol', 'nombre'));
     }
@@ -383,17 +386,24 @@ class CursoController extends Controller
         $aula = Aula::findOrFail($id);
 
         $cursos = Curso::with('formacion')->orderBy('codigo_accion')->orderBy('codigo_grupo')->get()
-            ->mapWithKeys(fn ($c) => [
+            ->mapWithKeys(fn($c) => [
                 $c->id => $this->codigoCurso($c) . ($c->formacion ? ' - ' . $c->formacion->nombre : ''),
             ]);
 
         $estados = collect(EstadoAula::cases())
-            ->mapWithKeys(fn ($e) => [$e->value => ucfirst(strtolower($e->value))]);
+            ->mapWithKeys(fn($e) => [$e->value => ucfirst(strtolower($e->value))]);
 
         $usos = collect(UsoAula::cases())
-            ->mapWithKeys(fn ($u) => [$u->value => ucfirst(strtolower($u->value))]);
+            ->mapWithKeys(fn($u) => [$u->value => ucfirst(strtolower($u->value))]);
 
         return view('aula.formulario', compact('aula', 'cursos', 'estados', 'usos') + $this->datosUsuario());
+    }
+
+    public function crearFormularioDia(Curso $curso)
+    {
+        return view('curso.formularioFecha', [
+            'curso'  => $curso
+        ]);
     }
 
     // Actualiza el aula en la base de datos

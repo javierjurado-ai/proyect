@@ -1,4 +1,14 @@
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+@php
+    $formacion = $curso->formacion;
+    $presupuesto = $curso->presupuesto;
+    $peticionLogistica = $curso->peticionLogistica;
+    $modalidad = $curso->modalidad->value ?? $curso->modalidad;
+
+    $horaInicio = $curso->hora_inicio ? substr($curso->hora_inicio, 0, 5) : null;
+    $horaFinal = $curso->hora_final ? substr($curso->hora_final, 0, 5) : null;
+    $horario = $horaInicio ? $horaInicio . ($horaFinal ? ' – ' . $horaFinal : '') : 'Sin horario';
+@endphp
 <x-interfaz.layout.app titulo="Curso {{ $curso->codigo_accion }}/{{ $curso->codigo_grupo }}" :rol="$rol"
     :usuario="$nombre" :contadores="$contadores ?? []">
 
@@ -325,6 +335,19 @@
         <x-slot:productos title="Productos">
             <p>Aquí va productos :)</p>
         </x-slot:productos>
+        <x-slot:calendario title="Calendario">
+            <x-slot:calendario title="Calendario">
+                <x-calendario.calendario :url="route('curso.dia.create', $curso)" :inicial="\Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString()" :eventos="[
+                    [
+                        'title' => $horario,
+                        'daysOfWeek' => [1, 2, 3, 4, 5],
+                        'startTime' => $horaInicio,
+                        'endTime' => $horaFinal,
+                        'startRecur' => \Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString(),
+                        'endRecur' => \Illuminate\Support\Carbon::parse($curso->fecha_fin)->addDay()->toDateString(),
+                    ],
+                ]" />
+            </x-slot:calendario>
     </x-interfaz.layout.pestanas>
 
 </x-interfaz.layout.app>
