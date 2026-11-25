@@ -158,26 +158,32 @@
                 </div>
             </fieldset>
 
-            <fieldset class="mb-8">
-                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Aula y contacto</legend>
-                <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                    <x-formulario.entrada
+            <div class="mb-8 grid grid-cols-1 gap-5 md:grid-cols-3">
+                {{-- Bloque izquierdo: AULA (Desplegable dinámico) --}}
+                <fieldset>
+                    <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Aula</legend>
+                    <x-formulario.seleccion
                         name="aula"
+                        id="aula-select"
                         label="Aula *"
-                        maxlength="45"
-                        placeholder="Ej.: Aula 3"
+                        placeholder="-- Primero selecciona un centro --"
+                        :options="[]" 
                         :value="$curso->aula ?? ''" />
+                </fieldset>
 
-                    {{-- El aula virtual va ahora en su propia tabla (curso_aula_virtual) --}}
-
+                {{-- Bloque derecho: CONTACTO --}}
+                <fieldset>
+                    <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Contacto</legend>
                     <x-formulario.entrada
                         name="tecnico_comunidad"
+                        id="tecnico_comunidad"
                         label="Técnico Comunidad *"
                         maxlength="45"
                         :value="$curso->tecnico_comunidad ?? ''" />
-                </div>
-            </fieldset>
-
+                </fieldset>
+            </div>
+            
+{{-- El aula virtual va ahora en su propia tabla (curso_aula_virtual) --}}
             <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Contenidos y Objetivos</legend>
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-2 mb-5">
@@ -272,6 +278,89 @@
         };
         modalidad.addEventListener('change', ajustarHoras);
         ajustarHoras();
+
+
+    // -------------------------------------------------------------
+    // Lógica robusta para el Desplegable de Aula y Centro
+    // -------------------------------------------------------------
+    const todasLasAulas = @json($aulas ?? []);
+    const selectAula = document.getElementById('aula-select');
+    
+    // Valores actuales del curso en modo edición (desde PHP)
+    const aulaActual = "{{ $curso->aula ?? '' }}";
+    const centroIdActual = "{{ $curso->centro_id ?? '' }}";
+
+    // Función auxiliar para encontrar el elemento del centro de forma universal
+    const obtenerCentroId = () => {
+        // Busca cualquier select o input que maneje el centro
+        const elCentro = document.querySelector('select[name="centro_id"], [name="centro_id"], select[id*="centro"], input[name="centro_id"]');
+        if (elCentro && elCentro.value) {
+            return elCentro.value;
+        }
+        return centroIdActual; // Si no lo encuentra en el DOM, usa el de la BD del curso
+    };
+
+    const actualizarAulasYModalidad = () => {
+        const m = modalidad ? modalidad.value : '';
+        const esTeleformacion = (m === 'TELEFORMACION');
+
+        if (!selectAula) return;
+
+        // Si es teleformación, bloqueamos el aula
+        if (esTeleformacion) {
+            selectAula.innerHTML = '<option value="">-- No aplica (Teleformación) --</option>';
+            selectAula.value = '';
+            selectAula.disabled = true;
+            return;
+        }
+
+        const centroId = obtenerCentroId();
+
+        selectAula.disabled = false;
+        selectAula.innerHTML = '<option value="">-- Elige un aula --</option>';
+
+        if (!centroId) {
+            selectAula.innerHTML = '<option value="">-- Primero selecciona un centro --</option>';
+            selectAula.disabled = true;
+            return;
+        }
+
+        // Filtramos las aulas que coinciden con el centro_id
+        const aulasFiltradas = todasLasAulas.filter(aula => String(aula.centro_id) === String(centroId));
+
+        if (aulasFiltradas.length === 0) {
+            selectAula.innerHTML = '<option value="">-- No hay aulas registradas en este centro --</option>';
+            selectAula.disabled = true;
+            return;
+        }
+
+        // Rellenamos el desplegable y seleccionamos la que tenía el curso
+        aulasFiltradas.forEach(aula => {
+            const option = document.createElement('option');
+            option.value = aula.nombre_aula; 
+            option.textContent = aula.nombre_aula;
+            
+            if (aula.nombre_aula === aulaActual) {
+                option.selected = true;
+            }
+            
+            selectAula.appendChild(option);
+        });
+    };
+
+    // Escuchamos cambios de cualquier elemento relacionado con el centro
+    const elCentroInput = document.querySelector('select[name="centro_id"], [name="centro_id"], select[id*="centro"]');
+    if (elCentroInput) {
+        elCentroInput.addEventListener('change', actualizarAulasYModalidad);
+        elCentroInput.addEventListener('input', actualizarAulasYModalidad);
+    }
+
+    if (modalidad) {
+        modalidad.addEventListener('change', actualizarAulasYModalidad);
+    }
+
+    // Ejecutar al cargar la página de edición o creación
+    setTimeout(actualizarAulasYModalidad, 100); // Pequeño retardo para asegurar que el DOM del componente esté listo   
 
         // El mensaje de éxito desaparece al empezar a escribir otro curso
         form.addEventListener('focusin', () => {

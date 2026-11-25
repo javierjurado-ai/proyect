@@ -72,7 +72,9 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3">{{ ucfirst(strtolower($aula->uso_aula?->value ?? '')) }}</td>
-                            <td class="px-4 py-3">{{ $aula->observaciones ?? '-' }}</td>
+                            <td class="px-4 py-3 max-w-xs truncate" title="{{ $aula->observaciones ?? '' }}">
+                                {{ $aula->observaciones ?? '-' }}
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
