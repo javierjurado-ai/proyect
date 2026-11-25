@@ -332,6 +332,9 @@ class CursoController extends Controller
 
         return view('curso.formulario', array_merge(
             compact('curso'),
+            [
+                'aulas' => Aula::all() // <-- Asegúrate de pasar esto aquí
+            ],
             $this->datosDesplegables(),
             $this->datosUsuario()
         ));

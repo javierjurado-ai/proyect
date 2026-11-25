@@ -280,6 +280,7 @@
         ajustarHoras();
 
 
+
     // -------------------------------------------------------------
     // Lógica robusta para el Desplegable de Aula y Centro
     // -------------------------------------------------------------
@@ -287,17 +288,16 @@
     const selectAula = document.getElementById('aula-select');
     
     // Valores actuales del curso en modo edición (desde PHP)
-    const aulaActual = "{{ $curso->aula ?? '' }}";
-    const centroIdActual = "{{ $curso->centro_id ?? '' }}";
+    const aulaActual = @json($curso->aula ?? '');
+    const centroIdActual = @json($curso->centro_id ?? '');
 
-    // Función auxiliar para encontrar el elemento del centro de forma universal
     const obtenerCentroId = () => {
-        // Busca cualquier select o input que maneje el centro
+        // Buscamos cualquier input o select del centro en el DOM
         const elCentro = document.querySelector('select[name="centro_id"], [name="centro_id"], select[id*="centro"], input[name="centro_id"]');
         if (elCentro && elCentro.value) {
             return elCentro.value;
         }
-        return centroIdActual; // Si no lo encuentra en el DOM, usa el de la BD del curso
+        return centroIdActual; // Respaldo con el ID de la base de datos
     };
 
     const actualizarAulasYModalidad = () => {
@@ -340,7 +340,7 @@
             option.value = aula.nombre_aula; 
             option.textContent = aula.nombre_aula;
             
-            if (aula.nombre_aula === aulaActual) {
+            if (String(aula.nombre_aula).trim() === String(aulaActual).trim()) {
                 option.selected = true;
             }
             
@@ -348,24 +348,31 @@
         });
     };
 
-    // Escuchamos cambios de cualquier elemento relacionado con el centro
-    const elCentroInput = document.querySelector('select[name="centro_id"], [name="centro_id"], select[id*="centro"]');
-    if (elCentroInput) {
-        elCentroInput.addEventListener('change', actualizarAulasYModalidad);
-        elCentroInput.addEventListener('input', actualizarAulasYModalidad);
-    }
+    // Escuchamos cambios en el centro
+    const registrarEventosCentro = () => {
+        const elCentroInput = document.querySelector('select[name="centro_id"], [name="centro_id"], select[id*="centro"], input[name="centro_id"]');
+        if (elCentroInput) {
+            ['change', 'input', 'blur'].forEach(evento => {
+                elCentroInput.addEventListener(evento, actualizarAulasYModalidad);
+            });
+        }
+    };
 
     if (modalidad) {
         modalidad.addEventListener('change', actualizarAulasYModalidad);
     }
 
-    // Ejecutar al cargar la página de edición o creación
-    setTimeout(actualizarAulasYModalidad, 100); // Pequeño retardo para asegurar que el DOM del componente esté listo   
+    // Ejecución inicial y reintentos para asegurar que el componente de Laravel termine de pintar el DOM en Edición
+    registrarEventosCentro();
+    actualizarAulasYModalidad();
+    setTimeout(actualizarAulasYModalidad, 200);
+    setTimeout(actualizarAulasYModalidad, 600);  // Pequeño retardo para asegurar que el DOM del componente esté listo   
 
-        // El mensaje de éxito desaparece al empezar a escribir otro curso
-        form.addEventListener('focusin', () => {
-            document.getElementById('success-alert')?.remove();
-        }, { once: true });
+
+    // El mensaje de éxito desaparece al empezar a escribir
+    form?.addEventListener('focusin', () => {
+        document.getElementById('success-alert')?.remove();
+    }, { once: true }); 
     </script>
 
 </x-interfaz.layout.app>
