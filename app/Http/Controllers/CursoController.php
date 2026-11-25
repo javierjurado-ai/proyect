@@ -517,10 +517,17 @@ class CursoController extends Controller
             );
 
             // Contacto con el id del curso recién creado y la persona del usuario.
+            // 'coordinador' es obligatorio en la tabla (varchar 45): se guarda su nombre completo.
+            $persona = Persona::find($personaId);
+            $nombreCoordinador = collect([$persona?->nombre, $persona?->primer_apellido, $persona?->segundo_apellido])
+                ->filter()
+                ->implode(' ');
+
             CursoContacto::create([
-                'curso_id'   => $curso->id,
-                'persona_id' => $personaId,
-                'actividad'  => 1,
+                'curso_id'    => $curso->id,
+                'persona_id'  => $personaId,
+                'coordinador' => mb_substr($nombreCoordinador, 0, 45),
+                'actividad'   => 1,
             ]);
         });
 

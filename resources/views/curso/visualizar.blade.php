@@ -22,13 +22,6 @@
         </x-slot:acciones>
     </x-interfaz.panel.cabecera>
 
-    @php
-        $formacion = $curso->formacion;
-        $presupuesto = $curso->presupuesto;
-        $peticionLogistica = $curso->peticionLogistica;
-        $modalidad = $curso->modalidad->value ?? $curso->modalidad;
-    @endphp
-
     <x-interfaz.layout.pestanas>
 
         {{-- Curso --}}
@@ -278,7 +271,7 @@
                     </div>
                 @endif
 
-                <x-tabla.tabla vacio="Todavía no hay alumnos matriculados en este curso." :columnas="[
+                <x-tabla.tabla vacio="Todavía no hay docentes en este curso." :columnas="[
                     'Nombre',
                     'DNI / NIE',
                     'Email',
@@ -291,8 +284,8 @@
 
                     @foreach ($curso->docentes as $cursoDocente)
                         @php
-                            $docente = $cursoAlumno->persona;
-                            $lopd = $alumno?->LOPD?->value ?? ($alumno?->LOPD ?? 'NO');
+                            $docente = $cursoDocente->persona;
+                            $lopd = $docente?->LOPD?->value ?? ($docente?->LOPD ?? 'NO');
                         @endphp
 
                         <tr class="hover:bg-slate-50">
@@ -306,7 +299,7 @@
                             <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $docente?->telefono ?? '—' }}
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-slate-700">
-                                {{ $alumno?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
+                                {{ $docente?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
                             </td>
                             <td class="px-4 py-3 text-slate-700">{{ $docente?->nacionalidad ?? '—' }}</td>
 
@@ -324,7 +317,6 @@
                                 <div class="inline-flex items-center gap-2">
 
 
-                                    <x-tabla.boton-eliminar :action="route('curso.alumno.destroy', [$curso->id, $cursoAlumno->id])" />
                                 </div>
                             </td>
                         </tr>
@@ -348,7 +340,7 @@
                     </div>
                 @endif
 
-                <x-tabla.tabla vacio="Todavía no hay alumnos matriculados en este curso." :columnas="[
+                <x-tabla.tabla vacio="Todavía no hay docentes en este curso." :columnas="[
                     'Nombre',
                     'DNI / NIE',
                     'Email',
@@ -361,8 +353,8 @@
 
                     @foreach ($curso->docentes as $cursoDocente)
                         @php
-                            $docente = $cursoAlumno->persona;
-                            $lopd = $alumno?->LOPD?->value ?? ($alumno?->LOPD ?? 'NO');
+                            $docente = $cursoDocente->persona;
+                            $lopd = $docente?->LOPD?->value ?? ($docente?->LOPD ?? 'NO');
                         @endphp
 
                         <tr class="hover:bg-slate-50">
@@ -376,7 +368,7 @@
                             <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $docente?->telefono ?? '—' }}
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-slate-700">
-                                {{ $alumno?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
+                                {{ $docente?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
                             </td>
                             <td class="px-4 py-3 text-slate-700">{{ $docente?->nacionalidad ?? '—' }}</td>
 
@@ -394,7 +386,6 @@
                                 <div class="inline-flex items-center gap-2">
 
 
-                                    <x-tabla.boton-eliminar :action="route('curso.alumno.destroy', [$curso->id, $cursoAlumno->id])" />
                                 </div>
                             </td>
                         </tr>
@@ -403,7 +394,6 @@
             </x-interfaz.panel.tarjeta>
         </x-slot:productos>
         <x-slot:calendario title="Calendario">
-            <x-slot:calendario title="Calendario">
                 <x-calendario.calendario :url="route('curso.dia.create', $curso)" :inicial="\Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString()" :eventos="[
                     [
                         'title' => $horario,
@@ -414,7 +404,7 @@
                         'endRecur' => \Illuminate\Support\Carbon::parse($curso->fecha_fin)->addDay()->toDateString(),
                     ],
                 ]" />
-            </x-slot:calendario>
+        </x-slot:calendario>
     </x-interfaz.layout.pestanas>
 
 </x-interfaz.layout.app>
