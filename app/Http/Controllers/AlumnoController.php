@@ -25,10 +25,10 @@ class AlumnoController extends Controller
 
         $alumnos = Persona::query()
             // Solo las personas que están en curso_alumno (del curso elegido, si hay filtro)
-            ->whereIn('id', CursoAlumno::select('persona_id')->when($cursoId, fn ($q) => $q->where('curso_id', $cursoId)))
-            ->when($buscar !== '', fn ($q) => $this->filtroBusqueda($q, $buscar))
+            ->whereIn('id', CursoAlumno::select('persona_id')->when($cursoId, fn($q) => $q->where('curso_id', $cursoId)))
+            ->when($buscar !== '', fn($q) => $this->filtroBusqueda($q, $buscar))
             ->withCount(['cursoAlumno as cursos_count'])
-            ->withCount(['cursoAlumno as diplomas_count' => fn ($q) => $q->where('diploma', 'SI')])
+            ->withCount(['cursoAlumno as diplomas_count' => fn($q) => $q->where('diploma', 'SI')])
             ->with(['empresasComoAlumno:id,nombre'])
             ->orderBy('primer_apellido')->orderBy('segundo_apellido')->orderBy('nombre')
             ->paginate(15)
@@ -45,9 +45,9 @@ class AlumnoController extends Controller
         $this->soloAdministradorYCoordinador();
 
         $inscripciones = CursoAlumno::where('persona_id', $persona->id)
-            ->with(['curso.formacion', 'empresa'])
+            ->with(['curso.formacion', 'curso.calendario', 'empresa'])
             ->get()
-            ->sortByDesc(fn ($i) => $i->curso?->fecha_inicio)
+            ->sortByDesc(fn($i) => $i->curso?->fecha_inicio)
             ->values();
 
         // Si no está en ningún curso no es alumno
@@ -69,7 +69,7 @@ class AlumnoController extends Controller
     {
         $like = '%' . $buscar . '%';
 
-        return $q->where(fn ($w) => $w
+        return $q->where(fn($w) => $w
             ->where('nombre', 'like', $like)
             ->orWhere('primer_apellido', 'like', $like)
             ->orWhere('segundo_apellido', 'like', $like)
@@ -86,6 +86,6 @@ class AlumnoController extends Controller
             ->whereIn('id', $tabla::select('curso_id'))
             ->orderByDesc('fecha_inicio')
             ->get()
-            ->mapWithKeys(fn ($c) => [$c->id => $c->codigo_accion . '/' . $c->codigo_grupo . ' · ' . ($c->formacion?->nombre ?? 'Sin formación')]);
+            ->mapWithKeys(fn($c) => [$c->id => $c->codigo_accion . '/' . $c->codigo_grupo . ' · ' . ($c->formacion?->nombre ?? 'Sin formación')]);
     }
 }
