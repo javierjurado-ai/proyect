@@ -399,6 +399,13 @@ class CursoController extends Controller
         return view('aula.formulario', compact('aula', 'cursos', 'estados', 'usos') + $this->datosUsuario());
     }
 
+    public function crearFormularioDia(Curso $curso)
+    {
+        return view('curso.formularioFecha', [
+            'curso'  => $curso
+        ]);
+    }
+
     // Actualiza el aula en la base de datos
     public function actualizarAula(Request $request, $id)
     {

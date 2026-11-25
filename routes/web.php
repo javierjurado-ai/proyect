@@ -15,6 +15,7 @@ use App\Http\Controllers\CreditoFormativoController;
 use App\Http\Controllers\InicioController;
 use App\Http\Controllers\PresupuestoController;
 use App\Http\Controllers\PeticionesLogisticaController;
+use App\Models\Curso;
 use Illuminate\Support\Facades\Auth;
 
 /*
@@ -132,6 +133,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/curso/{curso}/alumnos', [CursoController::class, 'guardarAlumnos'])->name('curso.alumno.store');
     Route::get('/curso/{curso}/docentes', [CursoController::class, 'agregarDocentes'])->name('curso.docente.create');
     Route::post('/curso/{curso}/docentes', [CursoController::class, 'guardarDocentes'])->name('curso.docente.store');
+    Route::get('/curso/{curso}/calendario/crear', [CursoController::class, 'crearFormularioDia'])->name('curso.dia.create');
+    Route::post('/curso/{curso}/calendario', [CursoController::class, 'store'])->name('curso.calendario.store');
+
 
     // Rutas web para la gestión de Centros (Editar, Actualizar y Eliminar)
     Route::get('/view/listadoCentro', [CentroController::class, 'index'])->name('centro.index');
@@ -145,7 +149,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/view/centro/{centro}', [CentroController::class, 'visualizarCentro'])->name('centro.visualizar');
     Route::get('/view/centro/{centro}/aulas', [CentroController::class, 'crearTablaPorAula'])->name('centro.aulas');
 
-    
+
 
     // Rutas web para la gestión de Empresas (Editar, Actualizar y Eliminar)
     Route::get('/view/listadoEmpresa', [EmpresaController::class, 'index'])->name('empresa.index');
