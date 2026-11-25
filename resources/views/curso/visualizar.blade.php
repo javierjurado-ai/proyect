@@ -357,212 +357,86 @@
                 </x-tabla.tabla>
             </x-interfaz.panel.tarjeta>
         </x-slot:docentes>
-        <x-slot:productos title="Productos">
-            <x-interfaz.panel.tarjeta titulo="Docentes trabajando">
-                <div class="mb-4 flex items-center justify-between">
-                    <p class="text-sm text-slate-500">{{ $curso->docentes->count() }} registrados</p>
-                    <a href="{{ route('curso.docente.store', $curso) }}"
-                        class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
-                        + Nuevo docente
-                    </a>
-                </div>
-
-                @if (session('ok'))
-                    <div class="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
-                        {{ session('ok') }}
-                    </div>
-                @endif
-
-                <x-tabla.tabla vacio="Todavía no hay docentes en este curso." :columnas="[
-                    'Nombre',
-                    'DNI / NIE',
-                    'Email',
-                    'Teléfono',
-                    'Nacimiento',
-                    'Nacionalidad',
-                    ['LOPD', 'center'],
-                    ['Acciones', 'center'],
-                ]">
-
-                    @foreach ($curso->docentes as $cursoDocente)
-                        @php
-                            $docente = $cursoDocente->persona;
-                            $lopd = $docente?->LOPD?->value ?? ($docente?->LOPD ?? 'NO');
-                        @endphp
-
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-4 py-3 font-medium text-slate-800">
-                                {{ $docente ? $docente->nombre . ' ' . $docente->primer_apellido . ' ' . $docente->segundo_apellido : '—' }}
-                            </td>
-                            <td class="px-4 py-3 font-mono text-slate-700">
-                                {{ $docente?->DNI ?? ($docente?->NIE ?? '—') }}
-                            </td>
-                            <td class="px-4 py-3 text-slate-700">{{ $docente?->email ?? '—' }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $docente?->telefono ?? '—' }}
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-slate-700">
-                                {{ $docente?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
-                            </td>
-                            <td class="px-4 py-3 text-slate-700">{{ $docente?->nacionalidad ?? '—' }}</td>
-
-                            <td class="px-4 py-3 text-center">
-                                @if (strtoupper((string) $lopd) === 'SI')
-                                    <span
-                                        class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">Sí</span>
-                                @else
-                                    <span
-                                        class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">No</span>
-                                @endif
-                            </td>
-
-                            <td class="px-4 py-3 text-center whitespace-nowrap">
-                                <div class="inline-flex items-center gap-2">
-
-
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </x-tabla.tabla>
-            </x-interfaz.panel.tarjeta>
-        </x-slot:productos>
         <x-slot:calendario title="Calendario">
-            <x-interfaz.panel.tarjeta titulo="Calendario del curso">
-                @if (session('ok'))
-                    <div role="status" class="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                        {{ session('ok') }}
+            <x-slot:calendario title="Calendario">
+                <x-calendario.calendario :url="route('curso.dia.create', $curso)" :inicial="\Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString()" :eventos="[
+                    [
+                        'title' => $horario,
+                        'daysOfWeek' => [1, 2, 3, 4, 5],
+                        'startTime' => $horaInicio,
+                        'endTime' => $horaFinal,
+                        'startRecur' => \Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString(),
+                        'endRecur' => \Illuminate\Support\Carbon::parse($curso->fecha_fin)->addDay()->toDateString(),
+                    ],
+                ]" />
+            </x-slot:calendario>
+            <x-slot:pedidos title="Pedidos">
+                <x-interfaz.panel.tarjeta titulo="Peticiones de logística">
+                    <div class="mb-4 flex items-center justify-between">
+                        <p class="text-sm text-slate-500">{{ $curso->peticionesLogistica->count() }} peticiones</p>
+                        <a href="{{ route('curso.logistica.store', $curso) }}"
+                            class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
+                            + Nueva petición
+                        </a>
                     </div>
-                @endif
 
-                <div id="calendario-curso">
-                    {{-- Barra de acciones: actúa sobre el día seleccionado en el calendario --}}
-                    <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
-                        <div class="min-w-0 text-sm">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-stone-500">Día seleccionado</p>
-                            <p id="dia-seleccionado" class="truncate font-semibold text-marca-950">
-                                <span class="font-normal text-stone-500">Ninguno · pulsa un día con sesión</span>
-                            </p>
+                    @if (session('ok'))
+                        <div
+                            class="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
+                            {{ session('ok') }}
                         </div>
-
-                        <div class="flex flex-wrap items-center gap-2">
-                            <a href="{{ route('curso.crearTablaCurso') }}"
-                                class="inline-flex items-center gap-1 rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-stone-200/60">
-                                ← Atrás
-                            </a>
-
-                            <form id="form-cancelar-dia" method="POST" action="">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" id="boton-cancelar-dia" disabled
-                                    class="inline-flex items-center rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white">
-                                    Cancelar sesión
-                                </button>
-                            </form>
-
-                            <a id="boton-modificar-dia" href="#" aria-disabled="true"
-                                class="pointer-events-none inline-flex items-center rounded-lg bg-marca-800 px-4 py-2 text-sm font-semibold text-white opacity-40 hover:bg-marca-900">
-                                Modificar
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-stone-500">
-                        <span class="inline-flex items-center gap-2">
-                            <span class="h-3 w-3 rounded-sm border-l-[3px] border-marca-700 bg-marca-100"></span>
-                            Sesión ({{ $diasConSesion }} {{ $diasConSesion === 1 ? 'día' : 'días' }})
-                        </span>
-                        <span class="inline-flex items-center gap-2">
-                            <span class="h-3 w-3 rounded-sm bg-marca-50 ring-1 ring-marca-100"></span>
-                            Periodo del curso
-                        </span>
-                        <span class="inline-flex items-center gap-2">
-                            <span class="h-3 w-3 rounded-full bg-marca-900"></span>
-                            Hoy
-                        </span>
-                        <span class="ml-auto text-xs">Pulsa un día con sesión para seleccionarlo, o un día vacío para añadirlo</span>
-                    </div>
-
-                    @error('generar')
-                        <div role="alert" class="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">{{ $message }}</div>
-                    @enderror
-
-                    @if ($diasConSesion === 0)
-                        @if ($horaInicio && $horaFinal && $curso->fecha_inicio && $curso->fecha_fin)
-                            {{-- Tiene horario general, pero todavía no hay días concretos en el calendario --}}
-                            <form method="POST" action="{{ route('curso.calendario.generar', $curso) }}"
-                                class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-marca-100 bg-marca-50 px-4 py-3 text-sm">
-                                @csrf
-                                <div class="text-marca-950">
-                                    <p class="font-semibold">El curso tiene horario {{ $horario }}, del
-                                        {{ \Illuminate\Support\Carbon::parse($curso->fecha_inicio)->format('d/m/Y') }} al
-                                        {{ \Illuminate\Support\Carbon::parse($curso->fecha_fin)->format('d/m/Y') }}.</p>
-                                    <p class="text-marca-800">Genera los días para verlos en el calendario. Después podrás modificar o cancelar cada uno.</p>
-                                </div>
-                                <div class="flex flex-wrap items-center gap-3">
-                                    <label for="modo-generar" class="sr-only">Qué días hay clase</label>
-                                    <select id="modo-generar" name="modo"
-                                        class="rounded-lg border border-marca-100 bg-white px-3 py-2 text-sm text-marca-950 focus:outline-none focus:ring-2 focus:ring-marca-700">
-                                        <option value="lv">De lunes a viernes</option>
-                                        <option value="todos">Todos los días</option>
-                                        <option value="alterno">Un día sí y otro no</option>
-                                    </select>
-                                    <button type="submit"
-                                        class="inline-flex items-center rounded-lg bg-marca-800 px-4 py-2 font-semibold text-white hover:bg-marca-900">
-                                        Generar días
-                                    </button>
-                                </div>
-                            </form>
-                        @else
-                            <p class="mb-4 rounded-lg border border-dashed border-stone-300 bg-stone-50 px-4 py-3 text-sm text-stone-600">
-                                Este curso todavía no tiene horario. Haz clic en cualquier día del periodo
-                                (también sábados o domingos) para añadirlo, o indica el horario en los datos del curso.
-                            </p>
-                        @endif
                     @endif
 
-                    <x-calendario.calendario seleccionable :url="route('curso.dia.create', $curso)"
-                        :inicial="$curso->fecha_inicio ? \Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString() : null"
-                        :eventos="$eventosCalendario" />
-                </div>
-            </x-interfaz.panel.tarjeta>
+                    <x-tabla.tabla vacio="Todavía no hay peticiones de logística en este curso." :columnas="[
+                        'nombre',
+                        'cantidad',
+                        'Fecha',
+                        'Fecha necesaria',
+                        'Solicitante',
+                        'Centro',
+                        ['Estado', 'center'],
+                        ['Acciones', 'center'],
+                    ]">
 
-            @push('scripts')
-                <script>
-                    (() => {
-                        const contenedor = document.getElementById('calendario-curso');
-                        const texto = document.getElementById('dia-seleccionado');
-                        const modificar = document.getElementById('boton-modificar-dia');
-                        const formCancelar = document.getElementById('form-cancelar-dia');
-                        const cancelar = document.getElementById('boton-cancelar-dia');
-                        let fechaTexto = '';
-
-                        contenedor.addEventListener('calendario:seleccion', (e) => {
-                            const { fecha, horario, editar, cancelar: urlCancelar } = e.detail;
-                            const [a, m, d] = fecha.split('-').map(Number);
-                            fechaTexto = new Date(a, m - 1, d)
-                                .toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                            fechaTexto = fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1);
-
-                            texto.textContent = fechaTexto + (horario ? ' · ' + horario : '');
-
-                            modificar.href = editar;
-                            modificar.removeAttribute('aria-disabled');
-                            modificar.classList.remove('pointer-events-none', 'opacity-40');
-
-                            formCancelar.action = urlCancelar;
-                            cancelar.disabled = false;
-                        });
-
-                        formCancelar.addEventListener('submit', (e) => {
-                            if (!formCancelar.action || cancelar.disabled ||
-                                !confirm('¿Cancelar la sesión del ' + fechaTexto + '?\nEl día se quitará del calendario del curso.')) {
-                                e.preventDefault();
-                            }
-                        });
-                    })();
-                </script>
-            @endpush
-        </x-slot:calendario>
+                        @foreach ($curso->peticionesLogistica as $peticion)
+                            @php $linea = $peticion->peticionProductos->first(); @endphp
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">
+                                    {{ $linea?->producto ?? '—' }}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">
+                                    {{ $linea?->cantidad ?? '—' }}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">
+                                    {{ $peticion->fecha?->format('d/m/Y') ?? '—' }}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">
+                                    {{ $peticion->fecha_necesaria?->format('d/m/Y') ?? '—' }}
+                                </td>
+                                <td class="px-4 py-3 font-medium text-slate-800">
+                                    {{ $peticion->solicitante ? $peticion->solicitante->nombre . ' ' . $peticion->solicitante->primer_apellido : '—' }}
+                                </td>
+                                <td class="px-4 py-3 text-slate-700">{{ $peticion->centro?->nombre ?? '—' }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    <span
+                                        class="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                                        {{ $peticion->estado ? ucfirst(strtolower(str_replace('_', ' ', $peticion->estado->value))) : '—' }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </x-tabla.tabla>
+                    @if ($curso->peticionesLogistica->isNotEmpty())
+                        <form method="POST" action="{{ route('curso.logistica.enviar', $curso) }}"
+                            class="mt-4 flex justify-end">
+                            @csrf
+                            <button type="submit"
+                                class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
+                                Enviar productos
+                            </button>
+                        </form>
+                    @endif
+                </x-interfaz.panel.tarjeta>
+            </x-slot:pedidos>
     </x-interfaz.layout.pestanas>
-
 </x-interfaz.layout.app>

@@ -13,6 +13,7 @@ use App\Models\Empresa;
 use App\Models\Enums\Categoria;
 use App\Models\Enums\CategoriaProfesional;
 use App\Models\Enums\EstadoAula;
+use App\Models\Enums\EstadoLogistica;
 use App\Models\enums\LOPD;
 use App\Models\Enums\Modalidad;
 use App\Models\Enums\NivelEstudio;
@@ -22,6 +23,7 @@ use App\Models\Enums\Turno;
 use App\Models\Enums\UsoAula;
 use App\Models\Formacion;
 use App\Models\Persona;
+use App\Models\PeticionesLogistica;
 use App\Models\Rol;
 use App\Services\CalendarioCursoService;
 use Illuminate\Database\QueryException;
@@ -339,7 +341,7 @@ class CursoController extends Controller
     }
 
     ///////////////////Aulas////////////////////////
-    
+
     // Muestra el formulario de alta de aulas asociado a un centro
     public function crearFormularioAula($centro_id)
     {
@@ -541,6 +543,47 @@ class CursoController extends Controller
         ];
     }
 
+    public function crearFormularioLogistica(Curso $curso)
+    {
+        $cursos = Curso::with('formacion')->orderBy('codigo_accion')->orderBy('codigo_grupo')->get()
+            ->mapWithKeys(fn($c) => [
+                $c->id => $this->codigoCurso($c) . ($c->formacion ? ' - ' . $c->formacion->nombre : ''),
+            ]);
+
+        return view('logistica.formularioPeticionProducto', compact('cursos', 'curso') + $this->datosUsuario());
+    }
+    public function crearPeticionLogistica(Request $request, Curso $curso)
+    {
+        $datos = $request->validate([
+            'producto'                  => 'required|string|max:45',
+            'cantidad'                  => 'required|integer|min:1|max:99',
+            'direccion_envio'           => 'required|string|max:255',
+            'fecha_necesaria'           => 'nullable|date',
+            'fecha_devolucion_prevista' => 'nullable|date|after_or_equal:fecha_necesaria',
+            'observaciones'             => 'nullable|string|max:200',
+        ]);
+
+        $peticion = $curso->peticionesLogistica()->create([
+            'fecha'                     => now(),
+            'estado'                    => EstadoLogistica::cases()[0], // pon tu estado inicial
+            'centro_id'                 => $curso->centro_id,
+            'solicitante_id'            => Auth::user()->persona_id ?? null, // ajusta a tu modelo de usuario
+            'direccion_envio'           => $datos['direccion_envio'],
+            'fecha_necesaria'           => $datos['fecha_necesaria'] ?? null,
+            'fecha_devolucion_prevista' => $datos['fecha_devolucion_prevista'] ?? null,
+            'observaciones'             => $datos['observaciones'] ?? null,
+        ]);
+
+        $peticion->peticionProductos()->create([
+            'peticiones_logistica_id' => $peticion->id,
+            'producto' => $datos['producto'],
+            'cantidad' => $datos['cantidad'],
+        ]);
+
+        return redirect()
+            ->route('curso.mostrar', $curso) // tu ruta de detalle del curso
+            ->with('ok', 'Petición creada correctamente.');
+    }
     // Actualiza el aula en la base de datos
     public function actualizarAula(Request $request, $id)
     {
@@ -581,7 +624,7 @@ class CursoController extends Controller
     public function eliminarAula($id)
     {
         $aula = Aula::findOrFail($id);
-        
+
         // Guardamos el centro_id ANTES de borrar el registro
         $centroId = $aula->centro_id;
 
@@ -595,7 +638,6 @@ class CursoController extends Controller
             return redirect()
                 ->route('aula.index')
                 ->with('ok', 'Aula eliminada correctamente.');
-                
         } catch (QueryException $e) {
             if ($centroId) {
                 return redirect()->to("/view/centro/{$centroId}")->with('error', 'No se puede eliminar el aula porque tiene registros asociados.');
