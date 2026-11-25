@@ -56,8 +56,8 @@
                 </ul>
             @endif
         </x-interfaz.panel.tarjeta>
-                {{-- Aulas --}}
-        <x-interfaz.panel.tarjeta titulo="Aulas" :enlace="$ruta('aula.create')" texto-enlace="Nueva aula">
+                {{-- Aulas: se crean desde un centro, así que el enlace lleva al listado de centros --}}
+        <x-interfaz.panel.tarjeta titulo="Aulas" :enlace="$ruta('centro.index')" texto-enlace="Nueva aula (elige centro)">
             @if ($aulas->isEmpty())
                 <p class="text-sm text-slate-500">Todavía no hay aulas.</p>
             @else
