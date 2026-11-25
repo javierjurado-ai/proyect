@@ -69,6 +69,7 @@
         botonMenu.addEventListener('click', alternarMenu);
         fondo.addEventListener('click', alternarMenu);
     </script>
+    @stack('scripts')
 </body>
 
 </html>

@@ -23,13 +23,22 @@ return Application::configure(basePath: dirname(__DIR__))
         // comparten dirección con los formularios y botones de borrar de la web, que sí
         // deben llevar CSRF.
         $middleware->validateCsrfTokens(except: [
-            'credito', 'credito/*',
-            'comunicacionFundae', 'comunicacionFundae/*',
-            'peticionesLogistica', 'peticionesLogistica/*',
-            'centro-contactos/*', 'api/centro-contactos',
-            'curso/rolDocente/*', 'curso/CursoDocente/*',
-            'curso/rolAlumno/*', 'curso/CursoAlumno/*',
-            
+            'credito',
+            'credito/*',
+            'comunicacionFundae',
+            'comunicacionFundae/*',
+            'peticionesLogistica',
+            'peticionesLogistica/*',
+            'centro-contactos/*',
+            'api/centro-contactos',
+            'curso/rolDocente/*',
+            'curso/CursoDocente/*',
+            'curso/rolAlumno/*',
+            'curso/CursoAlumno/*',
+            'persona/iniciarSesion',
+            'persona/crearUsuario',
+            'credito',
+            'credito/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -37,12 +46,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
             return $request->is(
                 'persona/iniciarSesion',
-                'credito', 'credito/*',
-                'comunicacionFundae', 'comunicacionFundae/*',
-                'peticionesLogistica', 'peticionesLogistica/*',
-                'centro-contactos/*', 'api/centro-contactos',
-                'curso/listar', 'curso/rolDocente/*', 'curso/CursoDocente/*',
-                'curso/rolAlumno/*', 'curso/CursoAlumno/*'
+                'credito',
+                'credito/*',
+                'comunicacionFundae',
+                'comunicacionFundae/*',
+                'peticionesLogistica',
+                'peticionesLogistica/*',
+                'centro-contactos/*',
+                'api/centro-contactos',
+                'curso/listar',
+                'curso/rolDocente/*',
+                'curso/CursoDocente/*',
+                'curso/rolAlumno/*',
+                'curso/CursoAlumno/*'
             ) || $request->expectsJson();
         });
     })->create();
