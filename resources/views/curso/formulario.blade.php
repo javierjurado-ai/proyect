@@ -226,16 +226,6 @@
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
-
-                    {{-- Solo para turno partido (se muestra u oculta según el turno elegido) --}}
-                    <div id="segundo-tramo" @class(['hidden' => old('turno', $curso->turno->value ?? $curso->turno ?? '') !== 'PARTIDO'])>
-                        <span class="mb-1 block text-sm font-medium text-slate-700">Segundo tramo (turno partido) *</span>
-                        <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                            <x-formulario.entrada name="hora_inicio2" label="Hora inicio *" type="time" />
-                            <x-formulario.entrada name="hora_final2" label="Hora fin *" type="time" />
-                        </div>
-                    </div>
-                </div>
             </fieldset>
 
              {{-- Bloque donde antes estaba Aula, ahora ponemos CONTACTO y NIVEL DE FORMACIÓN --}}
