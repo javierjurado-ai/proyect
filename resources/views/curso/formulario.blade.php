@@ -13,6 +13,11 @@
 
     $fecha = fn ($f) => $f ? \Illuminate\Support\Carbon::parse($f)->format('Y-m-d') : '';
     $hora  = fn ($h) => $h ? substr($h, 0, 5) : '';
+
+    $opcionesNivel = [
+        0 => 'Básico',
+        1 => 'Superior',
+    ];
 @endphp
 
 <x-interfaz.layout.app :titulo="$editando ? 'Editar curso' : 'Nuevo curso'" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
@@ -49,7 +54,6 @@
             <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Datos del curso</legend>
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                    {{-- codigo_curso ya no existe: el curso se identifica por acción + grupo --}}
                     <x-formulario.entrada
                         name="codigo_accion"
                         label="Código de acción *"
@@ -62,13 +66,13 @@
                         maxlength="45"
                         :value="$curso->codigo_grupo ?? ''" />
 
-                    <x-formulario.entrada
-                        name="nivel_formacion"
-                        label="Nivel de formación"
-                        type="number"
-                        min="0"
-                        max="3"
-                        :value="$curso->nivel_formacion ?? 0" />
+                    {{-- CENTRO arriba --}}
+                    <x-formulario.selector
+                        name="centro_id"
+                        label="Centro"
+                        placeholder="Busca un centro..."
+                        :options="$centros"
+                        :value="$curso->centro_id ?? ''" />
                     
                     <x-formulario.entrada
                         name="empresa_formadora"
@@ -83,19 +87,19 @@
                         :options="$formaciones"
                         :value="$curso->formacion_id ?? ''" />
 
-                    <x-formulario.selector
-                        name="centro_id"
-                        label="Centro"
-                        placeholder="Busca un centro..."
-                        :options="$centros"
-                        :value="$curso->centro_id ?? ''" />
+                    <x-formulario.seleccion
+                        name="aula"
+                        id="aula-select"
+                        label="Aula *"
+                        placeholder="-- Elige un aula --"
+                        :options="[]"
+                        :value="$curso->aula ?? ''" />
                 </div>
             </fieldset>
 
             <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Modalidad y horas</legend>
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                    {{-- Desplegable, igual que el turno --}}
                     <x-formulario.seleccion
                         name="modalidad"
                         label="Modalidad *"
@@ -136,7 +140,6 @@
                         type="date"
                         :value="$fecha($curso->fecha_fin ?? null)" />
 
-                    {{-- Turno: desplegable --}}
                     <x-formulario.seleccion
                         name="turno"
                         label="Turno *"
@@ -158,20 +161,18 @@
                 </div>
             </fieldset>
 
-            <div class="mb-8 grid grid-cols-1 gap-5 md:grid-cols-3">
-                {{-- Bloque izquierdo: AULA (Desplegable dinámico) --}}
+             {{-- Bloque donde antes estaba Aula, ahora ponemos CONTACTO y NIVEL DE FORMACIÓN --}}
+            <div class="mb-8 grid grid-cols-1 gap-5 md:grid-cols-2">                
                 <fieldset>
-                    <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Aula</legend>
+                    <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Nivel de formación</legend>
                     <x-formulario.seleccion
-                        name="aula"
-                        id="aula-select"
-                        label="Aula *"
-                        placeholder="-- Primero selecciona un centro --"
-                        :options="[]" 
-                        :value="$curso->aula ?? ''" />
+                        name="nivel_formacion"
+                        label="Nivel de formación *"
+                        placeholder="-- Elige un nivel --"
+                        :options="$opcionesNivel"
+                        :value="isset($curso) ? $curso->nivel_formacion : ''" />
                 </fieldset>
 
-                {{-- Bloque derecho: CONTACTO --}}
                 <fieldset>
                     <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Contacto</legend>
                     <x-formulario.entrada
@@ -183,7 +184,6 @@
                 </fieldset>
             </div>
             
-{{-- El aula virtual va ahora en su propia tabla (curso_aula_virtual) --}}
             <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Contenidos y Objetivos</legend>
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-2 mb-5">
