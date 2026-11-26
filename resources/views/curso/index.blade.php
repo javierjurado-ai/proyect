@@ -33,28 +33,30 @@
                    class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-marca-700">
         </div>
 
-        {{-- 3. Nombre Formación --}}
+        {{-- 3. Nombre Formación (Buscador inteligente con datalist) --}}
         <div class="min-w-44 flex-1">
-            <label for="formacion" class="mb-1 block text-xs font-medium text-slate-700">Nombre Formación</label>
-            <select id="formacion" name="formacion"
-                    class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-marca-700">
-                <option value="">Todas</option>
-                @foreach ($formacionesFiltro ?? [] as $id => $nombreForm)
-                    <option value="{{ $id }}" @selected(($formacionId ?? '') == $id)>{{ $nombreForm }}</option>
+            <label for="formacion_input" class="mb-1 block text-xs font-medium text-slate-700">Nombre Formación</label>
+            <input id="formacion_input" name="formacion_nombre" list="lista_formaciones" type="search" 
+                   value="{{ $formacionNombre ?? '' }}" placeholder="Escribe o selecciona..."
+                   class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-marca-700">
+            <datalist id="lista_formaciones">
+                @foreach ($formacionesFiltro ?? [] as $nombreForm)
+                    <option value="{{ $nombreForm }}">
                 @endforeach
-            </select>
+            </datalist>
         </div>
 
-        {{-- 4. Empresa Cliente --}}
+        {{-- 4. Empresa Cliente (Buscador inteligente con datalist) --}}
         <div class="min-w-40 flex-1">
-            <label for="empresa" class="mb-1 block text-xs font-medium text-slate-700">Empresa Cliente</label>
-            <select id="empresa" name="empresa"
-                    class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-marca-700">
-                <option value="">Todas</option>
-                @foreach ($empresasFiltro ?? [] as $id => $nombreEmp)
-                    <option value="{{ $id }}" @selected(($empresaId ?? '') == $id)>{{ $nombreEmp }}</option>
+            <label for="empresa_input" class="mb-1 block text-xs font-medium text-slate-700">Empresa Cliente</label>
+            <input id="empresa_input" name="empresa_cliente" list="lista_empresas" type="search" 
+                   value="{{ $empresaCliente ?? '' }}" placeholder="Escribe o selecciona..."
+                   class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-marca-700">
+            <datalist id="lista_empresas">
+                @foreach ($empresasFiltro ?? [] as $nombreEmp)
+                    <option value="{{ $nombreEmp }}">
                 @endforeach
-            </select>
+            </datalist>
         </div>
 
         {{-- 5. Modalidad --}}
