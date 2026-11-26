@@ -89,16 +89,24 @@ class CursoController extends Controller
             'docentes.persona',
         ]);
 
-        $peticion = PeticionesLogistica::with(['solicitante', 'centro'])
+        $peticionSinEstado = PeticionesLogistica::with(['solicitante', 'centro'])
             ->where('curso_id', $curso->id)
-            ->where('estado', EstadoLogistica::Pendiente)
+            ->whereNull('estado')
             ->first();
 
-        $productos = $peticion
-            ? PeticionProducto::where('peticiones_logistica_id', $peticion->id)->get()
+        $peticionesConEstado = PeticionesLogistica::with(['solicitante', 'centro', 'peticionProductos'])
+            ->where('curso_id', $curso->id)
+            ->whereNotNull('estado')
+            ->first();
+
+        $productos = $peticionSinEstado
+            ? PeticionProducto::where('peticiones_logistica_id', $peticionSinEstado->id)->get()
+            : collect();
+        $peticiones = $peticionesConEstado
+            ? PeticionProducto::where('peticiones_logistica_id', $peticionesConEstado->id)->get()
             : collect();
 
-        return view('curso.visualizar', compact('curso', 'rol', 'nombre', 'persona', 'nombre','productos'));
+        return view('curso.visualizar', compact('curso', 'rol', 'nombre', 'persona', 'nombre', 'productos','peticiones'));
     }
 
     public function crearTablaPorDocente($id)
@@ -584,7 +592,7 @@ class CursoController extends Controller
         $peticion = PeticionesLogistica::firstOrCreate(
             [
                 'curso_id' => $curso->id,
-                'estado'   => EstadoLogistica::Pendiente,
+                'estado'   => null,
             ],
             [
                 'fecha'           => now(),
@@ -604,6 +612,30 @@ class CursoController extends Controller
         return redirect()
             ->route('curso.visualizar', $curso)
             ->with('ok', 'Petición creada correctamente.');
+    }
+
+    public function enviarPeticionesLogistica(Request $request, Curso $curso)
+    {
+        $datos = $request->validate([
+            'direccion_envio' => 'nullable|string|max:255',
+            'fecha_necesaria' => 'nullable|date',
+        ]);
+
+        $peticion = PeticionesLogistica::where('curso_id', $curso->id)
+            ->whereNull('estado')
+            ->firstOrFail();
+
+        $peticion->update([
+            'fecha'           => now(),
+            'solicitante_id'  => Auth::user()->persona_id,
+            'direccion_envio' => $datos['direccion_envio'] ?? $peticion->direccion_envio,
+            'fecha_necesaria' => $datos['fecha_necesaria'] ?? null,
+            'estado'          => EstadoLogistica::Pendiente,
+        ]);
+
+        return redirect()
+            ->route('curso.mostrar', $curso)
+            ->with('ok', 'Productos enviados correctamente.');
     }
     // Actualiza el aula en la base de datos
     public function actualizarAula(Request $request, $id)
