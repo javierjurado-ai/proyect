@@ -94,19 +94,17 @@ class CursoController extends Controller
             ->whereNull('estado')
             ->first();
 
-        $peticionesConEstado = PeticionesLogistica::with(['solicitante', 'centro', 'peticionProductos'])
+        $peticiones = PeticionesLogistica::with(['solicitante', 'centro', 'peticionProductos'])
             ->where('curso_id', $curso->id)
             ->whereNotNull('estado')
-            ->first();
+            ->latest('fecha')
+            ->get();
 
         $productos = $peticionSinEstado
             ? PeticionProducto::where('peticiones_logistica_id', $peticionSinEstado->id)->get()
             : collect();
-        $peticiones = $peticionesConEstado
-            ? PeticionProducto::where('peticiones_logistica_id', $peticionesConEstado->id)->get()
-            : collect();
 
-        return view('curso.visualizar', compact('curso', 'rol', 'nombre', 'persona', 'nombre', 'productos','peticiones'));
+        return view('curso.visualizar', compact('curso', 'rol', 'nombre', 'persona', 'nombre', 'productos', 'peticiones'));
     }
 
     public function crearTablaPorDocente($id)
