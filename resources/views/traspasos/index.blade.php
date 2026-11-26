@@ -75,16 +75,6 @@
             </x-tabla.tabla>
         </x-interfaz.panel.tarjeta>
 
-        <div class="mt-6 grid gap-4 sm:grid-cols-2">
-            <div class="rounded-xl border border-stone-200 bg-white p-4 text-sm text-slate-700">
-                <p class="text-xs font-bold text-marca-700">1 · PEDIR</p>
-                <p class="mt-1">Un almacén pide material a otro. Queda <strong>pendiente de enviar</strong> en el que lo tiene.</p>
-            </div>
-            <div class="rounded-xl border border-stone-200 bg-white p-4 text-sm text-slate-700">
-                <p class="text-xs font-bold text-marca-700">2 · ENVIAR</p>
-                <p class="mt-1">El que lo tiene lo envía: sale de su stock y <strong>entra en el del otro almacén</strong> en ese momento.</p>
-            </div>
-        </div>
     @endif
 
 </x-interfaz.layout.app>
