@@ -481,5 +481,57 @@
                     @endforelse
                 </x-interfaz.panel.tarjeta>
             </x-slot:pedidos>
+            <x-slot:pruebas title="Pruebas">
+                @vite(['resources/css/app.css', 'resources/js/app.js'])
+                <ul id="chat-mensajes"></ul>
+
+                <form id="chat-formulario">
+                    <input id="chat-texto" type="text" maxlength="500" placeholder="Escribe un mensaje" required>
+                    <button type="submit">Enviar</button>
+                </form>
+
+                <p id="chat-error" style="color: red;"></p>
+
+                <script type="module">
+                    const lista = document.getElementById('chat-mensajes');
+                    const formulario = document.getElementById('chat-formulario');
+                    const input = document.getElementById('chat-texto');
+                    const error = document.getElementById('chat-error');
+
+                    // Recibir
+                    window.Echo.channel('chat').listen('EnviarMensaje', (e) => {
+                        const li = document.createElement('li');
+                        li.textContent = `[${e.fecha} ${e.hora}] ${e.autor}: ${e.mensaje}`;
+                        lista.appendChild(li);
+                    });
+
+                    // Enviar
+                    formulario.addEventListener('submit', async (ev) => {
+                        ev.preventDefault();
+                        error.textContent = '';
+
+                        const respuesta = await fetch('/mensajes', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            },
+                            body: JSON.stringify({
+                                mensaje: input.value
+                            }),
+                        });
+
+                        if (respuesta.ok) {
+                            input.value = '';
+                        } else {
+                            const datos = await respuesta.json().catch(() => null);
+                            error.textContent = datos ?
+                                `${datos.message} — ${datos.file ?? ''}:${datos.line ?? ''}` :
+                                `No se pudo enviar (error ${respuesta.status})`;
+                        }
+                    });
+                </script>
+            </x-slot:pruebas>
     </x-interfaz.layout.pestanas>
 </x-interfaz.layout.app>
