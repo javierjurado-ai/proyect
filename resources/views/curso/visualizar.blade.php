@@ -376,12 +376,12 @@
                 ]" />
             </x-slot:calendario>
             <x-slot:carrito title="Carrito">
-                <x-interfaz.panel.tarjeta titulo="Peticiones de logística">
+                <x-interfaz.panel.tarjeta titulo="Carrito">
                     <div class="mb-4 flex items-center justify-between">
                         <p class="text-sm text-slate-500">{{ $productos->count() }} productos</p>
                         <a href="{{ route('curso.logistica.store', $curso) }}"
                             class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
-                            + Nueva petición
+                            + Nuevo producto
                         </a>
                     </div>
 
@@ -439,5 +439,30 @@
                     </form>
                 </x-interfaz.panel.tarjeta>
             </x-slot:carrito>
+            <x-slot:pedidos title="Pedidos">
+                <x-interfaz.panel.tarjeta titulo="Pedidos Logistica">
+                    <div class="mb-4 flex items-center justify-between">
+                        <p class="text-sm text-slate-500">{{ $peticiones->count() }} productos</p>
+                    </div>
+
+                    @if (session('ok'))
+                        <div
+                            class="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
+                            {{ session('ok') }}
+                        </div>
+                    @endif
+                    @csrf
+
+                    <x-tabla.tabla vacio="Todavía no hay pedidos."
+                        :columnas="['Nombre', 'Cantidad']">
+                        @foreach ($peticiones as $linea)
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->producto }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->cantidad }}</td>
+                            </tr>
+                        @endforeach
+                    </x-tabla.tabla>
+                </x-interfaz.panel.tarjeta>
+            </x-slot:pedidos>
     </x-interfaz.layout.pestanas>
 </x-interfaz.layout.app>
