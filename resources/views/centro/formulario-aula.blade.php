@@ -62,9 +62,8 @@
             <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Observaciones</legend>
                 <div class="grid gap-5 grid-cols-1">
-                    <x-formulario.area name="observaciones" label="Observaciones" maxlength="450" rows="3">
-                        {{ old('observaciones', $aula->observaciones ?? '') }}
-                    </x-formulario.area>
+                    <x-formulario.area name="observaciones" label="Observaciones" maxlength="450" rows="3"
+                        :value="old('observaciones', $aula->observaciones ?? '')"/>                    
                 </div>
             </fieldset>
 

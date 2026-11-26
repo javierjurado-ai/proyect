@@ -323,9 +323,13 @@ class CursoController extends Controller
     ///////////////////Formulario////////////////////////
     public function crearFormulario()
     {
+        // Añadimos las aulas disponibles ordenadas por nombre
+        $aulas = \App\Models\Aula::select('id', 'centro_id', 'nombre_aula')->orderBy('nombre_aula')->get();
+
         return view('curso.formulario', array_merge(
             $this->datosDesplegables(),
-            $this->datosUsuario()
+            $this->datosUsuario(),
+            compact('aulas') // <--- Pasamos las aulas a la vista
         ));
     }
 
@@ -338,7 +342,10 @@ class CursoController extends Controller
         $diasCalendario = $curso->calendario()->count();
 
         return view('curso.formulario', array_merge(
-            compact('curso', 'diasCalendario'),
+            compact('curso'),
+            [
+                'aulas' => Aula::all() // <-- Asegúrate de pasar esto aquí
+            ],
             $this->datosDesplegables(),
             $this->datosUsuario()
         ));
@@ -679,6 +686,11 @@ class CursoController extends Controller
         $datos = $request->validate($this->reglas($request), $this->mensajes());
         $cal   = $request->validate($this->reglasCalendario(true), $this->mensajesCalendario());
 
+        // Si es teleformación y el aula viene vacía, le asignamos un valor por defecto para la BD
+        if (($datos['modalidad'] ?? '') === 'TELEFORMACION' && empty($datos['aula'])) {
+            $datos['aula'] = 'Online';
+        }
+
         // La persona de contacto es la del usuario que ha iniciado sesión.
         $personaId = Auth::user()->persona_id;
         $anadidos = 0;
@@ -811,7 +823,7 @@ class CursoController extends Controller
             'hora_inicio'             => $hora,
             'hora_final'              => $hora . '|after:hora_inicio',
             'turno'                   => ['required', Rule::enum(Turno::class)],
-            'aula'                    => 'required|string|max:45',
+            'aula'                    => 'nullable|string|max:45|required_unless:modalidad,TELEFORMACION',
             'tecnico_comunidad'       => 'required|string|max:45',
             'observaciones'           => 'nullable|string|max:200',
             'objetivos'               => 'required|string|max:500',

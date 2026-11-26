@@ -14,6 +14,10 @@
     $fecha = fn ($f) => $f ? \Illuminate\Support\Carbon::parse($f)->format('Y-m-d') : '';
     $hora  = fn ($h) => $h ? substr($h, 0, 5) : '';
 
+    $opcionesNivel = [
+        0 => 'Básico',
+        1 => 'Superior',
+    ];
     // Apartado "Calendario": no se guarda en la tabla curso, solo sirve para crear los días del calendario
     $nombresDias  = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo'];
     $diasMarcados = array_map('intval', (array) old('dias_semana', [1, 2, 3, 4, 5]));
@@ -56,7 +60,6 @@
             <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Datos del curso</legend>
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                    {{-- codigo_curso ya no existe: el curso se identifica por acción + grupo --}}
                     <x-formulario.entrada
                         name="codigo_accion"
                         label="Código de acción *"
@@ -69,13 +72,13 @@
                         maxlength="45"
                         :value="$curso->codigo_grupo ?? ''" />
 
-                    <x-formulario.entrada
-                        name="nivel_formacion"
-                        label="Nivel de formación"
-                        type="number"
-                        min="0"
-                        max="3"
-                        :value="$curso->nivel_formacion ?? 0" />
+                    {{-- CENTRO arriba --}}
+                    <x-formulario.selector
+                        name="centro_id"
+                        label="Centro"
+                        placeholder="Busca un centro..."
+                        :options="$centros"
+                        :value="$curso->centro_id ?? ''" />
                     
                     <x-formulario.entrada
                         name="empresa_formadora"
@@ -90,19 +93,19 @@
                         :options="$formaciones"
                         :value="$curso->formacion_id ?? ''" />
 
-                    <x-formulario.selector
-                        name="centro_id"
-                        label="Centro"
-                        placeholder="Busca un centro..."
-                        :options="$centros"
-                        :value="$curso->centro_id ?? ''" />
+                    <x-formulario.seleccion
+                        name="aula"
+                        id="aula-select"
+                        label="Aula *"
+                        placeholder="-- Elige un aula --"
+                        :options="[]"
+                        :value="$curso->aula ?? ''" />
                 </div>
             </fieldset>
 
             <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Modalidad y horas</legend>
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                    {{-- Desplegable, igual que el turno --}}
                     <x-formulario.seleccion
                         name="modalidad"
                         label="Modalidad *"
@@ -143,7 +146,6 @@
                         type="date"
                         :value="$fecha($curso->fecha_fin ?? null)" />
 
-                    {{-- Turno: desplegable --}}
                     <x-formulario.seleccion
                         name="turno"
                         label="Turno *"
@@ -236,26 +238,29 @@
                 </div>
             </fieldset>
 
-            <fieldset class="mb-8">
-                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Aula y contacto</legend>
-                <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                    <x-formulario.entrada
-                        name="aula"
-                        label="Aula *"
-                        maxlength="45"
-                        placeholder="Ej.: Aula 3"
-                        :value="$curso->aula ?? ''" />
+             {{-- Bloque donde antes estaba Aula, ahora ponemos CONTACTO y NIVEL DE FORMACIÓN --}}
+            <div class="mb-8 grid grid-cols-1 gap-5 md:grid-cols-2">                
+                <fieldset>
+                    <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Nivel de formación</legend>
+                    <x-formulario.seleccion
+                        name="nivel_formacion"
+                        label="Nivel de formación *"
+                        placeholder="-- Elige un nivel --"
+                        :options="$opcionesNivel"
+                        :value="isset($curso) ? $curso->nivel_formacion : ''" />
+                </fieldset>
 
-                    {{-- El aula virtual va ahora en su propia tabla (curso_aula_virtual) --}}
-
+                <fieldset>
+                    <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Contacto</legend>
                     <x-formulario.entrada
                         name="tecnico_comunidad"
+                        id="tecnico_comunidad"
                         label="Técnico Comunidad *"
                         maxlength="45"
                         :value="$curso->tecnico_comunidad ?? ''" />
-                </div>
-            </fieldset>
-
+                </fieldset>
+            </div>
+            
             <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Contenidos y Objetivos</legend>
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-2 mb-5">
@@ -401,10 +406,100 @@
         modalidad.addEventListener('change', ajustarHoras);
         ajustarHoras();
 
-        // El mensaje de éxito desaparece al empezar a escribir otro curso
-        form.addEventListener('focusin', () => {
-            document.getElementById('success-alert')?.remove();
-        }, { once: true });
+
+
+    // -------------------------------------------------------------
+    // Lógica robusta para el Desplegable de Aula y Centro
+    // -------------------------------------------------------------
+    const todasLasAulas = @json($aulas ?? []);
+    const selectAula = document.getElementById('aula-select');
+    
+    // Valores actuales del curso en modo edición (desde PHP)
+    const aulaActual = @json($curso->aula ?? '');
+    const centroIdActual = @json($curso->centro_id ?? '');
+
+    const obtenerCentroId = () => {
+        // Buscamos cualquier input o select del centro en el DOM
+        const elCentro = document.querySelector('select[name="centro_id"], [name="centro_id"], select[id*="centro"], input[name="centro_id"]');
+        if (elCentro && elCentro.value) {
+            return elCentro.value;
+        }
+        return centroIdActual; // Respaldo con el ID de la base de datos
+    };
+
+    const actualizarAulasYModalidad = () => {
+        const m = modalidad ? modalidad.value : '';
+        const esTeleformacion = (m === 'TELEFORMACION');
+
+        if (!selectAula) return;
+
+        // Si es teleformación, bloqueamos el aula
+        if (esTeleformacion) {
+            selectAula.innerHTML = '<option value="">-- No aplica (Teleformación) --</option>';
+            selectAula.value = '';
+            selectAula.disabled = true;
+            return;
+        }
+
+        const centroId = obtenerCentroId();
+
+        selectAula.disabled = false;
+        selectAula.innerHTML = '<option value="">-- Elige un aula --</option>';
+
+        if (!centroId) {
+            selectAula.innerHTML = '<option value="">-- Primero selecciona un centro --</option>';
+            selectAula.disabled = true;
+            return;
+        }
+
+        // Filtramos las aulas que coinciden con el centro_id
+        const aulasFiltradas = todasLasAulas.filter(aula => String(aula.centro_id) === String(centroId));
+
+        if (aulasFiltradas.length === 0) {
+            selectAula.innerHTML = '<option value="">-- No hay aulas registradas en este centro --</option>';
+            selectAula.disabled = true;
+            return;
+        }
+
+        // Rellenamos el desplegable y seleccionamos la que tenía el curso
+        aulasFiltradas.forEach(aula => {
+            const option = document.createElement('option');
+            option.value = aula.nombre_aula; 
+            option.textContent = aula.nombre_aula;
+            
+            if (String(aula.nombre_aula).trim() === String(aulaActual).trim()) {
+                option.selected = true;
+            }
+            
+            selectAula.appendChild(option);
+        });
+    };
+
+    // Escuchamos cambios en el centro
+    const registrarEventosCentro = () => {
+        const elCentroInput = document.querySelector('select[name="centro_id"], [name="centro_id"], select[id*="centro"], input[name="centro_id"]');
+        if (elCentroInput) {
+            ['change', 'input', 'blur'].forEach(evento => {
+                elCentroInput.addEventListener(evento, actualizarAulasYModalidad);
+            });
+        }
+    };
+
+    if (modalidad) {
+        modalidad.addEventListener('change', actualizarAulasYModalidad);
+    }
+
+    // Ejecución inicial y reintentos para asegurar que el componente de Laravel termine de pintar el DOM en Edición
+    registrarEventosCentro();
+    actualizarAulasYModalidad();
+    setTimeout(actualizarAulasYModalidad, 200);
+    setTimeout(actualizarAulasYModalidad, 600);  // Pequeño retardo para asegurar que el DOM del componente esté listo   
+
+
+    // El mensaje de éxito desaparece al empezar a escribir
+    form?.addEventListener('focusin', () => {
+        document.getElementById('success-alert')?.remove();
+    }, { once: true }); 
     </script>
 
 </x-interfaz.layout.app>
