@@ -143,7 +143,9 @@
 
         {{-- Crédito formativo por año --}}
         <x-slot:creditos title="Créditos">
-            <x-interfaz.panel.tarjeta titulo="Crédito formativo por año">
+            <x-interfaz.panel.tarjeta titulo="Crédito formativo por año"
+                :enlace="in_array($rol, ['ADMINISTRADOR', 'COMERCIAL'], true) ? route('credito.create', ['empresa_id' => $empresa->id]) : null"
+                texto-enlace="Registrar crédito">
                 <x-tabla.tabla vacio="Esta empresa no tiene créditos formativos registrados."
                     :columnas="['Año', ['Importe total', 'right'], ['Consumido', 'right'], ['Disponible', 'right'], 'Uso']">
                     @foreach ($creditos as $cr)

@@ -403,6 +403,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/factura/{id}/rectificar', [FacturaController::class, 'rectificarFactura'])->whereNumber('id');
         Route::post('/factura/{id}/cobros', [FacturaController::class, 'registrarCobro'])->whereNumber('id');
         Route::delete('/factura/{id}/cobros/{cobroId}', [FacturaController::class, 'eliminarCobro'])->whereNumber(['id', 'cobroId']);
+
+        // Créditos formativos FUNDAE (pantalla web). Van en /view/creditos para no chocar con la API JSON /credito
+        Route::get('/view/creditos', [CreditoFormativoController::class, 'index'])->name('credito.index');
+        Route::get('/view/creditos/crear', [CreditoFormativoController::class, 'crearFormulario'])->name('credito.create');
+        Route::post('/view/creditos', [CreditoFormativoController::class, 'guardarCredito'])->name('credito.store');
+        Route::get('/view/creditos/{id}/editar', [CreditoFormativoController::class, 'editarFormulario'])->name('credito.edit')->whereNumber('id');
+        Route::put('/view/creditos/{id}', [CreditoFormativoController::class, 'actualizarCreditoWeb'])->name('credito.update')->whereNumber('id');
+        Route::delete('/view/creditos/{id}', [CreditoFormativoController::class, 'eliminarCreditoWeb'])->name('credito.destroy')->whereNumber('id');
     });
 
     // Compras (facturas de proveedores): solo LOGISTA (las suyas) y ADMINISTRADOR (todas)
