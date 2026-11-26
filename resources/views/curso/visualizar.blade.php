@@ -375,10 +375,10 @@
                     ],
                 ]" />
             </x-slot:calendario>
-            <x-slot:pedidos title="Pedidos">
+            <x-slot:carrito title="Carrito">
                 <x-interfaz.panel.tarjeta titulo="Peticiones de logística">
                     <div class="mb-4 flex items-center justify-between">
-                        <p class="text-sm text-slate-500">{{ $curso->peticionesLogistica->count() }} peticiones</p>
+                        <p class="text-sm text-slate-500">{{ $productos->count() }} productos</p>
                         <a href="{{ route('curso.logistica.store', $curso) }}"
                             class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
                             + Nueva petición
@@ -392,67 +392,52 @@
                         </div>
                     @endif
 
+                    <form method="POST" action="{{ route('curso.logistica.enviar', $curso) }}">
+                        @csrf
 
-                    <x-tabla.tabla vacio="Todavía no hay productos pendientes de petición en este curso."
-                        :columnas="[
-                            'Nombre',
-                            'Cantidad'
-                        ]">
-                        @foreach ($peticion?->peticionProductos ?? [] as $linea)
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->producto }}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->cantidad }}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">
-                                    {{ $peticion->fecha?->format('d/m/Y') ?? '—' }}
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">
-                                    {{ $peticion->fecha_necesaria?->format('d/m/Y') ?? '—' }}
-                                </td>
-                                <td class="px-4 py-3 font-medium text-slate-800">
-                                    {{ $peticion->solicitante ? $peticion->solicitante->nombre . ' ' . $peticion->solicitante->primer_apellido : '—' }}
-                                </td>
-                                <td class="px-4 py-3 text-slate-700">{{ $peticion->centro?->nombre ?? '—' }}</td>
-                                <td class="px-4 py-3 text-center">
-                                    <span
-                                        class="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
-                                        {{ $peticion->estado ? ucfirst(strtolower(str_replace('_', ' ', $peticion->estado->value))) : '—' }}
-                                    </span>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </x-tabla.tabla>
-                    @if ($curso->peticionesLogistica->isNotEmpty())
-                        <form method="POST" action="{{ route('curso.logistica.enviar', $curso) }}"
-                            class="mt-4 flex flex-wrap items-end gap-4">
-                            @csrf
-                            <input type="hidden" name="curso_id" value="{{ $curso->id }}">
-                            <input type="hidden" name="direccion_envio"
-                                value="{{ $curso->centro->direccion ?? '' }}">
+                        <x-tabla.tabla vacio="Todavía no hay productos pendientes de petición en este curso."
+                            :columnas="['Nombre', 'Cantidad']">
+                            @foreach ($productos as $linea)
+                                <tr class="hover:bg-slate-50">
+                                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->producto }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->cantidad }}</td>
+                                </tr>
+                            @endforeach
+                        </x-tabla.tabla>
 
-                            <div class="min-w-[220px] flex-1">
-                                <label class="mb-1 block text-sm font-medium text-slate-700">Curso</label>
-                                <input type="text"
-                                    value="{{ $curso->codigo_accion ?? '' }} / {{ $curso->codigo_grupo ?? '' }} - {{ $curso->formacion->nombre ?? '' }}"
-                                    disabled
-                                    class="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-sm text-slate-600">
-                            </div>
+                        @if ($productos->isNotEmpty())
+                            <div class="mt-4 flex flex-wrap items-end gap-4">
+                                <input type="hidden" name="direccion_envio"
+                                    value="{{ $curso->centro->direccion ?? '' }}">
 
-                            <div class="min-w-[220px] flex-1">
-                                <label class="mb-1 block text-sm font-medium text-slate-700">Dirección de envío</label>
-                                <input type="text" value="{{ $curso->centro->direccion ?? '' }}" disabled
-                                    class="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-sm text-slate-600">
+                                <div class="min-w-[220px] flex-1">
+                                    <label class="mb-1 block text-sm font-medium text-slate-700">Curso</label>
+                                    <input type="text"
+                                        value="{{ $curso->codigo_accion ?? '' }} / {{ $curso->codigo_grupo ?? '' }} - {{ $curso->formacion->nombre ?? '' }}"
+                                        disabled
+                                        class="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-sm text-slate-600">
+                                </div>
+
+                                <div class="min-w-[220px] flex-1">
+                                    <label class="mb-1 block text-sm font-medium text-slate-700">Dirección de
+                                        envío</label>
+                                    <input type="text" value="{{ $curso->centro->direccion ?? '' }}" disabled
+                                        class="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-sm text-slate-600">
+                                </div>
+
+                                <div class="min-w-[220px] flex-1">
+                                    <x-formulario.entrada name="fecha_necesaria" label="Fecha requerida"
+                                        type="date" :value="$fecha($peticion?->fecha_necesaria)" />
+                                </div>
+
+                                <button type="submit"
+                                    class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
+                                    Enviar productos
+                                </button>
                             </div>
-                            <div class="min-w-[220px] flex-1">
-                                <x-formulario.entrada name="fecha_necesaria" label="Fecha necesaria" type="date"
-                                    :value="$fecha($curso->peticionesLogistica->first()?->fecha_necesaria)" />
-                            </div>
-                            <button type="submit"
-                                class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
-                                Enviar productos
-                            </button>
-                        </form>
-                    @endif
+                        @endif
+                    </form>
                 </x-interfaz.panel.tarjeta>
-            </x-slot:pedidos>
+            </x-slot:carrito>
     </x-interfaz.layout.pestanas>
 </x-interfaz.layout.app>

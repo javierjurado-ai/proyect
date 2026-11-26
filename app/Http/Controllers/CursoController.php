@@ -84,14 +84,21 @@ class CursoController extends Controller
             'formacion',
             'presupuesto',
             'centro',
-            'peticionLogistica' => fn($q) => $q
-                ->where('estado', EstadoLogistica::Pendiente)
-                ->with(['peticionProductos', 'solicitante', 'centro']),
             'alumnos.persona',
             'alumnos.empresa',
             'docentes.persona',
         ]);
-        return view('curso.visualizar', compact('curso', 'rol', 'nombre', 'persona', 'nombre'));
+
+        $peticion = PeticionesLogistica::with(['solicitante', 'centro'])
+            ->where('curso_id', $curso->id)
+            ->where('estado', EstadoLogistica::Pendiente)
+            ->first();
+
+        $productos = $peticion
+            ? PeticionProducto::where('peticiones_logistica_id', $peticion->id)->get()
+            : collect();
+
+        return view('curso.visualizar', compact('curso', 'rol', 'nombre', 'persona', 'nombre','productos'));
     }
 
     public function crearTablaPorDocente($id)
