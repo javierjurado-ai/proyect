@@ -49,18 +49,7 @@
                         <x-formulario.selector name="curso_id" label="Curso *" placeholder="Busca un curso..."
                             :options="$cursos" :value="$peticion->curso_id ?? request('curso_id', '')" />
                     @endif
-                </div>
-            </fieldset>
-
-
-            <fieldset class="mb-8">
-                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Información del
-                    producto</legend>
-                <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                    <x-formulario.entrada name="producto" label="Producto *" maxlength="45" :value="$peticion?->peticionProductos->first()?->producto ?? ''" />
-                    <x-formulario.entrada name="cantidad" label="Cantidad *" type="number" min="0"
-                        max="99" :value="$peticion?->peticionProductos->first()?->cantidad ?? 0" />
-                    @if ($curso && $direccion)
+                    @if ($direccion)
                         <div>
                             <label class="mb-1 block text-sm font-medium text-slate-700">Dirección de envío *</label>
                             <input type="hidden" name="direccion_envio" value="{{ $direccion }}">
@@ -74,15 +63,23 @@
                 </div>
             </fieldset>
 
+
             <fieldset class="mb-8">
-                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Fechas</legend>
+                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Información del
+                    producto</legend>
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                    <x-formulario.entrada name="fecha_necesaria" label="Fecha necesaria" type="date"
-                        :value="$peticion?->fecha_necesaria?->format('Y-m-d') ?? ''" />
-                    <x-formulario.entrada name="fecha_devolucion_prevista" label="Devolución prevista" type="date"
-                        :value="$peticion?->fecha_devolucion_prevista?->format('Y-m-d') ?? ''" />
+                    <x-formulario.entrada name="producto" label="Producto *" maxlength="45" :value="$peticion?->peticionProductos->first()?->producto ?? ''" />
+                    <x-formulario.entrada name="cantidad" label="Cantidad *" type="number" min="0"
+                        max="99" :value="$peticion?->peticionProductos->first()?->cantidad ?? 0" />
+                    
+                </div>
+            </fieldset>
+
+            <fieldset class="mb-8">
+                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Observaciones</legend>
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
                     <x-formulario.area name="observaciones" label="Observaciones" maxlength="200" rows="3"
-                        :value="$peticion->observaciones ?? ''" />
+                        :value="$peticion?->peticionProductos->first()?->observaciones ?? ''" />
                 </div>
             </fieldset>
 

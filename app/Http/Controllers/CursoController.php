@@ -24,6 +24,7 @@ use App\Models\Enums\UsoAula;
 use App\Models\Formacion;
 use App\Models\Persona;
 use App\Models\PeticionesLogistica;
+use App\Models\PeticionProducto;
 use App\Models\Rol;
 use App\Services\CalendarioCursoService;
 use Illuminate\Database\QueryException;
@@ -82,10 +83,13 @@ class CursoController extends Controller
         $curso->load([
             'formacion',
             'presupuesto',
-            'peticionLogistica',
+            'centro',
+            'peticionLogistica' => fn($q) => $q
+                ->where('estado', EstadoLogistica::Pendiente)
+                ->with(['peticionProductos', 'solicitante', 'centro']),
             'alumnos.persona',
             'alumnos.empresa',
-            'docentes.persona'
+            'docentes.persona',
         ]);
         return view('curso.visualizar', compact('curso', 'rol', 'nombre', 'persona', 'nombre'));
     }
@@ -265,7 +269,7 @@ class CursoController extends Controller
             'docentes.*.persona_id'         => ['required', 'integer', 'distinct', Rule::exists((new Persona)->getTable(), (new Persona)->getKeyName())],
             'docentes.*.empresa_id'         => ['required', Rule::exists((new Empresa)->getTable(), (new Empresa)->getKeyName())],
             'docentes.*.categoria'          => ['required', 'string', 'max:45'],
-            'docentes.*.tipo_contrato'      => ['required', Rule::enum(TipoContrato::class)],
+            'docentes.*.tipo_contrato'      => ['required', 'string'],
             'docentes.*.convenio'           => ['required', 'string', 'max:45'],
             'docentes.*.IBAN'               => ['required', 'string', 'max:45'],
             'docentes.*.numero_horas'       => ['required', 'numeric', 'min:0'],
@@ -276,7 +280,6 @@ class CursoController extends Controller
         ], [
             'docentes.required'   => 'Añade al menos un docente.',
             'docentes.*.required' => 'Faltan datos de algún docente.',
-            'docentes.*.tipo_contrato.enum' => 'El tipo de contrato elegido no es válido.',
         ]);
 
         // Personas que ya son docentes de este curso (evita duplicados).
@@ -507,7 +510,9 @@ class CursoController extends Controller
     // Reglas de un día del calendario. Vale cualquier día de la semana (también fines de semana).
     private function reglasDia(Curso $curso, ?int $ignorarId = null): array
     {
-        $fecha = ['required', 'date',
+        $fecha = [
+            'required',
+            'date',
             Rule::unique('curso_calendario', 'fecha')
                 ->where('curso_id', $curso->id)
                 ->ignore($ignorarId),
@@ -556,33 +561,34 @@ class CursoController extends Controller
     public function crearPeticionLogistica(Request $request, Curso $curso)
     {
         $datos = $request->validate([
-            'producto'                  => 'required|string|max:45',
-            'cantidad'                  => 'required|integer|min:1|max:99',
-            'direccion_envio'           => 'required|string|max:255',
-            'fecha_necesaria'           => 'nullable|date',
-            'fecha_devolucion_prevista' => 'nullable|date|after_or_equal:fecha_necesaria',
-            'observaciones'             => 'nullable|string|max:200',
+            'producto'        => 'required|string|max:45',
+            'cantidad'        => 'required|integer|min:1|max:99',
+            'direccion_envio' => 'nullable|string|max:255',
+            'observaciones'   => 'nullable|string|max:200',
         ]);
 
-        $peticion = $curso->peticionesLogistica()->create([
-            'fecha'                     => now(),
-            'estado'                    => EstadoLogistica::cases()[0], // pon tu estado inicial
-            'centro_id'                 => $curso->centro_id,
-            'solicitante_id'            => Auth::user()->persona_id ?? null, // ajusta a tu modelo de usuario
-            'direccion_envio'           => $datos['direccion_envio'],
-            'fecha_necesaria'           => $datos['fecha_necesaria'] ?? null,
-            'fecha_devolucion_prevista' => $datos['fecha_devolucion_prevista'] ?? null,
-            'observaciones'             => $datos['observaciones'] ?? null,
-        ]);
+        $peticion = PeticionesLogistica::firstOrCreate(
+            [
+                'curso_id' => $curso->id,
+                'estado'   => EstadoLogistica::Pendiente,
+            ],
+            [
+                'fecha'           => now(),
+                'centro_id'       => $curso->centro_id,
+                'solicitante_id'  => Auth::user()->persona_id ?? null,
+                'direccion_envio' => $datos['direccion_envio'] ?? $curso->centro?->direccion,
+            ]
+        );
 
-        $peticion->peticionProductos()->create([
+        PeticionProducto::create([
             'peticiones_logistica_id' => $peticion->id,
-            'producto' => $datos['producto'],
-            'cantidad' => $datos['cantidad'],
+            'producto'                => $datos['producto'],
+            'cantidad'                => $datos['cantidad'],
+            'observaciones'           => $datos['observaciones'] ?? null,
         ]);
 
         return redirect()
-            ->route('curso.mostrar', $curso) // tu ruta de detalle del curso
+            ->route('curso.visualizar', $curso)
             ->with('ok', 'Petición creada correctamente.');
     }
     // Actualiza el aula en la base de datos
@@ -940,7 +946,7 @@ class CursoController extends Controller
         $cursoAlumno->delete();
 
         return redirect()
-            ->route('curso.visualizar', $cursoId)
+            ->route('curso.visualizar', $curso)
             ->with('ok', 'Alumno desmatriculado del curso correctamente.');
     }
 }

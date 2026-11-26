@@ -14,8 +14,6 @@ class PeticionProducto extends Model
     protected $fillable = [
         'peticiones_logistica_id',
         'articulo_id',
-        // OBSOLETO: texto libre antiguo. Se rellena solo con el nombre del artículo
-        // (ver booted). Quitar cuando se elimine la columna de la BD.
         'producto',
         'cantidad',
         'cantidad_servida',

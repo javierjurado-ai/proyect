@@ -5,6 +5,8 @@
     $peticionLogistica = $curso->peticionLogistica;
     $modalidad = $curso->modalidad->value ?? $curso->modalidad;
 
+    $peticion = $curso->peticionLogistica;
+    $fecha = fn($f) => $f ? \Illuminate\Support\Carbon::parse($f)->format('Y-m-d') : '';
     $horaInicio = $curso->hora_inicio ? substr($curso->hora_inicio, 0, 5) : null;
     $horaFinal = $curso->hora_final ? substr($curso->hora_final, 0, 5) : null;
     $horario = $horaInicio ? $horaInicio . ($horaFinal ? ' – ' . $horaFinal : '') : 'Sin horario';
@@ -390,26 +392,16 @@
                         </div>
                     @endif
 
-                    <x-tabla.tabla vacio="Todavía no hay peticiones de logística en este curso." :columnas="[
-                        'nombre',
-                        'cantidad',
-                        'Fecha',
-                        'Fecha necesaria',
-                        'Solicitante',
-                        'Centro',
-                        ['Estado', 'center'],
-                        ['Acciones', 'center'],
-                    ]">
 
-                        @foreach ($curso->peticionesLogistica as $peticion)
-                            @php $linea = $peticion->peticionProductos->first(); @endphp
+                    <x-tabla.tabla vacio="Todavía no hay productos pendientes de petición en este curso."
+                        :columnas="[
+                            'Nombre',
+                            'Cantidad'
+                        ]">
+                        @foreach ($peticion?->peticionProductos ?? [] as $linea)
                             <tr class="hover:bg-slate-50">
-                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">
-                                    {{ $linea?->producto ?? '—' }}
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">
-                                    {{ $linea?->cantidad ?? '—' }}
-                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->producto }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->cantidad }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-slate-700">
                                     {{ $peticion->fecha?->format('d/m/Y') ?? '—' }}
                                 </td>
@@ -439,7 +431,9 @@
 
                             <div class="min-w-[220px] flex-1">
                                 <label class="mb-1 block text-sm font-medium text-slate-700">Curso</label>
-                                <input type="text" value="{{ $curso->codigo_accion ?? '' }} / {{$curso->codigo_grupo ?? ''}} - {{$curso->formacion->nombre ?? ''}}" disabled
+                                <input type="text"
+                                    value="{{ $curso->codigo_accion ?? '' }} / {{ $curso->codigo_grupo ?? '' }} - {{ $curso->formacion->nombre ?? '' }}"
+                                    disabled
                                     class="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-sm text-slate-600">
                             </div>
 
@@ -448,7 +442,10 @@
                                 <input type="text" value="{{ $curso->centro->direccion ?? '' }}" disabled
                                     class="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-sm text-slate-600">
                             </div>
-
+                            <div class="min-w-[220px] flex-1">
+                                <x-formulario.entrada name="fecha_necesaria" label="Fecha necesaria" type="date"
+                                    :value="$fecha($curso->peticionesLogistica->first()?->fecha_necesaria)" />
+                            </div>
                             <button type="submit"
                                 class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
                                 Enviar productos
