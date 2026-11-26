@@ -38,56 +38,54 @@ class CursoController extends Controller
     public function crearTabla(Request $request)
     {
         $personaId = Auth::user()->persona_id;
-
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
-        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
+        $rol       = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $persona   = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
 
         if (! $rol || ! $persona) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()
-                ->route('login')
-                ->withErrors(['usuario' => 'No tienes acceso a la página.']);
+            return redirect()->route('login')->withErrors(['usuario' => 'No tienes acceso a la página.']);
         }
 
-        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
-            ->filter()
-            ->implode(' ');
+        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])->filter()->implode(' ');
 
-        // Capturamos los filtros de la petición GET
-        $buscar  = trim((string) $request->query('buscar', ''));
-        $filtroId = $request->query('filtro', '');
+        // Capturamos cada filtro individualmente
+        $fInicio       = trim((string) $request->query('fecha_inicio', ''));
+        $fFin          = trim((string) $request->query('fecha_fin', ''));
+        $formacionId   = $request->query('formacion', '');
+        $empresaId     = $request->query('empresa', '');
+        $modalidad     = $request->query('modalidad', '');
+        $codigoAccion  = trim((string) $request->query('codigo_accion', ''));
+        $codigoGrupo   = trim((string) $request->query('codigo_grupo', ''));
 
-       // Consulta principal de cursos con los filtros aplicados
+        // Consulta principal de cursos con filtros independientes
         $cursos = Curso::query()
             ->with(['formacion', 'centro.empresa'])
-            ->when($buscar !== '', function ($q) use ($buscar) {
-                // Buscador por texto: Fecha Inicio o Fecha Fin
-                $q->where(fn($w) => $w
-                    ->where('fecha_inicio', 'like', "%{$buscar}%")
-                    ->orWhere('fecha_fin', 'like', "%{$buscar}%")
-                );
-            })
-            ->when($filtroId !== '', function ($q) use ($filtroId) {
-                // Desplegable: Formación, Modalidad, Empresa Cliente (a través de centro), Código Acción o Código Grupo
-                $q->where(fn($w) => $w
-                    ->where('codigo_accion', $filtroId)
-                    ->orWhere('codigo_grupo', $filtroId)
-                    ->orWhere('modalidad', $filtroId)
-                    ->orWhereHas('centro.empresa', fn($sub) => $sub->where('nombre', $filtroId))
-                    ->orWhereHas('formacion', fn($sub) => $sub->where('nombre', $filtroId))
-                );
-            })
+            ->when($fInicio !== '', fn($q) => $q->where('fecha_inicio', 'like', "%{$fInicio}%"))
+            ->when($fFin !== '', fn($q) => $q->where('fecha_fin', 'like', "%{$fFin}%"))
+            ->when($formacionId !== '', fn($q) => $q->where('formacion_id', $formacionId))
+            ->when($empresaId !== '', fn($q) => $q->whereHas('centro', fn($sub) => $sub->where('empresa_id', $empresaId)))
+            ->when($modalidad !== '', fn($q) => $q->where('modalidad', $modalidad))
+            ->when($codigoAccion !== '', fn($q) => $q->where('codigo_accion', 'like', "%{$codigoAccion}%"))
+            ->when($codigoGrupo !== '', fn($q) => $q->where('codigo_grupo', 'like', "%{$codigoGrupo}%"))
             ->orderByDesc('fecha_inicio')
             ->paginate(15)
             ->withQueryString();
 
-        // Poblamos el array para el desplegable combinado con los valores únicos disponibles
-        $opcionesFiltro = $this->obtenerOpcionesFiltroCursos();
+        // Opciones independientes para los desplegables
+        $formacionesFiltro = Formacion::whereHas('cursos')->orderBy('nombre')->pluck('nombre', 'id');
+        $empresasFiltro    = Empresa::whereHas('centros.cursos')->orderBy('nombre')->pluck('nombre', 'id');
+        $modalidadesFiltro = collect(Modalidad::cases())->mapWithKeys(fn($m) => [$m->value => ucfirst(strtolower($m->value))]);
+        $accionesFiltro    = Curso::whereNotNull('codigo_accion')->distinct()->pluck('codigo_accion', 'codigo_accion');
+        $gruposFiltro      = Curso::whereNotNull('codigo_grupo')->distinct()->pluck('codigo_grupo', 'codigo_grupo');
 
-        return view('curso.index', compact('cursos', 'rol', 'nombre', 'buscar', 'filtroId', 'opcionesFiltro'));
+        return view('curso.index', compact(
+            'cursos', 'rol', 'nombre',
+            'fInicio', 'fFin', 'formacionId', 'empresaId', 'modalidad', 'codigoAccion', 'codigoGrupo',
+            'formacionesFiltro', 'empresasFiltro', 'modalidadesFiltro', 'accionesFiltro', 'gruposFiltro'
+        ));
     }
 
     public function visualizarCurso(Request $request, Curso $curso)
