@@ -2,9 +2,10 @@
 
     <x-interfaz.panel.cabecera :titulo="'Aulas'" subtitulo="Gestión y control de aulas disponibles">
         <x-slot:acciones>
-            <a href="{{ route('aula.create') }}"
+            {{-- Las aulas se crean desde un centro: primero se elige el centro --}}
+            <a href="{{ route('centro.index') }}"
                class="inline-flex items-center gap-1 rounded-lg bg-marca-800 px-4 py-2 text-sm font-semibold text-white hover:bg-marca-900">
-                + Nueva aula
+                + Nueva aula (elige centro)
             </a>
         </x-slot:acciones>
     </x-interfaz.panel.cabecera>
@@ -26,7 +27,6 @@
                 <table class="w-full text-left text-sm text-stone-700">
                     <thead class="border-b border-stone-200 bg-stone-50 text-xs uppercase text-stone-600">
                         <tr>
-                            
                             <th class="px-4 py-3">Nombre</th>
                             <th class="px-4 py-3">Curso asignado</th>
                             <th class="px-4 py-3 text-center">Capacidad</th>
@@ -62,7 +62,6 @@
                                         <x-tabla.boton-eliminar :action="route('aula.destroy', $aula->id)" />
                                     </div>
                                 </td>
-                                                                
                             </tr>
                         @endforeach
                     </tbody>

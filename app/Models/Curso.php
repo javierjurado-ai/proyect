@@ -140,4 +140,8 @@ class Curso extends Model
     {
         return $this->belongsToMany(Empresa::class, 'grupo_empresa', 'curso_id', 'empresa_id');
     }
+    public function calendario(): HasMany
+{
+    return $this->hasMany(CursoCalendario::class, 'curso_id', 'id');
+}
 }

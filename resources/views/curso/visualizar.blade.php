@@ -8,6 +8,48 @@
     $horaInicio = $curso->hora_inicio ? substr($curso->hora_inicio, 0, 5) : null;
     $horaFinal = $curso->hora_final ? substr($curso->hora_final, 0, 5) : null;
     $horario = $horaInicio ? $horaInicio . ($horaFinal ? ' – ' . $horaFinal : '') : 'Sin horario';
+
+    // Eventos del calendario: un evento por tramo horario de cada día guardado
+    // (cualquier día de la semana, también sábados y domingos)
+    $eventosCalendario = $curso->calendario
+        ->sortBy('fecha')
+        ->flatMap(function ($dia) use ($curso) {
+            $fecha = $dia->fecha->toDateString();
+            $tramos = collect([[$dia->hora_inicio1, $dia->hora_fin1], [$dia->hora_inicio2, $dia->hora_fin2]])->filter(
+                fn($t) => $t[0] && $t[1],
+            );
+
+            // Datos que usa la barra de acciones al seleccionar el día
+            $datosDia = [
+                'dia' => $dia->id,
+                'horario' => $tramos->map(fn($t) => substr($t[0], 0, 5) . ' – ' . substr($t[1], 0, 5))->implode(' y '),
+                'editar' => route('curso.calendario.edit', [$curso, $dia]),
+                'cancelar' => route('curso.calendario.destroy', [$curso, $dia]),
+            ];
+
+            return $tramos->map(
+                fn($t) => [
+                    'title' => substr($t[0], 0, 5) . ' – ' . substr($t[1], 0, 5),
+                    'start' => $fecha . 'T' . substr($t[0], 0, 5),
+                    'end' => $fecha . 'T' . substr($t[1], 0, 5),
+                    'extendedProps' => $datosDia,
+                ],
+            );
+        })
+        ->values();
+
+    // Periodo del curso como fondo, para ver de un vistazo qué días entran
+    if ($curso->fecha_inicio && $curso->fecha_fin) {
+        $eventosCalendario->push([
+            'start' => \Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString(),
+            'end' => \Illuminate\Support\Carbon::parse($curso->fecha_fin)->addDay()->toDateString(),
+            'display' => 'background',
+            'classNames' => ['periodo-curso'],
+        ]);
+    }
+
+    $eventosCalendario = $eventosCalendario->all();
+    $diasConSesion = $curso->calendario->count();
 @endphp
 <x-interfaz.layout.app titulo="Curso {{ $curso->codigo_accion }}/{{ $curso->codigo_grupo }}" :rol="$rol"
     :usuario="$nombre" :contadores="$contadores ?? []">
@@ -22,14 +64,7 @@
         </x-slot:acciones>
     </x-interfaz.panel.cabecera>
 
-    @php
-        $formacion = $curso->formacion;
-        $presupuesto = $curso->presupuesto;
-        $peticionLogistica = $curso->peticionLogistica;
-        $modalidad = $curso->modalidad->value ?? $curso->modalidad;
-    @endphp
-
-    <x-interfaz.layout.pestanas>
+    <x-interfaz.layout.pestanas :inicial="request('pestana') === 'calendario' ? 'calendario' : null">
 
         {{-- Curso --}}
         <x-slot:informacion title="Información">
@@ -69,13 +104,7 @@
                     </div>
                     <div>
                         <dt class="text-slate-500">Horario</dt>
-                        <dd>
-                            @if ($curso->hora_inicio)
-                                {{ substr($curso->hora_inicio, 0, 5) }}{{ $curso->hora_final ? ' – ' . substr($curso->hora_final, 0, 5) : '' }}
-                            @else
-                                —
-                            @endif
-                        </dd>
+                        <dd>{{ $horaInicio ? $horario : '—' }}</dd>
                     </div>
                     <div>
                         <dt class="text-slate-500">Inicio</dt>
@@ -278,7 +307,7 @@
                     </div>
                 @endif
 
-                <x-tabla.tabla vacio="Todavía no hay alumnos matriculados en este curso." :columnas="[
+                <x-tabla.tabla vacio="Todavía no hay docentes en este curso." :columnas="[
                     'Nombre',
                     'DNI / NIE',
                     'Email',
@@ -291,8 +320,8 @@
 
                     @foreach ($curso->docentes as $cursoDocente)
                         @php
-                            $docente = $cursoAlumno->persona;
-                            $lopd = $alumno?->LOPD?->value ?? ($alumno?->LOPD ?? 'NO');
+                            $docente = $cursoDocente->persona;
+                            $lopd = $docente?->LOPD?->value ?? ($docente?->LOPD ?? 'NO');
                         @endphp
 
                         <tr class="hover:bg-slate-50">
@@ -306,7 +335,7 @@
                             <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $docente?->telefono ?? '—' }}
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-slate-700">
-                                {{ $alumno?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
+                                {{ $docente?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
                             </td>
                             <td class="px-4 py-3 text-slate-700">{{ $docente?->nacionalidad ?? '—' }}</td>
 
@@ -324,7 +353,6 @@
                                 <div class="inline-flex items-center gap-2">
 
 
-                                    <x-tabla.boton-eliminar :action="route('curso.alumno.destroy', [$curso->id, $cursoAlumno->id])" />
                                 </div>
                             </td>
                         </tr>
@@ -332,76 +360,6 @@
                 </x-tabla.tabla>
             </x-interfaz.panel.tarjeta>
         </x-slot:docentes>
-        <x-slot:productos title="Productos">
-            <x-interfaz.panel.tarjeta titulo="Docentes trabajando">
-                <div class="mb-4 flex items-center justify-between">
-                    <p class="text-sm text-slate-500">{{ $curso->docentes->count() }} registrados</p>
-                    <a href="{{ route('curso.docente.store', $curso) }}"
-                        class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
-                        + Nuevo docente
-                    </a>
-                </div>
-
-                @if (session('ok'))
-                    <div class="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
-                        {{ session('ok') }}
-                    </div>
-                @endif
-
-                <x-tabla.tabla vacio="Todavía no hay alumnos matriculados en este curso." :columnas="[
-                    'Nombre',
-                    'DNI / NIE',
-                    'Email',
-                    'Teléfono',
-                    'Nacimiento',
-                    'Nacionalidad',
-                    ['LOPD', 'center'],
-                    ['Acciones', 'center'],
-                ]">
-
-                    @foreach ($curso->docentes as $cursoDocente)
-                        @php
-                            $docente = $cursoAlumno->persona;
-                            $lopd = $alumno?->LOPD?->value ?? ($alumno?->LOPD ?? 'NO');
-                        @endphp
-
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-4 py-3 font-medium text-slate-800">
-                                {{ $docente ? $docente->nombre . ' ' . $docente->primer_apellido . ' ' . $docente->segundo_apellido : '—' }}
-                            </td>
-                            <td class="px-4 py-3 font-mono text-slate-700">
-                                {{ $docente?->DNI ?? ($docente?->NIE ?? '—') }}
-                            </td>
-                            <td class="px-4 py-3 text-slate-700">{{ $docente?->email ?? '—' }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $docente?->telefono ?? '—' }}
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-slate-700">
-                                {{ $alumno?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
-                            </td>
-                            <td class="px-4 py-3 text-slate-700">{{ $docente?->nacionalidad ?? '—' }}</td>
-
-                            <td class="px-4 py-3 text-center">
-                                @if (strtoupper((string) $lopd) === 'SI')
-                                    <span
-                                        class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">Sí</span>
-                                @else
-                                    <span
-                                        class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">No</span>
-                                @endif
-                            </td>
-
-                            <td class="px-4 py-3 text-center whitespace-nowrap">
-                                <div class="inline-flex items-center gap-2">
-
-
-                                    <x-tabla.boton-eliminar :action="route('curso.alumno.destroy', [$curso->id, $cursoAlumno->id])" />
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </x-tabla.tabla>
-            </x-interfaz.panel.tarjeta>
-        </x-slot:productos>
         <x-slot:calendario title="Calendario">
             <x-slot:calendario title="Calendario">
                 <x-calendario.calendario :url="route('curso.dia.create', $curso)" :inicial="\Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString()" :eventos="[
@@ -415,6 +373,89 @@
                     ],
                 ]" />
             </x-slot:calendario>
-    </x-interfaz.layout.pestanas>
+            <x-slot:pedidos title="Pedidos">
+                <x-interfaz.panel.tarjeta titulo="Peticiones de logística">
+                    <div class="mb-4 flex items-center justify-between">
+                        <p class="text-sm text-slate-500">{{ $curso->peticionesLogistica->count() }} peticiones</p>
+                        <a href="{{ route('curso.logistica.store', $curso) }}"
+                            class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
+                            + Nueva petición
+                        </a>
+                    </div>
 
+                    @if (session('ok'))
+                        <div
+                            class="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
+                            {{ session('ok') }}
+                        </div>
+                    @endif
+
+                    <x-tabla.tabla vacio="Todavía no hay peticiones de logística en este curso." :columnas="[
+                        'nombre',
+                        'cantidad',
+                        'Fecha',
+                        'Fecha necesaria',
+                        'Solicitante',
+                        'Centro',
+                        ['Estado', 'center'],
+                        ['Acciones', 'center'],
+                    ]">
+
+                        @foreach ($curso->peticionesLogistica as $peticion)
+                            @php $linea = $peticion->peticionProductos->first(); @endphp
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">
+                                    {{ $linea?->producto ?? '—' }}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">
+                                    {{ $linea?->cantidad ?? '—' }}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">
+                                    {{ $peticion->fecha?->format('d/m/Y') ?? '—' }}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">
+                                    {{ $peticion->fecha_necesaria?->format('d/m/Y') ?? '—' }}
+                                </td>
+                                <td class="px-4 py-3 font-medium text-slate-800">
+                                    {{ $peticion->solicitante ? $peticion->solicitante->nombre . ' ' . $peticion->solicitante->primer_apellido : '—' }}
+                                </td>
+                                <td class="px-4 py-3 text-slate-700">{{ $peticion->centro?->nombre ?? '—' }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    <span
+                                        class="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                                        {{ $peticion->estado ? ucfirst(strtolower(str_replace('_', ' ', $peticion->estado->value))) : '—' }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </x-tabla.tabla>
+                    @if ($curso->peticionesLogistica->isNotEmpty())
+                        <form method="POST" action="{{ route('curso.logistica.enviar', $curso) }}"
+                            class="mt-4 flex flex-wrap items-end gap-4">
+                            @csrf
+                            <input type="hidden" name="curso_id" value="{{ $curso->id }}">
+                            <input type="hidden" name="direccion_envio"
+                                value="{{ $curso->centro->direccion ?? '' }}">
+
+                            <div class="min-w-[220px] flex-1">
+                                <label class="mb-1 block text-sm font-medium text-slate-700">Curso</label>
+                                <input type="text" value="{{ $curso->codigo_accion ?? '' }} / {{$curso->codigo_grupo ?? ''}} - {{$curso->formacion->nombre ?? ''}}" disabled
+                                    class="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-sm text-slate-600">
+                            </div>
+
+                            <div class="min-w-[220px] flex-1">
+                                <label class="mb-1 block text-sm font-medium text-slate-700">Dirección de envío</label>
+                                <input type="text" value="{{ $curso->centro->direccion ?? '' }}" disabled
+                                    class="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-sm text-slate-600">
+                            </div>
+
+                            <button type="submit"
+                                class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
+                                Enviar productos
+                            </button>
+                        </form>
+                    @endif
+                </x-interfaz.panel.tarjeta>
+            </x-slot:pedidos>
+    </x-interfaz.layout.pestanas>
 </x-interfaz.layout.app>

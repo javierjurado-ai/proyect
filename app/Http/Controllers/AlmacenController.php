@@ -3,12 +3,61 @@
 namespace App\Http\Controllers;
 
 use App\Models\Almacen;
+use App\Models\Articulo;
+use App\Models\ArticuloSerie;
+use App\Models\MovimientoAlmacen;
 use App\Models\Stock;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
 class AlmacenController extends Controller
 {
+    use Concerns\DatosUsuario;
+
+    // Vista web: stock del almacén elegido (?almacen_id=), material prestado y últimos movimientos
+    public function index(Request $request)
+    {
+        [$rol, $nombre] = $this->rolYNombre();
+
+        $almacenes = Almacen::where('activo', true)->orderBy('nombre')->get();
+        $almacen = $almacenes->firstWhere('id', (int) $request->query('almacen_id'))
+            ?? $this->misAlmacenes()->first();
+
+        $stockAqui = $almacen ? Stock::where('almacen_id', $almacen->id)->pluck('cantidad', 'articulo_id') : collect();
+
+        // Unidades prestadas a cursos por artículo (las que tienen nº de serie)
+        $prestadas = ArticuloSerie::where('estado', 'PRESTADO')->selectRaw('articulo_id, COUNT(*) as n')
+            ->groupBy('articulo_id')->pluck('n', 'articulo_id');
+
+        $articulos = Articulo::where('activo', true)->withSum('stock as stock_total', 'cantidad')->orderBy('nombre')->get()
+            ->map(fn ($a) => [
+                'articulo'   => $a,
+                'aqui'       => (int) ($stockAqui[$a->id] ?? 0),
+                'total'      => (int) $a->stock_total,
+                'prestados'  => (int) ($prestadas[$a->id] ?? 0),
+                'bajoMinimo' => $a->stock_minimo > 0 && (int) $a->stock_total < $a->stock_minimo,
+            ]);
+
+        // Equipos prestados agrupados por curso
+        $prestadosPorCurso = ArticuloSerie::with(['articulo', 'curso.formacion'])
+            ->where('estado', 'PRESTADO')->orderBy('numero_serie')->get()->groupBy('curso_id');
+
+        $movimientos = $almacen
+            ? MovimientoAlmacen::with(['lineas.articulo', 'curso.formacion', 'almacenOrigen', 'almacenDestino', 'persona'])
+                ->where(fn ($q) => $q->where('almacen_origen_id', $almacen->id)->orWhere('almacen_destino_id', $almacen->id))
+                ->orderByDesc('fecha')->orderByDesc('id')->limit(10)->get()
+            : collect();
+
+        $resumen = [
+            'articulos'   => $articulos->count(),
+            'disponibles' => $almacen ? ArticuloSerie::where('almacen_id', $almacen->id)->where('estado', 'DISPONIBLE')->count() : 0,
+            'prestados'   => $prestadas->sum(),
+            'bajoMinimo'  => $articulos->where('bajoMinimo', true)->count(),
+        ];
+
+        return view('almacen.index', compact('rol', 'nombre', 'almacenes', 'almacen', 'articulos', 'prestadosPorCurso', 'movimientos', 'resumen'));
+    }
+
     // Listar todos los almacenes (?activo=1 para solo los activos)
     public function listarAlmacenes(Request $request)
     {

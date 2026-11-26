@@ -18,6 +18,12 @@
         0 => 'Básico',
         1 => 'Superior',
     ];
+    // Apartado "Calendario": no se guarda en la tabla curso, solo sirve para crear los días del calendario
+    $nombresDias  = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo'];
+    $diasMarcados = array_map('intval', (array) old('dias_semana', [1, 2, 3, 4, 5]));
+    $diasCalendario = $diasCalendario ?? 0;
+    // Al editar, se ofrece desplegado si el curso aún no tiene días o si se envió marcado
+    $generar = ! $editando || old('generar_calendario', $diasCalendario === 0 ? '1' : null);
 @endphp
 
 <x-interfaz.layout.app :titulo="$editando ? 'Editar curso' : 'Nuevo curso'" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
@@ -147,6 +153,9 @@
                         :options="$opcionesTurno"
                         :value="$curso->turno->value ?? $curso->turno ?? ''" />
 
+                </div>
+
+                <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
                     <x-formulario.entrada
                         name="hora_inicio"
                         label="Hora inicio *"
@@ -158,6 +167,74 @@
                         label="Hora fin *"
                         type="time"
                         :value="$hora($curso->hora_final ?? null)" />
+                </div>
+
+                {{-- Solo para turno partido (se muestra u oculta según el turno elegido) --}}
+                    <div id="segundo-tramo" @class(['hidden' => old('turno', $curso->turno->value ?? $curso->turno ?? '') !== 'PARTIDO'])>
+                        <span class="mb-1 block text-sm font-medium text-slate-700">Segundo tramo (turno partido) *</span>
+                        <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+                            <x-formulario.entrada name="hora_inicio2" label="Hora inicio *" type="time" />
+                            <x-formulario.entrada name="hora_final2" label="Hora fin *" type="time" />
+                        </div>
+            </fieldset>
+
+            {{-- Calendario: genera los días en curso_calendario (no se guarda en la tabla curso) --}}
+            <fieldset class="mb-8" id="apartado-calendario">
+                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Calendario del curso</legend>
+
+                @if ($editando)
+                    <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-sm">
+                        <span class="text-slate-600">
+                            @if ($diasCalendario)
+                                Este curso tiene <strong class="text-marca-950">{{ $diasCalendario }} {{ $diasCalendario === 1 ? 'día' : 'días' }}</strong> en su calendario.
+                                Si cambias las fechas o el horario, esos días se ajustan solos.
+                            @else
+                                Este curso todavía no tiene días en su calendario.
+                            @endif
+                        </span>
+                        <label class="inline-flex items-center gap-2 font-semibold text-marca-950">
+                            <input type="hidden" name="generar_calendario" value="0">
+                            <input type="checkbox" name="generar_calendario" value="1" id="generar_calendario"
+                                class="h-4 w-4 rounded border-stone-300 accent-marca-800" @checked($generar)>
+                            Añadir días al calendario
+                        </label>
+                    </div>
+                @endif
+
+                <div id="opciones-calendario" class="space-y-5">
+                    <div>
+                        <span class="mb-2 block text-sm font-medium text-slate-700">Días de clase *</span>
+
+                        <input type="hidden" name="calendario_modo" value="semana">
+                        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Días de clase" id="dias-semana">
+                            @foreach ($nombresDias as $numero => $nombreDia)
+                                <label class="cursor-pointer">
+                                    <input type="checkbox" name="dias_semana[]" value="{{ $numero }}" class="peer sr-only"
+                                        @checked(in_array($numero, $diasMarcados, true))>
+                                    <span title="{{ $nombreDia }}"
+                                        class="inline-flex h-10 min-w-12 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:border-marca-700 peer-checked:border-marca-800 peer-checked:bg-marca-800 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-marca-700 peer-focus-visible:ring-offset-1">
+                                        {{ \Illuminate\Support\Str::substr($nombreDia, 0, 3) }}
+                                    </span>
+                                </label>
+                            @endforeach
+                            <button type="button" data-dias="1,2,3,4,5"
+                                class="ml-1 px-2 text-xs font-semibold text-marca-800 underline underline-offset-2 hover:text-marca-950">L–V</button>
+                            <button type="button" data-dias="1,2,3,4,5,6,7"
+                                class="px-2 text-xs font-semibold text-marca-800 underline underline-offset-2 hover:text-marca-950">Todos</button>
+                        </div>
+                        @error('dias_semana')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- Solo para turno partido (se muestra u oculta según el turno elegido) --}}
+                    <div id="segundo-tramo" @class(['hidden' => old('turno', $curso->turno->value ?? $curso->turno ?? '') !== 'PARTIDO'])>
+                        <span class="mb-1 block text-sm font-medium text-slate-700">Segundo tramo (turno partido) *</span>
+                        <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+                            <x-formulario.entrada name="hora_inicio2" label="Hora inicio *" type="time" />
+                            <x-formulario.entrada name="hora_final2" label="Hora fin *" type="time" />
+                        </div>
+                    </div>
                 </div>
             </fieldset>
 
@@ -241,12 +318,17 @@
         const fechaFin   = document.getElementById('fecha_fin');
 
         // Al elegir turno, propone un horario si las horas están vacías
-        const horarios = { 'MAÑANA': ['09:00', '14:00'], 'TARDE': ['16:00', '20:00'] };
+        const horarios = { 'MAÑANA': ['09:00', '14:00'], 'TARDE': ['16:00', '20:00'], 'PARTIDO': ['09:00', '14:00', '16:00', '18:00'] };
         turno.addEventListener('change', () => {
             const h = horarios[turno.value];
             if (!h) return;
             if (!horaInicio.value) horaInicio.value = h[0];
             if (!horaFinal.value)  horaFinal.value  = h[1];
+            // Turno partido: también propone el segundo tramo
+            const ini2 = document.getElementById('hora_inicio2');
+            const fin2 = document.getElementById('hora_final2');
+            if (h[2] && !ini2.value) ini2.value = h[2];
+            if (h[3] && !fin2.value) fin2.value = h[3];
         });
 
         // La fecha de fin no puede ser anterior a la de inicio
@@ -254,10 +336,55 @@
         fechaIni.addEventListener('change', ajustarFechaFin);
         ajustarFechaFin();
 
-        // La hora de fin no puede ser anterior a la de inicio
-        const ajustarHoraFin = () => { horaFinal.min = horaInicio.value; };
-        horaInicio.addEventListener('change', ajustarHoraFin);
+        // La hora de fin no puede ser anterior a la de inicio (y el 2º tramo va después del 1º)
+        const horaInicio2 = document.getElementById('hora_inicio2');
+        const horaFinal2  = document.getElementById('hora_final2');
+        const ajustarHoraFin = () => {
+            horaFinal.min   = horaInicio.value;
+            horaInicio2.min = horaFinal.value;
+            horaFinal2.min  = horaInicio2.value;
+        };
+        [horaInicio, horaFinal, horaInicio2, horaFinal2].forEach(c => c.addEventListener('change', ajustarHoraFin));
         ajustarHoraFin();
+
+        // Apartado Calendario: al editar solo se usa si se marca "Añadir días al calendario"
+        const generar  = document.getElementById('generar_calendario');
+        const opciones = document.getElementById('opciones-calendario');
+        const diasSem  = document.querySelectorAll('input[name="dias_semana[]"]');
+        const segundoTramo = document.getElementById('segundo-tramo');
+        const ajustarCalendario = () => {
+            const activo  = !generar || generar.checked;
+            const partido = turno.value === 'PARTIDO';
+            opciones.classList.toggle('hidden', !activo);
+            opciones.querySelectorAll('input, button').forEach(c => c.disabled = !activo);
+
+            // Segundo tramo: solo con turno partido, y entonces es obligatorio
+            segundoTramo.classList.toggle('hidden', !partido);
+            segundoTramo.querySelectorAll('input').forEach(c => {
+                c.disabled = !activo || !partido;
+                c.required = activo && partido;
+            });
+        };
+        generar?.addEventListener('change', ajustarCalendario);
+        turno.addEventListener('change', ajustarCalendario);
+        ajustarCalendario();
+
+        // Botones rápidos de días: L–V / Todos
+        document.querySelectorAll('[data-dias]').forEach(boton => {
+            boton.addEventListener('click', () => {
+                const dias = boton.dataset.dias.split(',');
+                diasSem.forEach(c => c.checked = dias.includes(c.value));
+            });
+        });
+
+        // Si se generan días, al menos uno marcado
+        form.addEventListener('submit', (e) => {
+            const activo = !generar || generar.checked;
+            if (activo && !document.querySelector('input[name="dias_semana[]"]:checked')) {
+                e.preventDefault();
+                alert('Marca al menos un día de clase.');
+            }
+        });
 
         // Contador de caracteres de los textarea (objetivos, contenido, observaciones)
         document.querySelectorAll('[data-contador]').forEach(span => {

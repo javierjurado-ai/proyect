@@ -6,12 +6,14 @@ use App\Models\Aula;
 use App\Models\Centro;
 use App\Models\Curso;
 use App\Models\CursoAlumno;
+use App\Models\CursoCalendario;
 use App\Models\CursoContacto;
 use App\Models\CursoDocente;
 use App\Models\Empresa;
 use App\Models\Enums\Categoria;
 use App\Models\Enums\CategoriaProfesional;
 use App\Models\Enums\EstadoAula;
+use App\Models\Enums\EstadoLogistica;
 use App\Models\enums\LOPD;
 use App\Models\Enums\Modalidad;
 use App\Models\Enums\NivelEstudio;
@@ -21,7 +23,9 @@ use App\Models\Enums\Turno;
 use App\Models\Enums\UsoAula;
 use App\Models\Formacion;
 use App\Models\Persona;
+use App\Models\PeticionesLogistica;
 use App\Models\Rol;
+use App\Services\CalendarioCursoService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -261,7 +265,7 @@ class CursoController extends Controller
             'docentes.*.persona_id'         => ['required', 'integer', 'distinct', Rule::exists((new Persona)->getTable(), (new Persona)->getKeyName())],
             'docentes.*.empresa_id'         => ['required', Rule::exists((new Empresa)->getTable(), (new Empresa)->getKeyName())],
             'docentes.*.categoria'          => ['required', 'string', 'max:45'],
-            'docentes.*.tipo_contrato'      => ['required', 'string'],
+            'docentes.*.tipo_contrato'      => ['required', Rule::enum(TipoContrato::class)],
             'docentes.*.convenio'           => ['required', 'string', 'max:45'],
             'docentes.*.IBAN'               => ['required', 'string', 'max:45'],
             'docentes.*.numero_horas'       => ['required', 'numeric', 'min:0'],
@@ -272,6 +276,7 @@ class CursoController extends Controller
         ], [
             'docentes.required'   => 'Añade al menos un docente.',
             'docentes.*.required' => 'Faltan datos de algún docente.',
+            'docentes.*.tipo_contrato.enum' => 'El tipo de contrato elegido no es válido.',
         ]);
 
         // Personas que ya son docentes de este curso (evita duplicados).
@@ -330,6 +335,9 @@ class CursoController extends Controller
     {
         $curso = Curso::findOrFail($id);
 
+        // Días que ya tiene en su calendario (para el apartado "Calendario" del formulario)
+        $diasCalendario = $curso->calendario()->count();
+
         return view('curso.formulario', array_merge(
             compact('curso'),
             [
@@ -341,7 +349,7 @@ class CursoController extends Controller
     }
 
     ///////////////////Aulas////////////////////////
-    
+
     // Muestra el formulario de alta de aulas asociado a un centro
     public function crearFormularioAula($centro_id)
     {
@@ -419,13 +427,171 @@ class CursoController extends Controller
         return view('centro.formulario-aula', compact('aula', 'centro', 'cursos', 'estados', 'usos') + $this->datosUsuario());
     }
 
+    ///////////////////Calendario del curso////////////////////////
+
+    // Formulario para añadir un día (la fecha puede venir del clic en el calendario: ?fecha=AAAA-MM-DD)
     public function crearFormularioDia(Curso $curso)
     {
-        return view('curso.formularioFecha', [
-            'curso'  => $curso
-        ]);
+        return view('curso.formularioFecha', array_merge(
+            compact('curso'),
+            $this->datosUsuario()
+        ));
     }
 
+    // Guarda un día nuevo en el calendario del curso
+    public function guardarDia(Request $request, Curso $curso)
+    {
+        $datos = $request->validate($this->reglasDia($curso), $this->mensajesDia());
+
+        $curso->calendario()->create($datos);
+
+        return redirect()
+            ->route('curso.visualizar', [$curso, 'pestana' => 'calendario'])
+            ->with('ok', 'Día añadido al calendario.');
+    }
+
+    // Formulario para modificar un día que ya existe
+    public function editarFormularioDia(Curso $curso, CursoCalendario $dia)
+    {
+        abort_unless((int) $dia->curso_id === (int) $curso->id, 404);
+
+        return view('curso.formularioFecha', array_merge(
+            compact('curso', 'dia'),
+            $this->datosUsuario()
+        ));
+    }
+
+    // Guarda los cambios de un día
+    public function actualizarDia(Request $request, Curso $curso, CursoCalendario $dia)
+    {
+        abort_unless((int) $dia->curso_id === (int) $curso->id, 404);
+
+        $datos = $request->validate($this->reglasDia($curso, $dia->id), $this->mensajesDia());
+
+        $dia->update($datos);
+
+        return redirect()
+            ->route('curso.visualizar', [$curso, 'pestana' => 'calendario'])
+            ->with('ok', 'Día del ' . $dia->fecha->format('d/m/Y') . ' modificado.');
+    }
+
+    // Cancela (borra) la sesión de un día
+    public function cancelarDia(Curso $curso, CursoCalendario $dia)
+    {
+        abort_unless((int) $dia->curso_id === (int) $curso->id, 404);
+
+        $fecha = $dia->fecha->format('d/m/Y');
+        $dia->delete();
+
+        return redirect()
+            ->route('curso.visualizar', [$curso, 'pestana' => 'calendario'])
+            ->with('ok', 'Sesión del ' . $fecha . ' cancelada.');
+    }
+
+    // Crea los días del calendario a partir del horario general del curso
+    // (fecha inicio → fecha fin, hora inicio → hora fin). No toca los días que ya existan.
+    public function generarDias(Request $request, Curso $curso)
+    {
+        if (! $curso->fecha_inicio || ! $curso->fecha_fin || ! $curso->hora_inicio || ! $curso->hora_final) {
+            return back()->withErrors(['generar' => 'El curso necesita fecha de inicio, fecha de fin y horario para generar los días.']);
+        }
+
+        $patron = match ($request->input('modo')) {
+            'todos'   => ['modo' => 'semana', 'dias' => [1, 2, 3, 4, 5, 6, 7]],
+            'alterno' => ['modo' => 'alterno'],
+            default   => ['modo' => 'semana', 'dias' => [1, 2, 3, 4, 5]],
+        };
+
+        $total = app(CalendarioCursoService::class)->generar($curso, $patron);
+
+        return redirect()
+            ->route('curso.visualizar', [$curso, 'pestana' => 'calendario'])
+            ->with('ok', $total === 0
+                ? 'No había días nuevos que añadir.'
+                : "Se han añadido {$total} " . ($total === 1 ? 'día' : 'días') . ' al calendario con el horario del curso.');
+    }
+
+    // Reglas de un día del calendario. Vale cualquier día de la semana (también fines de semana).
+    private function reglasDia(Curso $curso, ?int $ignorarId = null): array
+    {
+        $fecha = ['required', 'date',
+            Rule::unique('curso_calendario', 'fecha')
+                ->where('curso_id', $curso->id)
+                ->ignore($ignorarId),
+        ];
+        if ($curso->fecha_inicio) {
+            $fecha[] = 'after_or_equal:' . \Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString();
+        }
+        if ($curso->fecha_fin) {
+            $fecha[] = 'before_or_equal:' . \Illuminate\Support\Carbon::parse($curso->fecha_fin)->toDateString();
+        }
+
+        return [
+            'fecha'        => $fecha,
+            'hora_inicio1' => ['required', 'date_format:H:i'],
+            'hora_fin1'    => ['required', 'date_format:H:i', 'after:hora_inicio1'],
+            'hora_inicio2' => ['nullable', 'required_with:hora_fin2', 'date_format:H:i', 'after_or_equal:hora_fin1'],
+            'hora_fin2'    => ['nullable', 'required_with:hora_inicio2', 'date_format:H:i', 'after:hora_inicio2'],
+        ];
+    }
+
+    private function mensajesDia(): array
+    {
+        return [
+            'required'                => 'Este campo es obligatorio.',
+            'required_with'           => 'Si rellenas el segundo tramo, indica inicio y fin.',
+            'date'                    => 'La fecha no es válida.',
+            'date_format'             => 'La hora no es válida (formato HH:MM).',
+            'fecha.unique'            => 'Ese día ya está en el calendario del curso. Modifícalo en lugar de crearlo otra vez.',
+            'fecha.after_or_equal'    => 'La fecha es anterior al inicio del curso.',
+            'fecha.before_or_equal'   => 'La fecha es posterior al final del curso.',
+            'hora_fin1.after'         => 'La hora de fin debe ser posterior a la de inicio.',
+            'hora_inicio2.after_or_equal' => 'El segundo tramo debe empezar después de que acabe el primero.',
+            'hora_fin2.after'         => 'La hora de fin debe ser posterior a la de inicio.',
+        ];
+    }
+
+    public function crearFormularioLogistica(Curso $curso)
+    {
+        $cursos = Curso::with('formacion')->orderBy('codigo_accion')->orderBy('codigo_grupo')->get()
+            ->mapWithKeys(fn($c) => [
+                $c->id => $this->codigoCurso($c) . ($c->formacion ? ' - ' . $c->formacion->nombre : ''),
+            ]);
+
+        return view('logistica.formularioPeticionProducto', compact('cursos', 'curso') + $this->datosUsuario());
+    }
+    public function crearPeticionLogistica(Request $request, Curso $curso)
+    {
+        $datos = $request->validate([
+            'producto'                  => 'required|string|max:45',
+            'cantidad'                  => 'required|integer|min:1|max:99',
+            'direccion_envio'           => 'required|string|max:255',
+            'fecha_necesaria'           => 'nullable|date',
+            'fecha_devolucion_prevista' => 'nullable|date|after_or_equal:fecha_necesaria',
+            'observaciones'             => 'nullable|string|max:200',
+        ]);
+
+        $peticion = $curso->peticionesLogistica()->create([
+            'fecha'                     => now(),
+            'estado'                    => EstadoLogistica::cases()[0], // pon tu estado inicial
+            'centro_id'                 => $curso->centro_id,
+            'solicitante_id'            => Auth::user()->persona_id ?? null, // ajusta a tu modelo de usuario
+            'direccion_envio'           => $datos['direccion_envio'],
+            'fecha_necesaria'           => $datos['fecha_necesaria'] ?? null,
+            'fecha_devolucion_prevista' => $datos['fecha_devolucion_prevista'] ?? null,
+            'observaciones'             => $datos['observaciones'] ?? null,
+        ]);
+
+        $peticion->peticionProductos()->create([
+            'peticiones_logistica_id' => $peticion->id,
+            'producto' => $datos['producto'],
+            'cantidad' => $datos['cantidad'],
+        ]);
+
+        return redirect()
+            ->route('curso.mostrar', $curso) // tu ruta de detalle del curso
+            ->with('ok', 'Petición creada correctamente.');
+    }
     // Actualiza el aula en la base de datos
     public function actualizarAula(Request $request, $id)
     {
@@ -466,7 +632,7 @@ class CursoController extends Controller
     public function eliminarAula($id)
     {
         $aula = Aula::findOrFail($id);
-        
+
         // Guardamos el centro_id ANTES de borrar el registro
         $centroId = $aula->centro_id;
 
@@ -480,7 +646,6 @@ class CursoController extends Controller
             return redirect()
                 ->route('aula.index')
                 ->with('ok', 'Aula eliminada correctamente.');
-                
         } catch (QueryException $e) {
             if ($centroId) {
                 return redirect()->to("/view/centro/{$centroId}")->with('error', 'No se puede eliminar el aula porque tiene registros asociados.');
@@ -513,6 +678,7 @@ class CursoController extends Controller
     public function agregarCurso(Request $request)
     {
         $datos = $request->validate($this->reglas($request), $this->mensajes());
+        $cal   = $request->validate($this->reglasCalendario(true), $this->mensajesCalendario());
 
         // Si es teleformación y el aula viene vacía, le asignamos un valor por defecto para la BD
         if (($datos['modalidad'] ?? '') === 'TELEFORMACION' && empty($datos['aula'])) {
@@ -521,25 +687,36 @@ class CursoController extends Controller
 
         // La persona de contacto es la del usuario que ha iniciado sesión.
         $personaId = Auth::user()->persona_id;
+        $anadidos = 0;
 
-        DB::transaction(function () use ($datos, $personaId) {
+        DB::transaction(function () use ($datos, $cal, $personaId, &$anadidos) {
             // El curso se crea solo con sus propios campos.
             $curso = Curso::create(
                 collect($datos)->except(['coordinador', 'actividad'])->all()
             );
 
+            // Días del calendario según el patrón elegido (no se guarda en la tabla curso)
+            $anadidos = $this->generarCalendario($curso, $cal);
+
             // Contacto con el id del curso recién creado y la persona del usuario.
+            // 'coordinador' es obligatorio en la tabla (varchar 45): se guarda su nombre completo.
+            $persona = Persona::find($personaId);
+            $nombreCoordinador = collect([$persona?->nombre, $persona?->primer_apellido, $persona?->segundo_apellido])
+                ->filter()
+                ->implode(' ');
+
             CursoContacto::create([
-                'curso_id'   => $curso->id,
-                'persona_id' => $personaId,
-                'actividad'  => 1,
-                'coordinador' => 'N/A', // <--- Añade esto de forma temporal luego borrar tras terminar las mejoras
+                'curso_id'    => $curso->id,
+                'persona_id'  => $personaId,
+                'coordinador' => mb_substr($nombreCoordinador, 0, 45),
+                'actividad'   => 1,
             ]);
         });
 
         return redirect()
             ->route('curso.crearTablaCurso')
-            ->with('ok', 'Curso guardado correctamente.');
+            ->with('ok', 'Curso guardado correctamente.'
+                . ($anadidos ? " Se han creado {$anadidos} días en su calendario." : ''));
     }
 
     // Actualizar un curso (API)
@@ -549,9 +726,13 @@ class CursoController extends Controller
 
         $datos = $request->validate($this->reglas($request, $curso->id), $this->mensajes());
 
-        $curso->update($datos);
+        DB::transaction(function () use ($curso, $datos) {
+            $antes = $curso->only(CalendarioCursoService::CAMPOS);
+            $curso->update($datos);
+            app(CalendarioCursoService::class)->ajustar($curso, $antes);
+        });
 
-        return response()->json($curso, 200);
+        return response()->json($curso->fresh(), 200);
     }
 
     // Actualiza el curso enviado desde el formulario web
@@ -560,12 +741,22 @@ class CursoController extends Controller
         $curso = Curso::findOrFail($id);
 
         $datos = $request->validate($this->reglas($request, $curso->id), $this->mensajes());
+        $cal   = $request->validate($this->reglasCalendario(false), $this->mensajesCalendario());
 
-        $curso->update($datos);
+        $cambios = DB::transaction(function () use ($curso, $datos, $cal) {
+            $antes = $curso->only(CalendarioCursoService::CAMPOS);
+            $curso->update($datos);
+
+            // Primero se ajustan los días que ya había (fechas y horario) y luego se añaden los nuevos
+            $cambios = app(CalendarioCursoService::class)->ajustar($curso, $antes);
+            $cambios['anadidos'] = $this->generarCalendario($curso, $cal);
+
+            return $cambios;
+        });
 
         return redirect()
             ->route('curso.crearTablaCurso')
-            ->with('ok', 'Curso actualizado correctamente.');
+            ->with('ok', 'Curso actualizado correctamente.' . $this->resumenCalendario($cambios));
     }
 
     // Eliminar un curso (API)
@@ -653,6 +844,63 @@ class CursoController extends Controller
             'horas_presenciales.required_if'  => 'Indica las horas presenciales para esta modalidad.',
             'horas_teleformacion.required_if' => 'Indica las horas de teleformación para esta modalidad.',
         ];
+    }
+
+    // " Calendario: 3 días añadidos, 2 actualizados." (vacío si no ha cambiado nada)
+    private function resumenCalendario(array $c): string
+    {
+        $partes = array_filter([
+            ($c['anadidos'] ?? 0) ? $c['anadidos'] . ($c['anadidos'] === 1 ? ' día añadido' : ' días añadidos') : null,
+            ($c['actualizados'] ?? 0) ? $c['actualizados'] . ($c['actualizados'] === 1 ? ' día con el horario actualizado' : ' días con el horario actualizado') : null,
+            ($c['quitados'] ?? 0) ? $c['quitados'] . ($c['quitados'] === 1 ? ' día quitado por estar fuera de las fechas' : ' días quitados por estar fuera de las fechas') : null,
+        ]);
+
+        return $partes ? ' Calendario: ' . implode(', ', $partes) . '.' : '';
+    }
+
+    // Campos del apartado "Calendario" del formulario de curso. No se guardan en la tabla curso:
+    // solo dicen qué días crear en curso_calendario.
+    //  - Al crear un curso siempre se genera; al editarlo, solo si se marca "generar_calendario".
+    private function reglasCalendario(bool $creando): array
+    {
+        $generar = $creando ? '' : 'exclude_unless:generar_calendario,1|';
+
+        return [
+            'generar_calendario' => 'nullable|boolean',
+            'calendario_modo'    => $generar . 'required|in:semana,alterno',
+            'dias_semana'        => $generar . 'exclude_unless:calendario_modo,semana|required|array|min:1',
+            'dias_semana.*'      => 'integer|between:1,7|distinct',
+            // Segundo tramo: solo con turno partido, y entonces obligatorio
+            'hora_inicio2'       => $generar . 'exclude_unless:turno,PARTIDO|required|date_format:H:i|after_or_equal:hora_final',
+            'hora_final2'        => $generar . 'exclude_unless:turno,PARTIDO|required|date_format:H:i|after:hora_inicio2',
+        ];
+    }
+
+    private function mensajesCalendario(): array
+    {
+        return [
+            'calendario_modo.required'    => 'Elige qué días hay clase.',
+            'dias_semana.required'        => 'Marca al menos un día de clase.',
+            'dias_semana.min'             => 'Marca al menos un día de clase.',
+            'hora_inicio2.required'       => 'En turno partido indica la hora de inicio del segundo tramo.',
+            'hora_final2.required'        => 'En turno partido indica la hora de fin del segundo tramo.',
+            'hora_inicio2.after_or_equal' => 'El segundo tramo debe empezar después de que acabe el primero.',
+            'hora_final2.after'           => 'La hora final debe ser posterior a la de inicio.',
+            'date_format'                 => 'La hora debe tener el formato HH:MM.',
+        ];
+    }
+
+    // Crea los días del calendario con los datos validados del apartado "Calendario"
+    private function generarCalendario(Curso $curso, array $cal): int
+    {
+        if (empty($cal['calendario_modo'])) {
+            return 0; // al editar sin marcar "Añadir días al calendario"
+        }
+
+        $patron = ['modo' => $cal['calendario_modo'], 'dias' => $cal['dias_semana'] ?? []];
+
+        return app(CalendarioCursoService::class)
+            ->generar($curso, $patron, $cal['hora_inicio2'] ?? null, $cal['hora_final2'] ?? null);
     }
 
     // Datos de los desplegables del formulario de curso

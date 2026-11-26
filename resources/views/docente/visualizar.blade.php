@@ -25,6 +25,32 @@
 
     $genero = $valor($persona->genero);
     $enMarcha = $asignaciones->filter(fn ($a) => $a->fecha_inicio->lte($hoy) && $a->fecha_fin->gte($hoy));
+
+    // Eventos del calendario: un evento por tramo horario de cada día de cada curso que imparte
+    // (solo los días dentro de las fechas en que imparte ese curso)
+    $eventosCalendario = $asignaciones
+        ->filter(fn ($a) => $a->curso)
+        ->flatMap(function ($a) {
+            $nombreCurso = $a->curso->formacion?->nombre ?? 'Curso';
+
+            return $a->curso->calendario
+                ->filter(fn ($dia) => $dia->fecha->between($a->fecha_inicio, $a->fecha_fin))
+                ->flatMap(function ($dia) use ($nombreCurso) {
+                    $dia_ = $dia->fecha->toDateString();
+
+                    return collect([[$dia->hora_inicio1, $dia->hora_fin1], [$dia->hora_inicio2, $dia->hora_fin2]])
+                        ->filter(fn ($t) => $t[0] && $t[1])
+                        ->map(fn ($t) => [
+                            'title' => substr($t[0], 0, 5) . ' – ' . substr($t[1], 0, 5) . ' ' . $nombreCurso,
+                            'start' => $dia_ . 'T' . substr($t[0], 0, 5),
+                            'end'   => $dia_ . 'T' . substr($t[1], 0, 5),
+                        ]);
+                });
+        })
+        ->values()
+        ->all();
+
+    $inicialCalendario = ($enMarcha->first() ?? $asignaciones->first())?->fecha_inicio?->toDateString();
 @endphp
 
 <x-interfaz.layout.app :titulo="$nombreCompleto" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
@@ -87,6 +113,11 @@
             </x-tabla.tabla>
         </x-interfaz.panel.tarjeta>
     </div>
+
+    {{-- Calendario: igual que en la ficha del alumno --}}
+    <x-interfaz.panel.tarjeta titulo="Calendario" class="mb-6">
+        <x-calendario.calendario :inicial="$inicialCalendario" :eventos="$eventosCalendario" />
+    </x-interfaz.panel.tarjeta>
 
     {{-- Detalle por curso: horario, tutorías y retribución --}}
     <x-interfaz.panel.tarjeta titulo="Horario, tutorías y retribución por curso">
