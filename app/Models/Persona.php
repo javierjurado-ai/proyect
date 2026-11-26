@@ -45,9 +45,9 @@ class Persona extends Model
         return $this->hasOne(Usuario::class, 'persona_id', 'id');
     }
 
-    public function roles(): HasMany
+    public function roles()
     {
-        return $this->hasMany(Rol::class, 'persona_id', 'id');
+        return $this->belongsToMany(Rol::class, 'rol_persona', 'persona_id', 'rol_id');
     }
 
     public function cursoAlumno(): HasMany
