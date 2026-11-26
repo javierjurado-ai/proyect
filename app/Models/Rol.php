@@ -22,8 +22,8 @@ class Rol extends Model
         'rol' => TipoRol::class,
     ];
 
-    public function persona(): BelongsTo
+    public function personas()
     {
-        return $this->belongsTo(Persona::class, 'persona_id', 'id');
+        return $this->belongsToMany(Persona::class, 'rol_persona', 'rol_id', 'persona_id');
     }
 }

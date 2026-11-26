@@ -35,33 +35,57 @@ use Illuminate\Validation\Rule;
 
 class CursoController extends Controller
 {
-    ///////////////////Tablas//////////////////////
     public function crearTabla(Request $request)
     {
         $personaId = Auth::user()->persona_id;
-
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
-        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
+        $rol       = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $persona   = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
 
         if (! $rol || ! $persona) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()
-                ->route('login')
-                ->withErrors(['usuario' => 'No tienes acceso a la página.']);
+            return redirect()->route('login')->withErrors(['usuario' => 'No tienes acceso a la página.']);
         }
 
-        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
-            ->filter()
-            ->implode(' ');
+        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])->filter()->implode(' ');
 
-        $cursos = Curso::with('formacion')
-            ->whereIn('id', CursoContacto::where('persona_id', $personaId)->select('curso_id'))
-            ->get();
+        // Capturamos cada filtro individualmente
+        $fInicio         = trim((string) $request->query('fecha_inicio', ''));
+        $fFin            = trim((string) $request->query('fecha_fin', ''));
+        $formacionNombre = trim((string) $request->query('formacion_nombre', ''));
+        $empresaCliente  = trim((string) $request->query('empresa_cliente', ''));
+        $modalidad       = $request->query('modalidad', '');
+        $codigoAccion    = trim((string) $request->query('codigo_accion', ''));
+        $codigoGrupo     = trim((string) $request->query('codigo_grupo', ''));
 
-        return view('curso.index', compact('cursos', 'rol', 'nombre'));
+        // Consulta principal de cursos con filtros independientes
+        $cursos = Curso::query()
+            ->with(['formacion', 'centro.empresa'])
+            ->when($fInicio !== '', fn($q) => $q->where('fecha_inicio', 'like', "%{$fInicio}%"))
+            ->when($fFin !== '', fn($q) => $q->where('fecha_fin', 'like', "%{$fFin}%"))
+            ->when($formacionNombre !== '', fn($q) => $q->whereHas('formacion', fn($sub) => $sub->where('nombre', 'like', "%{$formacionNombre}%")))
+            ->when($empresaCliente !== '', fn($q) => $q->whereHas('centro.empresa', fn($sub) => $sub->where('nombre', 'like', "%{$empresaCliente}%")))
+            ->when($modalidad !== '', fn($q) => $q->where('modalidad', $modalidad))
+            ->when($codigoAccion !== '', fn($q) => $q->where('codigo_accion', 'like', "%{$codigoAccion}%"))
+            ->when($codigoGrupo !== '', fn($q) => $q->where('codigo_grupo', 'like', "%{$codigoGrupo}%"))
+            ->orderByDesc('fecha_inicio')
+            ->paginate(15)
+            ->withQueryString();
+
+        // Opciones para los datalists y selects
+        $formacionesFiltro = Formacion::whereHas('cursos')->orderBy('nombre')->pluck('nombre');
+        $empresasFiltro    = Empresa::whereHas('centros.cursos')->orderBy('nombre')->pluck('nombre');
+        $modalidadesFiltro = collect(Modalidad::cases())->mapWithKeys(fn($m) => [$m->value => ucfirst(strtolower($m->value))]);
+        $accionesFiltro    = Curso::whereNotNull('codigo_accion')->distinct()->pluck('codigo_accion', 'codigo_accion');
+        $gruposFiltro      = Curso::whereNotNull('codigo_grupo')->distinct()->pluck('codigo_grupo', 'codigo_grupo');
+
+        return view('curso.index', compact(
+            'cursos', 'rol', 'nombre',
+            'fInicio', 'fFin', 'formacionNombre', 'empresaCliente', 'modalidad', 'codigoAccion', 'codigoGrupo',
+            'formacionesFiltro', 'empresasFiltro', 'modalidadesFiltro', 'accionesFiltro', 'gruposFiltro'
+        ));
     }
 
     public function visualizarCurso(Request $request, Curso $curso)
@@ -970,12 +994,17 @@ class CursoController extends Controller
         return $curso->codigo_accion . '/' . $curso->codigo_grupo;
     }
 
-    // Rol y nombre del usuario conectado (los necesita el menú y la barra de arriba)
+    // Rol y nombre del usuario conectado adaptado a la nueva estructura con rol_persona
     private function datosUsuario(): array
     {
         $personaId = Auth::user()->persona_id;
 
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        // Buscamos el rol a través de la tabla intermedia rol_persona
+        $rol = DB::table('rol_persona')
+            ->join('rol', 'rol.id', '=', 'rol_persona.rol_id')
+            ->where('rol_persona.persona_id', $personaId)
+            ->value('rol.rol'); // O ajusta según el nombre del campo del enum en tu tabla rol
+
         $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
 
         $nombre = collect([$persona?->nombre, $persona?->primer_apellido, $persona?->segundo_apellido])
@@ -997,5 +1026,29 @@ class CursoController extends Controller
         return redirect()
             ->route('curso.visualizar', $curso)
             ->with('ok', 'Alumno desmatriculado del curso correctamente.');
+    }
+
+    // Genera las opciones únicas para el desplegable del filtro de cursos
+    private function obtenerOpcionesFiltroCursos()
+    {
+        $acciones = Curso::whereNotNull('codigo_accion')->distinct()->pluck('codigo_accion', 'codigo_accion');
+        $grupos = Curso::whereNotNull('codigo_grupo')->distinct()->pluck('codigo_grupo', 'codigo_grupo');
+        $modalidades = Curso::whereNotNull('modalidad')->distinct()->pluck('modalidad', 'modalidad');
+        
+        // Empresas clientes vinculadas a través de los centros que tienen cursos
+        $empresas = Empresa::whereIn(
+            'id',
+            Centro::whereIn('id', Curso::whereNotNull('centro_id')->select('centro_id'))->select('empresa_id')
+        )->orderBy('nombre')->pluck('nombre', 'nombre');
+
+        $formaciones = Formacion::whereHas('cursos')->orderBy('nombre')->pluck('nombre', 'nombre');
+
+        return [
+            'Acciones'          => $acciones->toArray(),
+            'Grupos'            => $grupos->toArray(),
+            'Modalidades'       => $modalidades->toArray(),
+            'Empresas Clientes' => $empresas->toArray(),
+            'Formaciones'       => $formaciones->toArray(),
+        ];
     }
 }
