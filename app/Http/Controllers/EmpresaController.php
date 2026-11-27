@@ -75,15 +75,21 @@ class EmpresaController extends Controller
     // Mostrar la vista del formulario de creación web
     public function mostrarFormulario()
     {
-        return view('empresa.formulario');
+        $rolesDisponibles = RolEmpresa::cases();
+        $rolesSeleccionados = [RolEmpresa::Cliente->value]; // Por defecto cliente
+
+        return view('empresa.formulario', compact('rolesDisponibles', 'rolesSeleccionados'));
     }
 
     // Muestra el formulario de edición de la empresa
     public function vistaEditar($id)
     {
-        $empresa = Empresa::findOrFail($id);
+        $empresa = Empresa::with('roles')->findOrFail($id);
+        $rolesDisponibles = RolEmpresa::cases();
+        // Extraemos los valores de los roles que ya tiene asignados la empresa
+        $rolesSeleccionados = $empresa->roles->pluck('rol_empresa')->toArray();
 
-        return view('empresa.formulario', compact('empresa'));
+        return view('empresa.formulario', compact('empresa', 'rolesDisponibles', 'rolesSeleccionados'));
     }
 
     // Actualiza la empresa desde el formulario web
@@ -237,7 +243,7 @@ class EmpresaController extends Controller
             'codigo_postal'      => 'nullable|string|size:5',
             'municipio'          => 'nullable|string|max:45',
             'provincia'          => 'nullable|string|max:45',
-            'email_facturacion'  => 'nullable|email|max:100',
+            'email_facturacion'  =>  ['nullable','email','max:100','regex:/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/'],
             'dias_vencimiento'   => 'sometimes|integer|min:0|max:365',
             'telefono'           => 'nullable|string|max:20',
             'total_trabajadores' => 'nullable|integer|min:0',

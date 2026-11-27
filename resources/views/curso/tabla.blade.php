@@ -22,7 +22,7 @@
                     </span>
                 @endif
             </td>
-            <td class="px-4 py-3 text-slate-700">{{ $curso->empresa_formadora ?? '—' }}</td>
+            <td class="px-4 py-3 text-slate-700">{{ $curso->empresa?->nombre ?? '—' }}</td>
             <td class="px-4 py-3 whitespace-nowrap text-slate-700">
                 {{ \Illuminate\Support\Carbon::parse($curso->fecha_inicio)->format('d/m/Y') }}
             </td>
