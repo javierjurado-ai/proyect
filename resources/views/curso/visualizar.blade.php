@@ -244,134 +244,133 @@
 
         {{-- Alumnos y docentes: datos personales, solo para administrador y coordinador --}}
         @if ($puedeVerPersonas)
-        <x-slot:alumnos title="Alumnos">
-            <x-interfaz.panel.tarjeta titulo="Alumnos matriculados">
-                <div class="mb-4 flex items-center justify-between">
-                    <p class="text-sm text-slate-500">{{ $curso->alumnos->count() }} registrados</p>
-                    <a href="{{ route('curso.alumno.create', $curso) }}"
-                        class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
-                        + Nuevo alumno
-                    </a>
-                </div>
+            <x-slot:alumnos title="Alumnos">
+                <x-interfaz.panel.tarjeta titulo="Alumnos matriculados">
+                    <div class="mb-4 flex items-center justify-between">
+                        <p class="text-sm text-slate-500">{{ $curso->alumnos->count() }} registrados</p>
+                        <a href="{{ route('curso.alumno.create', $curso) }}"
+                            class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
+                            + Nuevo alumno
+                        </a>
+                    </div>
 
-                <x-tabla.tabla vacio="Todavía no hay alumnos matriculados en este curso." :columnas="[
-                    'Nombre',
-                    'DNI / NIE',
-                    'Email',
-                    'Teléfono',
-                    'Nacimiento',
-                    'Nacionalidad',
-                    ['LOPD', 'center'],
-                    ['Acciones', 'center'],
-                ]">
+                    <x-tabla.tabla vacio="Todavía no hay alumnos matriculados en este curso." :columnas="[
+                        'Nombre',
+                        'DNI / NIE',
+                        'Email',
+                        'Teléfono',
+                        'Nacimiento',
+                        'Nacionalidad',
+                        ['LOPD', 'center'],
+                        ['Acciones', 'center'],
+                    ]">
 
-                    @foreach ($curso->alumnos as $cursoAlumno)
-                        @php
-                            $alumno = $cursoAlumno->persona;
-                            $lopd = $alumno?->LOPD?->value ?? ($alumno?->LOPD ?? 'NO');
-                        @endphp
+                        @foreach ($curso->alumnos as $cursoAlumno)
+                            @php
+                                $alumno = $cursoAlumno->persona;
+                                $lopd = $alumno?->LOPD?->value ?? ($alumno?->LOPD ?? 'NO');
+                            @endphp
 
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-4 py-3 font-medium text-slate-800">
-                                {{ $alumno ? $alumno->nombre . ' ' . $alumno->primer_apellido . ' ' . $alumno->segundo_apellido : '—' }}
-                            </td>
-                            <td class="px-4 py-3 font-mono text-slate-700">
-                                {{ $alumno?->DNI ?? ($alumno?->NIE ?? '—') }}
-                            </td>
-                            <td class="px-4 py-3 text-slate-700">{{ $alumno?->email ?? '—' }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $alumno?->telefono ?? '—' }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-slate-700">
-                                {{ $alumno?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($alumno->fecha_nacimiento)->format('d/m/Y') : '—' }}
-                            </td>
-                            <td class="px-4 py-3 text-slate-700">{{ $alumno?->nacionalidad ?? '—' }}</td>
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-4 py-3 font-medium text-slate-800">
+                                    {{ $alumno ? $alumno->nombre . ' ' . $alumno->primer_apellido . ' ' . $alumno->segundo_apellido : '—' }}
+                                </td>
+                                <td class="px-4 py-3 font-mono text-slate-700">
+                                    {{ $alumno?->DNI ?? ($alumno?->NIE ?? '—') }}
+                                </td>
+                                <td class="px-4 py-3 text-slate-700">{{ $alumno?->email ?? '—' }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $alumno?->telefono ?? '—' }}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">
+                                    {{ $alumno?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($alumno->fecha_nacimiento)->format('d/m/Y') : '—' }}
+                                </td>
+                                <td class="px-4 py-3 text-slate-700">{{ $alumno?->nacionalidad ?? '—' }}</td>
 
-                            <td class="px-4 py-3 text-center">
-                                @if (strtoupper((string) $lopd) === 'SI')
-                                    <span
-                                        class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">Sí</span>
-                                @else
-                                    <span
-                                        class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">No</span>
-                                @endif
-                            </td>
+                                <td class="px-4 py-3 text-center">
+                                    @if (strtoupper((string) $lopd) === 'SI')
+                                        <span
+                                            class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">Sí</span>
+                                    @else
+                                        <span
+                                            class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">No</span>
+                                    @endif
+                                </td>
 
-                            <td class="px-4 py-3 text-center whitespace-nowrap">
-                                <div class="inline-flex items-center gap-2">
-                                    <x-tabla.boton-eliminar :action="route('curso.alumno.destroy', [$curso->id, $cursoAlumno->id])" />
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </x-tabla.tabla>
-            </x-interfaz.panel.tarjeta>
-        </x-slot:alumnos>
-        <x-slot:docentes title="Docentes">
-            <x-interfaz.panel.tarjeta titulo="Docentes trabajando">
-                <div class="mb-4 flex items-center justify-between">
-                    <p class="text-sm text-slate-500">{{ $curso->docentes->count() }} registrados</p>
-                    <a href="{{ route('curso.docente.create', $curso) }}"
-                        class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
-                        + Nuevo docente
-                    </a>
-                </div>
+                                <td class="px-4 py-3 text-center whitespace-nowrap">
+                                    <div class="inline-flex items-center gap-2">
+                                        <x-tabla.boton-eliminar :action="route('curso.alumno.destroy', [$curso->id, $cursoAlumno->id])" />
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </x-tabla.tabla>
+                </x-interfaz.panel.tarjeta>
+            </x-slot:alumnos>
+            <x-slot:docentes title="Docentes">
+                <x-interfaz.panel.tarjeta titulo="Docentes trabajando">
+                    <div class="mb-4 flex items-center justify-between">
+                        <p class="text-sm text-slate-500">{{ $curso->docentes->count() }} registrados</p>
+                        <a href="{{ route('curso.docente.create', $curso) }}"
+                            class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
+                            + Nuevo docente
+                        </a>
+                    </div>
 
-                <x-tabla.tabla vacio="Todavía no hay docentes en este curso." :columnas="[
-                    'Nombre',
-                    'DNI / NIE',
-                    'Email',
-                    'Teléfono',
-                    'Nacimiento',
-                    'Nacionalidad',
-                    ['LOPD', 'center'],
-                    ['Acciones', 'center'],
-                ]">
+                    <x-tabla.tabla vacio="Todavía no hay docentes en este curso." :columnas="[
+                        'Nombre',
+                        'DNI / NIE',
+                        'Email',
+                        'Teléfono',
+                        'Nacimiento',
+                        'Nacionalidad',
+                        ['LOPD', 'center'],
+                        ['Acciones', 'center'],
+                    ]">
 
-                    @foreach ($curso->docentes as $cursoDocente)
-                        @php
-                            $docente = $cursoDocente->persona;
-                            $lopd = $docente?->LOPD?->value ?? ($docente?->LOPD ?? 'NO');
-                        @endphp
+                        @foreach ($curso->docentes as $cursoDocente)
+                            @php
+                                $docente = $cursoDocente->persona;
+                                $lopd = $docente?->LOPD?->value ?? ($docente?->LOPD ?? 'NO');
+                            @endphp
 
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-4 py-3 font-medium text-slate-800">
-                                {{ $docente ? $docente->nombre . ' ' . $docente->primer_apellido . ' ' . $docente->segundo_apellido : '—' }}
-                            </td>
-                            <td class="px-4 py-3 font-mono text-slate-700">
-                                {{ $docente?->DNI ?? ($docente?->NIE ?? '—') }}
-                            </td>
-                            <td class="px-4 py-3 text-slate-700">{{ $docente?->email ?? '—' }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $docente?->telefono ?? '—' }}
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-slate-700">
-                                {{ $docente?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
-                            </td>
-                            <td class="px-4 py-3 text-slate-700">{{ $docente?->nacionalidad ?? '—' }}</td>
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-4 py-3 font-medium text-slate-800">
+                                    {{ $docente ? $docente->nombre . ' ' . $docente->primer_apellido . ' ' . $docente->segundo_apellido : '—' }}
+                                </td>
+                                <td class="px-4 py-3 font-mono text-slate-700">
+                                    {{ $docente?->DNI ?? ($docente?->NIE ?? '—') }}
+                                </td>
+                                <td class="px-4 py-3 text-slate-700">{{ $docente?->email ?? '—' }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $docente?->telefono ?? '—' }}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">
+                                    {{ $docente?->fecha_nacimiento ? \Illuminate\Support\Carbon::parse($docente->fecha_nacimiento)->format('d/m/Y') : '—' }}
+                                </td>
+                                <td class="px-4 py-3 text-slate-700">{{ $docente?->nacionalidad ?? '—' }}</td>
 
-                            <td class="px-4 py-3 text-center">
-                                @if (strtoupper((string) $lopd) === 'SI')
-                                    <span
-                                        class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">Sí</span>
-                                @else
-                                    <span
-                                        class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">No</span>
-                                @endif
-                            </td>
+                                <td class="px-4 py-3 text-center">
+                                    @if (strtoupper((string) $lopd) === 'SI')
+                                        <span
+                                            class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">Sí</span>
+                                    @else
+                                        <span
+                                            class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">No</span>
+                                    @endif
+                                </td>
 
-                            <td class="px-4 py-3 text-center whitespace-nowrap">
-                                <div class="inline-flex items-center gap-2">
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </x-tabla.tabla>
-            </x-interfaz.panel.tarjeta>
-        </x-slot:docentes>
+                                <td class="px-4 py-3 text-center whitespace-nowrap">
+                                    <div class="inline-flex items-center gap-2">
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </x-tabla.tabla>
+                </x-interfaz.panel.tarjeta>
+            </x-slot:docentes>
         @endif
 
         <x-slot:calendario title="Calendario">
-            <x-calendario.calendario :url="route('curso.dia.create', $curso)"
-                :inicial="\Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString()"
-                :eventos="$eventosCalendario" />
+            <x-calendario.calendario :url="route('curso.dia.create', $curso)" :inicial="\Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString()" :eventos="$eventosCalendario" />
         </x-slot:calendario>
 
         <x-slot:carrito title="Carrito">
@@ -418,8 +417,8 @@
                             </div>
 
                             <div class="min-w-[220px] flex-1">
-                                <x-formulario.entrada name="fecha_necesaria" label="Fecha requerida"
-                                    type="date" :value="$fecha($peticion?->fecha_necesaria)" />
+                                <x-formulario.entrada name="fecha_necesaria" label="Fecha requerida" type="date"
+                                    :value="$fecha($peticion?->fecha_necesaria)" />
                             </div>
 
                             <button type="submit"
@@ -445,8 +444,7 @@
                                 Pedido #{{ $peticion->id }}
                                 · {{ $peticion->fecha?->format('d/m/Y') ?? '—' }}
                             </p>
-                            <span
-                                class="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                            <span class="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
                                 {{ ucfirst(strtolower(str_replace('_', ' ', $peticion->estado->value))) }}
                             </span>
                         </div>
@@ -454,70 +452,23 @@
                         <x-tabla.tabla vacio="Este pedido no tiene productos." :columnas="['Nombre', 'Cantidad']">
                             @foreach ($peticion->peticionProductos as $linea)
                                 <tr class="hover:bg-slate-50">
-                                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->producto }}
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->cantidad }}
-                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->producto }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->cantidad }}</td>
                                 </tr>
                             @endforeach
                         </x-tabla.tabla>
+
+                        <div class="mt-2 flex justify-end">
+                            <button type="button"
+                                class="inline-flex items-center rounded-md bg-teal-800 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-teal-900">
+                                Abrir Ticket
+                            </button>
+                        </div>
                     </div>
                 @empty
                     <p class="text-sm text-slate-500">Todavía no hay pedidos.</p>
                 @endforelse
             </x-interfaz.panel.tarjeta>
         </x-slot:pedidos>
-        <x-slot:pruebas title="Pruebas">
-            @vite(['resources/css/app.css', 'resources/js/app.js'])
-            <ul id="chat-mensajes"></ul>
-
-            <form id="chat-formulario">
-                <input id="chat-texto" type="text" maxlength="500" placeholder="Escribe un mensaje" required>
-                <button type="submit">Enviar</button>
-            </form>
-
-            <p id="chat-error" style="color: red;"></p>
-
-            <script type="module">
-                const lista = document.getElementById('chat-mensajes');
-                const formulario = document.getElementById('chat-formulario');
-                const input = document.getElementById('chat-texto');
-                const error = document.getElementById('chat-error');
-
-                // Recibir
-                window.Echo.channel('chat').listen('EnviarMensaje', (e) => {
-                    const li = document.createElement('li');
-                    li.textContent = `[${e.fecha} ${e.hora}] ${e.autor}: ${e.mensaje}`;
-                    lista.appendChild(li);
-                });
-
-                // Enviar
-                formulario.addEventListener('submit', async (ev) => {
-                    ev.preventDefault();
-                    error.textContent = '';
-
-                    const respuesta = await fetch('/mensajes', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        },
-                        body: JSON.stringify({
-                            mensaje: input.value
-                        }),
-                    });
-
-                    if (respuesta.ok) {
-                        input.value = '';
-                    } else {
-                        const datos = await respuesta.json().catch(() => null);
-                        error.textContent = datos ?
-                            `${datos.message} — ${datos.file ?? ''}:${datos.line ?? ''}` :
-                            `No se pudo enviar (error ${respuesta.status})`;
-                    }
-                });
-            </script>
-        </x-slot:pruebas>
     </x-interfaz.layout.pestanas>
 </x-interfaz.layout.app>
