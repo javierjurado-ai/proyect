@@ -3,12 +3,11 @@
 namespace App\Events;
 
 use App\Models\PeticionMensajes;
-use Carbon\Carbon;
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+
 class EnviarMensaje implements ShouldBroadcastNow
 {
     use Dispatchable, SerializesModels;
@@ -17,16 +16,22 @@ class EnviarMensaje implements ShouldBroadcastNow
 
     public function broadcastOn(): array
     {
-        return [new Channel('chat')];
+        return [new PrivateChannel('ticket.' . $this->peticion->peticion_ticket_id)];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'mensaje.enviado';
     }
 
     public function broadcastWith(): array
-{
-    return [
-        'mensaje' => $this->peticion->mensaje,
-        'autor'   => $this->peticion->persona?->nombre ?? 'Anónimo',
-        'fecha'   => Carbon::parse($this->peticion->fecha_creada)->format('d/m/Y'),
-        'hora'    => $this->peticion->hora_creada,
-    ];
-}
+    {
+        return [
+            'id'         => $this->peticion->id,
+            'mensaje'    => $this->peticion->mensaje,
+            'persona_id' => $this->peticion->persona_id,
+            'autor'      => $this->peticion->persona?->nombre ?? 'Anónimo',
+            'hora'       => substr($this->peticion->hora_creada, 0, 5),
+        ];
+    }
 }

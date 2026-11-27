@@ -61,13 +61,13 @@ class CursoController extends Controller
         $codigoAccion    = trim((string) $request->query('codigo_accion', ''));
         $codigoGrupo     = trim((string) $request->query('codigo_grupo', ''));
 
-        // Consulta principal de cursos con filtros independientes
+        // Consulta principal de cursos con filtros independientes (actualizada a la relación directa con empresa)
         $cursos = Curso::query()
-            ->with(['formacion', 'centro.empresa'])
+            ->with(['formacion', 'empresa'])
             ->when($fInicio !== '', fn($q) => $q->where('fecha_inicio', 'like', "%{$fInicio}%"))
             ->when($fFin !== '', fn($q) => $q->where('fecha_fin', 'like', "%{$fFin}%"))
             ->when($formacionNombre !== '', fn($q) => $q->whereHas('formacion', fn($sub) => $sub->where('nombre', 'like', "%{$formacionNombre}%")))
-            ->when($empresaCliente !== '', fn($q) => $q->whereHas('centro.empresa', fn($sub) => $sub->where('nombre', 'like', "%{$empresaCliente}%")))
+            ->when($empresaCliente !== '', fn($q) => $q->whereHas('empresa', fn($sub) => $sub->where('nombre', 'like', "%{$empresaCliente}%")))
             ->when($modalidad !== '', fn($q) => $q->where('modalidad', $modalidad))
             ->when($codigoAccion !== '', fn($q) => $q->where('codigo_accion', 'like', "%{$codigoAccion}%"))
             ->when($codigoGrupo !== '', fn($q) => $q->where('codigo_grupo', 'like', "%{$codigoGrupo}%"))
@@ -75,9 +75,9 @@ class CursoController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        // Opciones para los datalists y selects
+        // Opciones para los datalists y selects (obteniendo empresas que tienen cursos asociados)
         $formacionesFiltro = Formacion::whereHas('cursos')->orderBy('nombre')->pluck('nombre');
-        $empresasFiltro    = Empresa::whereHas('centros.cursos')->orderBy('nombre')->pluck('nombre');
+        $empresasFiltro    = Empresa::whereHas('cursos')->orderBy('nombre')->pluck('nombre');
         $modalidadesFiltro = collect(Modalidad::cases())->mapWithKeys(fn($m) => [$m->value => ucfirst(strtolower($m->value))]);
         $accionesFiltro    = Curso::whereNotNull('codigo_accion')->distinct()->pluck('codigo_accion', 'codigo_accion');
         $gruposFiltro      = Curso::whereNotNull('codigo_grupo')->distinct()->pluck('codigo_grupo', 'codigo_grupo');
@@ -88,7 +88,7 @@ class CursoController extends Controller
             'formacionesFiltro', 'empresasFiltro', 'modalidadesFiltro', 'accionesFiltro', 'gruposFiltro'
         ));
     }
-
+    
     public function visualizarCurso(Request $request, Curso $curso)
     {
         ['rol' => $rol, 'nombre' => $nombre] = $this->datosUsuario();

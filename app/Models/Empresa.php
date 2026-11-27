@@ -169,4 +169,9 @@ class Empresa extends Model
     {
         return $this->hasMany(MovimientoAlmacen::class, 'proveedor_id', 'id');
     }
+
+    public function cursos(): HasMany
+    {
+        return $this->hasMany(Curso::class, 'empresa_id', 'id');
+    }
 }

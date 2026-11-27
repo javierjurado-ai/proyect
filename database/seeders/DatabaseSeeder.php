@@ -2,24 +2,41 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+/**
+ * Datos de prueba de la aplicación.
+ *
+ *   php artisan migrate:fresh --seed
+ *
+ * Usuarios de acceso (con las contraseñas de siempre): admin, coordinador, comercial y logista.
+ *
+ * Las fechas son relativas al día en que se ejecuta: cada vez que se regenera la base de datos
+ * hay cursos terminados, en marcha, que empiezan esta semana y futuros.
+ * El orden importa: cada seeder usa datos de los anteriores.
+ */
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call([
+            // Catálogos
+            AreaProfesionalSeeder::class,
+            RolSeeder::class,
+            SerieFacturaSeeder::class,
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            // Maestros
+            EmpresaSeeder::class,
+            CentroSeeder::class,
+            PersonaSeeder::class,
+            FormacionSeeder::class,
+            AlmacenSeeder::class,
+
+            // Actividad
+            CursoSeeder::class,
+            CreditoFormativoSeeder::class,
+            LogisticaSeeder::class,
+            FacturacionSeeder::class,
         ]);
     }
 }

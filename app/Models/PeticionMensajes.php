@@ -9,7 +9,7 @@ class PeticionMensajes extends Model
     protected $table = 'peticion_mensajes';
     protected $primaryKey = 'id';
     public $timestamps = false;
-protected $fillable = ['mensaje', 'fecha_creada', 'hora_creada', 'persona_id'];
+protected $fillable = ['mensaje', 'fecha_creada', 'hora_creada', 'persona_id','peticion_ticket_id'];
 
     protected $casts = [
         'fecha_creada' => 'date',
