@@ -1,3 +1,4 @@
+
 <x-interfaz.layout.app titulo="Tickets">
     <x-ticket.contenedor :activa="(bool) $conversacionActiva">
 
@@ -43,11 +44,11 @@
                     @endif
 
                     <x-ticket.mensaje :propio="$mensaje->persona_id == $personaId" :autor="$mensaje->persona?->nombre"
-                        :hora="substr($mensaje->hora_creada, 0, 5)">{{ $mensaje->mensaje }}</x-chat.mensaje>
-                    @empty
-                        <div class="flex h-full items-center justify-center">
-                            <p class="text-sm text-slate-500">Aún no hay mensajes. ¡Escribe el primero!</p>
-                        </div>
+                        :hora="substr($mensaje->hora_creada, 0, 5)">{{ $mensaje->mensaje }}</x-ticket.mensaje>
+                @empty
+                    <div class="flex h-full items-center justify-center">
+                        <p class="text-sm text-slate-500">Aún no hay mensajes. ¡Escribe el primero!</p>
+                    </div>
                 @endforelse
             </div>
 
@@ -67,31 +68,104 @@
         @endif
     </x-ticket.contenedor>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Bajar al último mensaje al abrir el ticket
-            const mensajes = document.querySelector('[data-chat-mensajes]');
-            if (mensajes) mensajes.scrollTop = mensajes.scrollHeight;
+    @if ($conversacionActiva)
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const ticketId = @js($conversacionActiva->id);
+                const personaId = @js($personaId);
+                const contenedor = document.querySelector('[data-chat-mensajes]');
+                const formulario = document.querySelector('[data-chat-formulario]');
+                const input = document.querySelector('[data-chat-input]');
 
-            const formulario = document.querySelector('[data-chat-formulario]');
-            const input = document.querySelector('[data-chat-input]');
-            if (!formulario || !input) return;
+                const bajar = () => contenedor.scrollTop = contenedor.scrollHeight;
+                bajar();
 
-            // El textarea crece según el texto
-            input.addEventListener('input', () => {
-                input.style.height = 'auto';
-                input.style.height = input.scrollHeight + 'px';
-            });
+                // Pinta una burbuja con las mismas clases que el componente x-ticket.mensaje
+                const pintar = (m) => {
+                    contenedor.querySelector('[data-chat-vacio]')?.remove();
 
-            // Enter envía, Mayús+Enter añade una línea
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                    const propio = m.persona_id == personaId;
+
+                    const fila = document.createElement('div');
+                    fila.className = 'mb-1.5 flex ' + (propio ? 'justify-end' : 'justify-start');
+
+                    const burbuja = document.createElement('div');
+                    burbuja.className = 'max-w-[80%] rounded-lg px-3 py-2 shadow-sm sm:max-w-[65%] ' +
+                        (propio ? 'rounded-br-sm bg-teal-800 text-white' : 'rounded-bl-sm bg-white text-slate-700');
+
+                    if (!propio && m.autor) {
+                        const autor = document.createElement('p');
+                        autor.className = 'mb-0.5 text-xs font-semibold text-teal-800';
+                        autor.textContent = m.autor;
+                        burbuja.appendChild(autor);
+                    }
+
+                    const texto = document.createElement('p');
+                    texto.className = 'text-sm break-words whitespace-pre-line';
+                    texto.textContent = m.mensaje; // textContent: evita inyectar HTML
+                    burbuja.appendChild(texto);
+
+                    const hora = document.createElement('div');
+                    hora.className = 'mt-1 flex items-center justify-end gap-1 text-[11px] ' +
+                        (propio ? 'text-teal-100' : 'text-slate-400');
+                    hora.textContent = m.hora;
+                    burbuja.appendChild(hora);
+
+                    fila.appendChild(burbuja);
+                    contenedor.appendChild(fila);
+                    bajar();
+                };
+
+                // Recibir los mensajes de los demás en tiempo real
+                window.Echo.private(`ticket.${ticketId}`)
+                    .listen('.mensaje.enviado', (m) => pintar(m));
+
+                // Enviar sin recargar la página
+                formulario.addEventListener('submit', async (e) => {
                     e.preventDefault();
-                    if (input.value.trim() !== '') formulario.requestSubmit();
-                }
-            });
+                    const contenido = input.value.trim();
+                    if (!contenido) return;
 
-            input.focus();
-        });
-    </script>
+                    const respuesta = await fetch(formulario.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': formulario.querySelector('[name=_token]').value,
+                            'X-Socket-ID': window.Echo.socketId() ?? '',
+                        },
+                        body: JSON.stringify({
+                            contenido
+                        }),
+                    });
+
+                    if (!respuesta.ok) {
+                        alert('No se ha podido enviar el mensaje.');
+                        return;
+                    }
+
+                    pintar(await respuesta.json());
+                    input.value = '';
+                    input.style.height = 'auto';
+                    input.focus();
+                });
+
+                // El textarea crece según el texto
+                input.addEventListener('input', () => {
+                    input.style.height = 'auto';
+                    input.style.height = input.scrollHeight + 'px';
+                });
+
+                // Enter envía, Mayús+Enter añade una línea
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        formulario.requestSubmit();
+                    }
+                });
+
+                input.focus();
+            });
+        </script>
+    @endif
 </x-interfaz.layout.app>

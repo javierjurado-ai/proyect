@@ -10,14 +10,11 @@ return new class extends Migration
     {
         Schema::create('peticion_ticket', function (Blueprint $table) {
             $table->integer('id', true);
-            $table->integer('peticion_mensajes_id');
             $table->integer('peticiones_logistica_id');
             $table->string('titulo', 45);
 
-            $table->index(['peticion_mensajes_id'], 'fk_peticion_peticion_mensajes1_idx');
             $table->index(['peticiones_logistica_id'], 'fk_peticion_peticiones_logistica1_idx');
 
-            $table->foreign('peticion_mensajes_id', 'fk_peticion_peticion_mensajes1')->references('id')->on('peticion_mensajes');
             $table->foreign('peticiones_logistica_id', 'fk_peticion_peticiones_logistica1')->references('id')->on('peticiones_logistica');
         });
     }

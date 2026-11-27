@@ -324,13 +324,13 @@ class FacturaEmpresaProveedoraController extends Controller
     }
 
     // Todas las facturas, o solo las propias si quien entra es LOGISTA
-    // (y no tiene además otro rol con acceso completo)
+    // (y no es además ADMINISTRADOR; el comercial no entra en compras)
     private function consulta()
     {
         $personaId = Auth::user()->persona_id;
         $roles = Rol::dePersona($personaId);
 
-        $soloPropias = $roles->contains('LOGISTA') && $roles->intersect(['ADMINISTRADOR', 'COMERCIAL'])->isEmpty();
+        $soloPropias = $roles->contains('LOGISTA') && ! $roles->contains('ADMINISTRADOR');
 
         return FacturaEmpresaProveedora::query()
             ->when($soloPropias, fn ($q) => $q->where('persona_id', $personaId));

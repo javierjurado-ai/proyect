@@ -119,6 +119,36 @@
                 </div>
             </fieldset>
 
+            @php
+                // Tipos marcados: lo enviado si hubo error, si no los que ya tiene (de los que puede ver)
+                $marcados = old('roles', $editando
+                    ? $empresa->roles->pluck('rol_empresa')->filter()->map(fn ($r) => $r->value)->intersect(array_keys($tipos))->values()->all()
+                    : (count($tipos) === 1 ? array_keys($tipos) : []));
+            @endphp
+            <fieldset class="mb-8">
+                <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Tipo de empresa *</legend>
+                <div class="flex flex-wrap gap-6">
+                    @foreach ($tipos as $valor => $texto)
+                        <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+                            <input type="checkbox" name="roles[]" value="{{ $valor }}" @checked(in_array($valor, $marcados, true))
+                                class="h-4 w-4 rounded border-slate-300 text-marca-800 focus:ring-marca-800">
+                            {{ $texto }}
+                        </label>
+                    @endforeach
+                </div>
+                @error('roles')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+                @error('roles.*')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+                @if ($editando && ($otros = $empresa->roles->pluck('rol_empresa')->filter()->map(fn ($r) => $r->value)->diff(array_keys($tipos)))->isNotEmpty())
+                    <p class="mt-2 text-xs text-slate-500">
+                        Además es {{ mb_strtolower($otros->map(fn ($t) => ucfirst(strtolower($t)))->implode(' y ')) }}; eso no se cambia desde aquí.
+                    </p>
+                @endif
+            </fieldset>
+
             <div class="flex flex-wrap justify-end gap-3">
                 <a href="{{ route('empresa.index') }}"
                    class="inline-flex items-center justify-center rounded-lg px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-stone-100">
