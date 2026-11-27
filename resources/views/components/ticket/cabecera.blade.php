@@ -13,7 +13,7 @@
         </a>
     @endif
 
-    <x-chat.avatar :nombre="$nombre" />
+    <x-ticket.avatar :nombre="$nombre" />
 
     <div class="min-w-0 flex-1">
         <p class="truncate text-sm font-semibold text-slate-800">{{ $nombre }}</p>

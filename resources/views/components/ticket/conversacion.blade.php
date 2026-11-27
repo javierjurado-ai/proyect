@@ -13,7 +13,7 @@
     'bg-teal-800/5' => $activa,
     'hover:bg-slate-50' => ! $activa,
 ])>
-    <x-chat.avatar :nombre="$nombre" />
+    <x-ticket.avatar :nombre="$nombre" />
 
     <div class="min-w-0 flex-1">
         <div class="flex items-center justify-between gap-2">

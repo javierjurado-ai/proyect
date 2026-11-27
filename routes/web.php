@@ -24,6 +24,7 @@ use App\Http\Controllers\FacturaEmpresaProveedoraController;
 use App\Http\Controllers\MensajeController;
 use App\Models\PeticionMensajes;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 
 /*
 |--------------------------------------------------------------------------
@@ -73,6 +74,9 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/cursos/{curso}/tickets/{ticket}/mensajes', [MensajeController::class, 'enviarMensaje'])
         ->name('ticket.mensajes.store');
+    Broadcast::channel('ticket.{ticket}', function ($user, PeticionTicket $ticket) {
+        return true; // Cambia esto por tu regla real: quién puede ver este ticket
+    });
     /*
     |----------------------------------------------------------------------
     | Formación, empresas y administración (todos menos LOGISTA)
