@@ -1,6 +1,6 @@
 @php
     $total = method_exists($cursos, 'total') ? $cursos->total() : $cursos->count();
-    $hayFiltro = !empty($fInicio) || !empty($fFin) || !empty($formacionId) || !empty($empresaId) || !empty($modalidad) || !empty($codigoAccion) || !empty($codigoGrupo);
+    $hayFiltro = !empty($fInicio) || !empty($fFin) || !empty($formacionNombre) || !empty($empresaCliente) || !empty($modalidad) || !empty($codigoAccion) || !empty($codigoGrupo);
 @endphp
 
 <x-interfaz.layout.app titulo="Cursos" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">

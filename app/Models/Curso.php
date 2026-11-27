@@ -17,8 +17,7 @@ class Curso extends Model
 
     protected $fillable = [
         'codigo_accion',
-        'codigo_grupo',
-        'empresa_formadora',
+        'codigo_grupo',        
         'fecha_inicio',
         'fecha_fin',
         'hora_inicio',
@@ -36,6 +35,7 @@ class Curso extends Model
         'centro_id',
         'presupuesto_id',
         'formacion_id',
+        'empresa_id',
         //eliminar cuando se elimine la columna curso.peticiones_logistica_id
         'peticiones_logistica_id',
     ];
@@ -141,7 +141,12 @@ class Curso extends Model
         return $this->belongsToMany(Empresa::class, 'grupo_empresa', 'curso_id', 'empresa_id');
     }
     public function calendario(): HasMany
-{
-    return $this->hasMany(CursoCalendario::class, 'curso_id', 'id');
-}
+    {
+        return $this->hasMany(CursoCalendario::class, 'curso_id', 'id');
+    }
+
+    public function empresa(): BelongsTo
+    {
+        return $this->belongsTo(Empresa::class, 'empresa_id', 'id');
+    }
 }
