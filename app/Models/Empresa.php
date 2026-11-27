@@ -101,6 +101,47 @@ class Empresa extends Model
         return $query->whereHas('roles', fn (Builder $q) => $q->where('rol.rol_empresa', $rol->value));
     }
 
+    // --- Qué empresas ve cada rol de persona ---
+    //   ADMINISTRADOR: todas (también las que no tienen tipo)
+    //   COORDINADOR:   formadoras y clientes
+    //   COMERCIAL:     clientes
+    //   LOGISTA:       proveedores
+    public const TIPOS_POR_ROL = [
+        'COORDINADOR' => ['FORMADORA', 'CLIENTE'],
+        'COMERCIAL'   => ['CLIENTE'],
+        'LOGISTA'     => ['PROVEEDOR'],
+    ];
+
+    // Tipos de empresa (RolEmpresa) que puede ver y asignar quien tiene ese rol
+    public static function tiposVisiblesPara(?string $rol): array
+    {
+        if ($rol === 'ADMINISTRADOR') {
+            return array_map(fn (RolEmpresa $r) => $r->value, RolEmpresa::cases());
+        }
+
+        return self::TIPOS_POR_ROL[$rol] ?? [];
+    }
+
+    // Empresa::visiblesPara($rol)->orderBy('nombre')->get()
+    public function scopeVisiblesPara(Builder $query, ?string $rol): Builder
+    {
+        if ($rol === 'ADMINISTRADOR') {
+            return $query;
+        }
+
+        $tipos = self::tiposVisiblesPara($rol);
+
+        return $tipos
+            ? $query->whereHas('roles', fn (Builder $q) => $q->whereIn('rol.rol_empresa', $tipos))
+            : $query->whereRaw('1 = 0'); // sin rol conocido no ve ninguna
+    }
+
+    // ¿La puede ver quien tiene ese rol?
+    public function esVisiblePara(?string $rol): bool
+    {
+        return static::whereKey($this->getKey())->visiblesPara($rol)->exists();
+    }
+
     // --- Facturación ---
 
     // Facturas que le emitimos (como CLIENTE)

@@ -33,7 +33,8 @@
 
 <x-interfaz.layout.app :titulo="$empresa->nombre" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
 
-    <x-interfaz.panel.cabecera :titulo="$empresa->nombre" subtitulo="CIF {{ $empresa->cif }}">
+    <x-interfaz.panel.cabecera :titulo="$empresa->nombre"
+        subtitulo="CIF {{ $empresa->cif }}{{ $empresa->roles->pluck('rol_empresa')->filter()->isNotEmpty() ? ' · ' . $empresa->roles->pluck('rol_empresa')->filter()->map(fn ($r) => ucfirst(strtolower($r->value)))->implode(', ') : '' }}">
         <x-slot:acciones>
             <a href="{{ route('empresa.index') }}"
                class="inline-flex items-center gap-1 rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-marca-950 hover:bg-stone-50">
@@ -144,7 +145,7 @@
         {{-- Crédito formativo por año --}}
         <x-slot:creditos title="Créditos">
             <x-interfaz.panel.tarjeta titulo="Crédito formativo por año"
-                :enlace="in_array($rol, ['ADMINISTRADOR', 'COMERCIAL'], true) ? route('credito.create', ['empresa_id' => $empresa->id]) : null"
+                :enlace="in_array($rol, ['ADMINISTRADOR', 'COORDINADOR', 'COMERCIAL'], true) ? route('credito.create', ['empresa_id' => $empresa->id]) : null"
                 texto-enlace="Registrar crédito">
                 <x-tabla.tabla vacio="Esta empresa no tiene créditos formativos registrados."
                     :columnas="['Año', ['Importe total', 'right'], ['Consumido', 'right'], ['Disponible', 'right'], 'Uso']">

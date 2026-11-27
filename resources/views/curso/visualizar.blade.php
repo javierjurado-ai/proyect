@@ -219,6 +219,7 @@
                     <p class="text-sm text-slate-500">Este curso no tiene presupuesto.</p>
                 @endif
             </x-interfaz.panel.tarjeta>
+            @if ($puedePedirMaterial)
             <x-interfaz.panel.tarjeta titulo="Logística">
                 @if ($peticionLogistica)
                     <dl class="grid grid-cols-2 gap-4 text-sm">
@@ -240,6 +241,7 @@
                     <p class="text-sm text-slate-500">Este curso no tiene petición de logística.</p>
                 @endif
             </x-interfaz.panel.tarjeta>
+            @endif
         </x-slot:informacion>
 
         {{-- Alumnos y docentes: datos personales, solo para administrador y coordinador --}}
@@ -373,6 +375,8 @@
             <x-calendario.calendario :url="route('curso.dia.create', $curso)" :inicial="\Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString()" :eventos="$eventosCalendario" />
         </x-slot:calendario>
 
+        {{-- Carrito y pedidos de material: solo administrador y coordinador --}}
+        @if ($puedePedirMaterial)
         <x-slot:carrito title="Carrito">
             <x-interfaz.panel.tarjeta titulo="Peticiones de logística">
                 <div class="mb-4 flex items-center justify-between">
@@ -470,5 +474,6 @@
                 @endforelse
             </x-interfaz.panel.tarjeta>
         </x-slot:pedidos>
+        @endif
     </x-interfaz.layout.pestanas>
 </x-interfaz.layout.app>

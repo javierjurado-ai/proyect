@@ -41,15 +41,27 @@ class EmpresaController extends Controller
             ->filter()
             ->implode(' ');
 
-        $empresas = Empresa::orderBy('nombre')->paginate(15);
+        // Cada rol solo ve su tipo de empresa (ver Empresa::visiblesPara)
+        $tipos = $this->tiposConTexto($rol);
+        $tipo  = (string) $request->query('tipo', '');
 
-        return view('empresa.index', compact('empresas', 'rol', 'nombre'));
+        $empresas = Empresa::visiblesPara($rol)
+            ->with('roles')
+            ->when(array_key_exists($tipo, $tipos), fn ($q) => $q->conRol(RolEmpresa::from($tipo)))
+            ->orderBy('nombre')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('empresa.index', compact('empresas', 'rol', 'nombre', 'tipos', 'tipo'));
     }
 
     // Ficha de la empresa: datos, cursos, créditos, centros, costes y alumnos
     public function visualizarEmpresa(Empresa $empresa)
     {
+        $this->comprobarVisible($empresa);
+
         $empresa->load([
+            'roles',
             'centros',
             'creditosFormativos' => fn ($q) => $q->orderByDesc('año'),
             'cursosGrupo'        => fn ($q) => $q->with('formacion')->orderByDesc('fecha_inicio'),
@@ -58,7 +70,7 @@ class EmpresaController extends Controller
         ]);
 
         // Los datos personales de los alumnos solo los ven administrador y coordinador
-        $rol = Rol::principal(Auth::user()->persona_id);
+        $rol = $this->rolActual();
         $puedeVerAlumnos = in_array($rol, ['ADMINISTRADOR', 'COORDINADOR'], true);
 
         $alumnos = $puedeVerAlumnos
@@ -75,30 +87,33 @@ class EmpresaController extends Controller
     // Mostrar la vista del formulario de creación web
     public function mostrarFormulario()
     {
-        return view('empresa.formulario');
+        $tipos = $this->tiposConTexto($this->rolActual());
+
+        return view('empresa.formulario', compact('tipos'));
     }
 
     // Muestra el formulario de edición de la empresa
     public function vistaEditar($id)
     {
-        $empresa = Empresa::findOrFail($id);
+        $empresa = Empresa::with('roles')->findOrFail($id);
+        $this->comprobarVisible($empresa);
 
-        return view('empresa.formulario', compact('empresa'));
+        $tipos = $this->tiposConTexto($this->rolActual());
+
+        return view('empresa.formulario', compact('empresa', 'tipos'));
     }
 
     // Actualiza la empresa desde el formulario web
     public function actualizarEmpresaWeb(Request $request, $id)
     {
-        $empresa = Empresa::findOrFail($id);
+        $empresa = Empresa::with('roles')->findOrFail($id);
+        $this->comprobarVisible($empresa);
 
-        $datos = $request->validate($this->reglas($empresa->id));
+        $datos = $request->validate($this->reglas($empresa->id, true), $this->mensajes());
 
         DB::transaction(function () use ($empresa, $datos) {
             $empresa->update(collect($datos)->except('roles')->all());
-            // Los roles solo se cambian si vienen en la petición
-            if (array_key_exists('roles', $datos)) {
-                $this->sincronizarRoles($empresa, $datos['roles']);
-            }
+            $this->sincronizarRoles($empresa, $this->rolesFinales($empresa, $datos['roles']));
         });
 
         return redirect()
@@ -109,7 +124,16 @@ class EmpresaController extends Controller
     // Elimina la empresa desde la tabla web
     public function eliminarEmpresaWeb($id)
     {
-        $empresa = Empresa::findOrFail($id);
+        $empresa = Empresa::with('roles')->findOrFail($id);
+        $this->comprobarVisible($empresa);
+
+        // Si la empresa también es de otro tipo que tú no ves (p. ej. cliente y proveedor),
+        // no se borra: se quedaría sin ella otro departamento. Eso lo decide el administrador.
+        if ($this->tiposQueNoVe($empresa)) {
+            return redirect()
+                ->route('empresa.index')
+                ->with('error', 'No se puede eliminar «' . $empresa->nombre . '»: también es ' . mb_strtolower(implode(' y ', $this->tiposQueNoVe($empresa))) . '. Pídeselo al administrador.');
+        }
 
         try {
             DB::transaction(function () use ($empresa) {
@@ -134,7 +158,8 @@ class EmpresaController extends Controller
     // Listar todas las empresas con sus roles (?rol=PROVEEDOR para filtrar)
     public function listarEmpresa(Request $request)
     {
-        $empresas = Empresa::with('roles')
+        $empresas = Empresa::visiblesPara($this->rolActual())
+            ->with('roles')
             ->when($request->filled('rol') && RolEmpresa::tryFrom($request->rol),
                 fn ($q) => $q->conRol(RolEmpresa::from($request->rol)))
             ->orderBy('nombre')
@@ -146,7 +171,7 @@ class EmpresaController extends Controller
     // Mostrar una empresa en concreto
     public function obtenerEmpresaPorID($id)
     {
-        $empresa = Empresa::with('roles')->find($id);
+        $empresa = Empresa::visiblesPara($this->rolActual())->with('roles')->find($id);
 
         if (! $empresa) {
             return response()->json(['mensaje' => 'Empresa no encontrada'], 404);
@@ -158,12 +183,12 @@ class EmpresaController extends Controller
     // Crear una empresa (sirve tanto para la web como para la API)
     public function agregarEmpresa(Request $request)
     {
-        $datos = $request->validate($this->reglas());
+        // Desde el formulario web el tipo es obligatorio; por la API, si no viene, se pone uno por defecto
+        $datos = $request->validate($this->reglas(null, ! $request->expectsJson()), $this->mensajes());
 
         $empresa = DB::transaction(function () use ($datos) {
             $empresa = Empresa::create(collect($datos)->except('roles')->all());
-            // Si no se indican roles, se crea como CLIENTE (lo que eran todas hasta ahora)
-            $this->sincronizarRoles($empresa, $datos['roles'] ?? [RolEmpresa::Cliente->value]);
+            $this->sincronizarRoles($empresa, $datos['roles'] ?? [$this->tipoPorDefecto()]);
 
             return $empresa;
         });
@@ -228,7 +253,8 @@ class EmpresaController extends Controller
      *  AUXILIARES
      * ========================================================= */
 
-    private function reglas(?int $id = null): array
+    // $conTipo: el tipo de empresa es obligatorio (formulario web)
+    private function reglas(?int $id = null, bool $conTipo = false): array
     {
         return [
             'cif'                => ['required', 'string', 'max:15', Rule::unique('empresa', 'cif')->ignore($id)],
@@ -242,9 +268,65 @@ class EmpresaController extends Controller
             'telefono'           => 'nullable|string|max:20',
             'total_trabajadores' => 'nullable|integer|min:0',
             'activo'             => 'sometimes|boolean',
-            'roles'              => 'sometimes|array|min:1',
-            'roles.*'            => ['distinct', Rule::enum(RolEmpresa::class)],
+            'roles'              => [$conTipo ? 'required' : 'sometimes', 'array', 'min:1'],
+            // Solo los tipos que puede asignar quien está conectado
+            'roles.*'            => ['distinct', Rule::in(Empresa::tiposVisiblesPara($this->rolActual()))],
         ];
+    }
+
+    private function mensajes(): array
+    {
+        return [
+            'roles.required' => 'Elige al menos un tipo de empresa.',
+            'roles.min'      => 'Elige al menos un tipo de empresa.',
+            'roles.*.in'     => 'No puedes asignar ese tipo de empresa.',
+            'cif.unique'     => 'Ya hay una empresa con ese CIF.',
+        ];
+    }
+
+    private function rolActual(): ?string
+    {
+        return Rol::principal(Auth::user()->persona_id);
+    }
+
+    // [CLIENTE => 'Cliente', ...] con los tipos que ve el rol
+    private function tiposConTexto(?string $rol): array
+    {
+        return collect(Empresa::tiposVisiblesPara($rol))
+            ->mapWithKeys(fn ($t) => [$t => ucfirst(strtolower($t))])
+            ->all();
+    }
+
+    // Si no la puede ver, para él no existe
+    private function comprobarVisible(Empresa $empresa): void
+    {
+        abort_unless($empresa->esVisiblePara($this->rolActual()), 404);
+    }
+
+    // Tipos que tiene la empresa y que quien está conectado no ve
+    private function tiposQueNoVe(Empresa $empresa): array
+    {
+        $visibles = Empresa::tiposVisiblesPara($this->rolActual());
+
+        return $empresa->roles->pluck('rol_empresa')->filter()
+            ->map(fn ($r) => $r->value)
+            ->reject(fn ($t) => in_array($t, $visibles, true))
+            ->values()->all();
+    }
+
+    // Al editar, lo marcado sustituye a los tipos que ve, y se conservan los que no ve
+    // (si el coordinador edita una empresa que además es proveedora, sigue siéndolo)
+    private function rolesFinales(Empresa $empresa, array $marcados): array
+    {
+        return array_values(array_unique(array_merge($marcados, $this->tiposQueNoVe($empresa))));
+    }
+
+    // Tipo que se pone si por la API no se indica ninguno
+    private function tipoPorDefecto(): string
+    {
+        $visibles = Empresa::tiposVisiblesPara($this->rolActual());
+
+        return in_array(RolEmpresa::Cliente->value, $visibles, true) ? RolEmpresa::Cliente->value : ($visibles[0] ?? RolEmpresa::Cliente->value);
     }
 
     // Deja a la empresa exactamente con los roles indicados (tabla rol_empresa)
