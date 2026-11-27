@@ -349,7 +349,8 @@ class CentroController extends Controller
     // [id => nombre] de empresas y [valor => texto] de tipos de centro
     private function desplegables(): array
     {
-        $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
+        // Solo las empresas que ve su rol (coordinador: formadoras y clientes; administrador: todas)
+        $empresas = Empresa::visiblesPara(Rol::principal(Auth::user()->persona_id))->orderBy('nombre')->pluck('nombre', 'id');
 
         $tiposCentro = collect(TipoCentro::cases())
             ->mapWithKeys(fn ($t) => [$t->value => ucfirst(strtolower($t->value))]);

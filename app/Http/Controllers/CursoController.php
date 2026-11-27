@@ -97,6 +97,9 @@ class CursoController extends Controller
         // Para el resto ni siquiera se consultan, así no llegan a la vista.
         $puedeVerPersonas = in_array($rol, ['ADMINISTRADOR', 'COORDINADOR'], true);
 
+        // El material (carrito y pedidos de logística) tampoco lo ve el comercial
+        $puedePedirMaterial = in_array($rol, ['ADMINISTRADOR', 'COORDINADOR'], true);
+
         $curso->load(['formacion', 'presupuesto', 'peticionLogistica', 'centro']);
 
         if ($puedeVerPersonas) {
@@ -120,7 +123,7 @@ class CursoController extends Controller
             ? PeticionProducto::where('peticiones_logistica_id', $peticionSinEstado->id)->get()
             : collect();
 
-        return view('curso.visualizar', compact('curso', 'rol', 'nombre', 'puedeVerPersonas', 'productos', 'peticiones'));
+        return view('curso.visualizar', compact('curso', 'rol', 'nombre', 'puedeVerPersonas', 'puedePedirMaterial', 'productos', 'peticiones'));
     }
 
     public function crearTablaPorDocente($id)
@@ -158,7 +161,8 @@ class CursoController extends Controller
             'id',
             $curso->alumnos()->select('persona_id')
         )->get();
-        $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
+        // Solo las empresas que ve su rol (coordinador: formadoras y clientes; administrador: todas)
+        $empresas = Empresa::visiblesPara(Rol::principal(Auth::user()->persona_id))->orderBy('nombre')->pluck('nombre', 'id');
         $lopd = collect(LOPD::cases())
             ->mapWithKeys(fn($l) => [$l->value => ucfirst(strtolower($l->value))]);
         $categoriasProfesional = collect(CategoriaProfesional::cases())
@@ -174,7 +178,8 @@ class CursoController extends Controller
             'id',
             $curso->docentes()->select('persona_id')
         )->get();
-        $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
+        // Solo las empresas que ve su rol (coordinador: formadoras y clientes; administrador: todas)
+        $empresas = Empresa::visiblesPara(Rol::principal(Auth::user()->persona_id))->orderBy('nombre')->pluck('nombre', 'id');
         $lopd = collect(LOPD::cases())
             ->mapWithKeys(fn($l) => [$l->value => ucfirst(strtolower($l->value))]);
         $categorias = collect(Categoria::cases())

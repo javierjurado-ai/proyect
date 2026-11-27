@@ -34,13 +34,14 @@
         {{-- Almacén, logística y compras: solo LOGISTA (y ADMINISTRADOR) --}}
         <x-interfaz.layout.menu-enlace :rol="$rol" ruta="pedidosLogistica.index" roles="ADMINISTRADOR,LOGISTA" :contador="$contadores['pedidos'] ?? null">Pedidos de material</x-interfaz.layout.menu-enlace>
         <x-interfaz.layout.menu-enlace :rol="$rol" ruta="traspaso.index" roles="ADMINISTRADOR,LOGISTA" :contador="$contadores['traspasos'] ?? null">Traspasos entre almacenes</x-interfaz.layout.menu-enlace>
-        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="almacen.index" roles="ADMINISTRADOR,LOGISTA">Almacén y artículos</x-interfaz.layout.menu-enlace>
+        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="almacen.index" roles="ADMINISTRADOR,LOGISTA">Almacenes</x-interfaz.layout.menu-enlace>
+        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="articulo.index" roles="ADMINISTRADOR,LOGISTA">Artículos</x-interfaz.layout.menu-enlace>
         <x-interfaz.layout.menu-enlace :rol="$rol" ruta="compra.index" roles="ADMINISTRADOR,LOGISTA">Compras</x-interfaz.layout.menu-enlace>
 
         {{-- Comercial --}}
-        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="empresa.index" roles="ADMINISTRADOR,COMERCIAL">Empresas</x-interfaz.layout.menu-enlace>
+        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="empresa.index" roles="ADMINISTRADOR,COORDINADOR,COMERCIAL,LOGISTA">Empresas</x-interfaz.layout.menu-enlace>
         <x-interfaz.layout.menu-enlace :rol="$rol" ruta="presupuesto.index" roles="ADMINISTRADOR,COMERCIAL" :contador="$contadores['presupuestos'] ?? null">Presupuestos</x-interfaz.layout.menu-enlace>
-        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="credito.index" roles="ADMINISTRADOR,COMERCIAL">Créditos</x-interfaz.layout.menu-enlace>
+        <x-interfaz.layout.menu-enlace :rol="$rol" ruta="credito.index" roles="ADMINISTRADOR,COORDINADOR,COMERCIAL">Créditos</x-interfaz.layout.menu-enlace>
 
         {{-- Administración --}}
         <x-interfaz.layout.menu-enlace :rol="$rol" ruta="persona.index" roles="ADMINISTRADOR" :contador="$contadores['usuarios'] ?? null">Usuarios y roles</x-interfaz.layout.menu-enlace>

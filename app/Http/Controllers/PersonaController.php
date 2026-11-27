@@ -69,8 +69,8 @@ class PersonaController extends Controller
         $lopd = collect(LOPD::cases())
             ->mapWithKeys(fn($l) => [$l->value => ucfirst(strtolower($l->value))]);
 
-        // [id => nombre] de la tabla empresa para el desplegable
-        $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
+        // [id => nombre] de las empresas que ve su rol, para el desplegable
+        $empresas = Empresa::visiblesPara($rol)->orderBy('nombre')->pluck('nombre', 'id');
         $volver = $request->old('volver', url()->previous());
         return view('persona.formulario', compact('generos', 'empresas', 'lopd', 'rol', 'nombre','volver'));
     }
