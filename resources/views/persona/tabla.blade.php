@@ -1,11 +1,18 @@
 <x-tabla.tabla vacio="Todavía no hay personas guardadas."
-    :columnas="['Nombre', 'DNI / NIE', 'Email', 'Teléfono', 'Género', 'LOPD', ['Acciones', 'center']]">
+    :columnas="['Acciones', 'Nombre', 'DNI / NIE', 'Email', 'Teléfono', 'Género', 'LOPD']">
     @foreach ($personas as $persona)
         @php
             $genero = $persona->genero->value ?? $persona->genero;
             $lopd = $persona->LOPD->value ?? $persona->LOPD;
         @endphp
-        <tr class="hover:bg-stone-50">
+        <x-tabla.fila>
+            {{-- ACCIONES (primera columna) --}}
+            <td class="px-4 py-3 whitespace-nowrap">
+                <div class="inline-flex items-center gap-2">
+                    <x-tabla.boton-editar :href="route('persona.edit', $persona->id)" />
+                </div>
+            </td>
+
             <td class="px-4 py-3 font-semibold text-slate-900">
                 {{ trim($persona->nombre . ' ' . $persona->primer_apellido . ' ' . $persona->segundo_apellido) }}
             </td>
@@ -20,7 +27,6 @@
                     {{ strtoupper((string) $lopd) === 'SI' ? 'Sí' : 'No' }}
                 </span>
             </td>
-
-        </tr>
+        </x-tabla.fila>
     @endforeach
 </x-tabla.tabla>

@@ -8,6 +8,7 @@ use App\Models\Enums\TipoCentro;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use App\Models\Persona;
+use App\Models\Enums\TipoRol;
 use App\Models\Rol;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -25,7 +26,7 @@ class CentroController extends Controller
     {
         $personaId = Auth::user()->persona_id;
 
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $rol     = Rol::principal($personaId);
         $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
 
         if (! $rol || ! $persona) {
@@ -120,9 +121,10 @@ class CentroController extends Controller
     {
         $persona = Persona::findOrFail($id);
 
-        $rol = Rol::updateOrCreate(['persona_id' => $persona->id], ['rol' => 'COORDINADOR']);
+        // Se añade a los roles que ya tenga (tabla rol_persona); no se repite si ya lo era
+        $persona->roles()->syncWithoutDetaching([Rol::idDePersona(TipoRol::Coordinador)]);
 
-        return response()->json($rol, 201);
+        return response()->json($persona->roles()->get(), 201);
     }
 
     /* =========================================================
@@ -360,7 +362,7 @@ class CentroController extends Controller
     {
         $personaId = Auth::user()->persona_id;
 
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $rol     = Rol::principal($personaId);
         $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
 
         $nombre = collect([$persona?->nombre, $persona?->primer_apellido, $persona?->segundo_apellido])

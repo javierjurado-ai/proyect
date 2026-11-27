@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\CursoAlumno;
 use App\Models\Empresa;
-use App\Models\EmpresaRol;
 use App\Models\Enums\RolEmpresa;
 use App\Models\Persona;
 use App\Models\Rol;
@@ -25,7 +24,7 @@ class EmpresaController extends Controller
     {
         $personaId = Auth::user()->persona_id;
 
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $rol     = Rol::principal($personaId);
         $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
 
         if (! $rol || ! $persona) {
@@ -59,7 +58,7 @@ class EmpresaController extends Controller
         ]);
 
         // Los datos personales de los alumnos solo los ven administrador y coordinador
-        $rol = Rol::where('persona_id', Auth::user()->persona_id)->value('rol')?->value;
+        $rol = Rol::principal(Auth::user()->persona_id);
         $puedeVerAlumnos = in_array($rol, ['ADMINISTRADOR', 'COORDINADOR'], true);
 
         $alumnos = $puedeVerAlumnos
@@ -115,7 +114,7 @@ class EmpresaController extends Controller
         try {
             DB::transaction(function () use ($empresa) {
                 // Los roles no son datos: se quitan para que no impidan borrar la empresa
-                $empresa->roles()->delete();
+                $empresa->roles()->detach();
                 $empresa->delete();
             });
             return redirect()
@@ -214,7 +213,7 @@ class EmpresaController extends Controller
         try {
             DB::transaction(function () use ($empresa) {
                 // Los roles no son datos: se quitan para que no impidan borrar la empresa
-                $empresa->roles()->delete();
+                $empresa->roles()->detach();
                 $empresa->delete();
             });
             return response()->json(['mensaje' => 'Empresa eliminada']);
@@ -248,13 +247,11 @@ class EmpresaController extends Controller
         ];
     }
 
-    // Deja a la empresa exactamente con los roles indicados
+    // Deja a la empresa exactamente con los roles indicados (tabla rol_empresa)
     private function sincronizarRoles(Empresa $empresa, array $roles): void
     {
-        $empresa->roles()->whereNotIn('rol', $roles)->delete();
-
-        foreach ($roles as $rol) {
-            EmpresaRol::firstOrCreate(['empresa_id' => $empresa->id, 'rol' => $rol]);
-        }
+        $empresa->roles()->sync(
+            collect($roles)->map(fn ($rol) => Rol::idDeEmpresa($rol))->unique()->all()
+        );
     }
 }

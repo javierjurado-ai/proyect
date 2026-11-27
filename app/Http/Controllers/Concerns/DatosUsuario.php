@@ -14,11 +14,11 @@ trait DatosUsuario
     protected function rolYNombre(): array
     {
         $personaId = Auth::user()->persona_id;
-        $rol = Rol::where('persona_id', $personaId)->value('rol');
+        $rol = Rol::principal($personaId);
         $persona = Persona::find($personaId);
 
         return [
-            $rol instanceof \BackedEnum ? $rol->value : $rol,
+            $rol,
             collect([$persona?->nombre, $persona?->primer_apellido, $persona?->segundo_apellido])->filter()->implode(' '),
         ];
     }

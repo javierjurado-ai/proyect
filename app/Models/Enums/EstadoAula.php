@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Models\enums;
+namespace App\Models\Enums;
 
 enum EstadoAula: string
 {
     case Disponible = 'DISPONIBLE';
     case Ocupada = 'OCUPADA';
-    
 }

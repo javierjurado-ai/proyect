@@ -29,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
                     $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
 
                     $datos = [
-                        'rol'          => Rol::where('persona_id', $personaId)->value('rol')?->value,
+                        'rol'          => Rol::principal($personaId),
                         'nombre'       => collect([$persona?->nombre, $persona?->primer_apellido, $persona?->segundo_apellido])->filter()->implode(' '),
                         'primerNombre' => $persona?->nombre ?? '',
                     ];

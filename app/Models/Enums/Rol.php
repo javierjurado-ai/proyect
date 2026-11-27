@@ -2,7 +2,7 @@
 
 namespace App\Models\Enums;
 
-enum Modalidad: string
+Enum Rol: string
 {
     case Alumno = 'ALUMNO';
     case Docente = 'DOCENTE';

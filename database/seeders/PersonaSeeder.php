@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Empresa;
-use App\Models\enums\Genero;
+use App\Models\Enums\Genero;
 use App\Models\Persona;
 use Illuminate\Database\Seeder;
 

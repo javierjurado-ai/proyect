@@ -1,12 +1,11 @@
 @php
     // Variables que usa este parcial (vienen del ámbito de la vista que lo incluye):
-    // $alumno, $editando, $curso, $cursos, $personas, $empresas,
-    // $jornadas, $categoriasProfesionales, $nivelesEstudio, $siNo
-    // Se incluye así: @include('alumno.formulario', ['incrustado' => true])
+    // $docente, $editando, $curso, $cursos, $personas, $empresas, $categorias, $contratos
+    // Se incluye así: @include('curso.formularioDocente', ['incrustado' => true])
     $incrustado = $incrustado ?? false;
     $editando = $editando ?? false;
     $docente = $docente ?? null;
-    // Si viene $prefijo (ej. 'alumnos[__ID__]') los campos se llaman alumnos[__ID__][erte], etc.
+    // Si viene $prefijo (ej. 'docentes[__ID__]') los campos se llaman docentes[__ID__][IBAN], etc.
     $prefijo = $prefijo ?? null;
     $n = fn(string $campo) => $prefijo ? "{$prefijo}[{$campo}]" : $campo;
 
@@ -49,12 +48,17 @@
             <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Información del Contrato
             </legend>
             <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                <x-formulario.seleccion :name="$n('categoria')" label="Categoria *" :options="$categorias" :value="$docente->categoria->value ?? ($docente->categoria ?? '')" />
-                <x-formulario.seleccion :name="$n('tipo_contrato')" label="Tipo de Contrato *" :options="$contratos"
-                    :value="$docente->tipo_contrato->value ?? ($docente->tipo_contrato ?? '')" />
-                <x-formulario.entrada name="convenio" label="Convenio *" maxlength="45" :value="$docente->convenio ?? ''" />
-                <x-formulario.entrada name="categoria" label="Categoria *" maxlength="45" :value="$docente->categoria ?? ''" />
-                <x-formulario.entrada name="IBAN" label="IBAN *" maxlength="45" :value="$docente->IBAN ?? ''" />
+                {{-- catagoria (sic): así se llama la columna en la BD. CUENTA AJENA o AUTONOMO --}}
+                <x-formulario.seleccion :name="$n('catagoria')" label="Tipo de trabajador *" placeholder="-- Selecciona --"
+                    :options="$categorias" :value="$docente->catagoria ?? ''" />
+                <x-formulario.seleccion :name="$n('tipo_contrato')" label="Tipo de contrato *" placeholder="-- Selecciona --"
+                    :options="$contratos" :value="$docente->tipo_contrato ?? ''" />
+                <x-formulario.entrada :name="$n('convenio')" label="Convenio *" maxlength="45"
+                    :value="$docente->convenio ?? 'FORMACION NO REGLADA'" />
+                {{-- categoria: el puesto. Si se deja vacío se guarda DOCENTE --}}
+                <x-formulario.entrada :name="$n('categoria')" label="Categoría (puesto)" maxlength="45"
+                    :value="$docente->categoria ?? 'DOCENTE'" />
+                <x-formulario.entrada :name="$n('IBAN')" label="IBAN *" maxlength="45" :value="$docente->IBAN ?? ''" />
             </div>
         </fieldset>
 
@@ -62,14 +66,14 @@
             <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Horas y Fechas
             </legend>
             <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                <x-formulario.entrada name="numero_horas" label="Numero de horas *" type="number" min="0"
+                <x-formulario.entrada :name="$n('numero_horas')" label="Numero de horas *" type="number" min="0"
                     step="0.01" :value="$docente->numero_horas ?? ''" />
-                <x-formulario.entrada name="horas_presenciales" label="Horas presenciales" type="number" min="0"
+                <x-formulario.entrada :name="$n('horas_presenciales')" label="Horas presenciales" type="number" min="0"
                     step="0.01" :value="$docente->horas_presenciales ?? ''" />
-                <x-formulario.entrada name="horas_virtuales" label="Horas virtuales" type="number" min="0"
+                <x-formulario.entrada :name="$n('horas_virtuales')" label="Horas virtuales" type="number" min="0"
                     step="0.01" :value="$docente->horas_virtuales ?? ''" />
-                <x-formulario.entrada name="fecha_inicio" label="Fecha inicio *" type="date" :value="$fecha($curso->fecha_inicio ?? null)" />
-                <x-formulario.entrada name="fecha_fin" label="Fecha fin *" type="date" :value="$fecha($curso->fecha_fin ?? null)" />
+                <x-formulario.entrada :name="$n('fecha_inicio')" label="Fecha inicio *" type="date" :value="$fecha($curso->fecha_inicio ?? null)" />
+                <x-formulario.entrada :name="$n('fecha_fin')" label="Fecha fin *" type="date" :value="$fecha($curso->fecha_fin ?? null)" />
             </div>
         </fieldset>
 

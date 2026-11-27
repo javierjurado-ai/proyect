@@ -14,7 +14,7 @@ use App\Models\Enums\Categoria;
 use App\Models\Enums\CategoriaProfesional;
 use App\Models\Enums\EstadoAula;
 use App\Models\Enums\EstadoLogistica;
-use App\Models\enums\LOPD;
+use App\Models\Enums\LOPD;
 use App\Models\Enums\Modalidad;
 use App\Models\Enums\NivelEstudio;
 use App\Models\Enums\TipoContrato;
@@ -38,8 +38,9 @@ class CursoController extends Controller
     public function crearTabla(Request $request)
     {
         $personaId = Auth::user()->persona_id;
-        $rol       = Rol::where('persona_id', $personaId)->value('rol')?->value;
-        $persona   = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
+
+        $rol     = Rol::principal($personaId);
+        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
 
         if (! $rol || ! $persona) {
             Auth::logout();
@@ -90,34 +91,25 @@ class CursoController extends Controller
 
     public function visualizarCurso(Request $request, Curso $curso)
     {
-        $personaId = Auth::user()->persona_id;
-        $curso->load(['formacion', 'presupuesto', 'peticionLogistica', 'centro']);
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
-        $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
-        $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
-            ->filter()
-            ->implode(' ');
-        $usuario = $this->datosUsuario();
+        ['rol' => $rol, 'nombre' => $nombre] = $this->datosUsuario();
 
-        // Los alumnos solo los ven el administrador y el coordinador.
+        // Los datos personales de alumnos y docentes solo los ven el administrador y el coordinador.
         // Para el resto ni siquiera se consultan, así no llegan a la vista.
-        $puedeVerAlumnos = in_array($usuario['rol'], ['ADMINISTRADOR', 'COORDINADOR'], true);
+        $puedeVerPersonas = in_array($rol, ['ADMINISTRADOR', 'COORDINADOR'], true);
 
-        // Cargamos las relaciones necesarias incluyendo los alumnos y sus datos personales
-        $curso->load([
-            'formacion',
-            'presupuesto',
-            'centro',
-            'alumnos.persona',
-            'alumnos.empresa',
-            'docentes.persona',
-        ]);
+        $curso->load(['formacion', 'presupuesto', 'peticionLogistica', 'centro']);
 
+        if ($puedeVerPersonas) {
+            $curso->load(['alumnos.persona', 'alumnos.empresa', 'docentes.persona']);
+        }
+
+        // Petición de logística sin enviar (estado NULL) y sus productos (pestaña Pedidos)
         $peticionSinEstado = PeticionesLogistica::with(['solicitante', 'centro'])
             ->where('curso_id', $curso->id)
             ->whereNull('estado')
             ->first();
 
+        // Peticiones ya enviadas a logística
         $peticiones = PeticionesLogistica::with(['solicitante', 'centro', 'peticionProductos'])
             ->where('curso_id', $curso->id)
             ->whereNotNull('estado')
@@ -128,7 +120,7 @@ class CursoController extends Controller
             ? PeticionProducto::where('peticiones_logistica_id', $peticionSinEstado->id)->get()
             : collect();
 
-        return view('curso.visualizar', compact('curso', 'rol', 'nombre', 'persona', 'nombre', 'productos', 'peticiones'));
+        return view('curso.visualizar', compact('curso', 'rol', 'nombre', 'puedeVerPersonas', 'productos', 'peticiones'));
     }
 
     public function crearTablaPorDocente($id)
@@ -177,9 +169,10 @@ class CursoController extends Controller
     }
     public function agregarDocentes(Curso $curso)
     {
+        // Personas que todavía no son docentes de este curso (un alumno sí puede serlo)
         $personasDisponibles = Persona::whereNotIn(
             'id',
-            $curso->alumnos()->select('persona_id')
+            $curso->docentes()->select('persona_id')
         )->get();
         $empresas = Empresa::orderBy('nombre')->pluck('nombre', 'id');
         $lopd = collect(LOPD::cases())
@@ -191,22 +184,22 @@ class CursoController extends Controller
         return view('curso.tablaDocente', compact('curso', 'personasDisponibles', 'empresas', 'lopd', 'categorias', 'contratos'));
     }
     ////////////////////Roles////////////////////////////
-    // OJO: el enum `rol` de la BD solo admite ADMINISTRADOR, COMERCIAL y COORDINADOR.
-    // Estos dos métodos fallarán hasta que se amplíe el enum en la BD.
+    // Añaden el rol a la persona (tabla rol_persona) sin quitarle los que ya tenga.
+    // Una misma persona puede ser, por ejemplo, ALUMNO y DOCENTE.
     public function agregarRolDocente($id)
     {
-        return Rol::firstOrCreate([
-            'rol'        => TipoRol::Docente,
-            'persona_id' => $id,
-        ]);
+        $persona = Persona::findOrFail($id);
+        $persona->roles()->syncWithoutDetaching([Rol::idDePersona(TipoRol::Docente)]);
+
+        return response()->json($persona->roles()->get(), 201);
     }
 
     public function agregarRolAlumno($id)
     {
-        return Rol::firstOrCreate([
-            'rol'        => TipoRol::Alumno, // antes guardaba Docente por error
-            'persona_id' => $id,
-        ]);
+        $persona = Persona::findOrFail($id);
+        $persona->roles()->syncWithoutDetaching([Rol::idDePersona(TipoRol::Alumno)]);
+
+        return response()->json($persona->roles()->get(), 201);
     }
 
     /////////////////////Alumnos y docentes del curso///////////////////////////
@@ -238,24 +231,28 @@ class CursoController extends Controller
 
     public function guardarAlumnos(Request $request, Curso $curso)
     {
-        //para la función para visualizar la petición
-        //dd($request->input('alumnos'), (new \App\Models\Empresa)->getTable(), (new \App\Models\Empresa)->getKeyName());
+        // Los campos SI/NO usan el enum LOPD (sus valores son justo 'SI' y 'NO')
+        $siNo = ['required', Rule::enum(LOPD::class)];
+
         $request->validate([
             'alumnos'                                         => ['required', 'array', 'min:1'],
             'alumnos.*.persona_id'                            => ['required', 'integer', 'distinct', Rule::exists((new Persona)->getTable(), 'id')],
-            'alumnos.*.empresa_id' => ['required', Rule::exists((new Empresa)->getTable(), (new Empresa)->getKeyName())],
-            'alumnos.*.jornada_laboral'                       => ['required', 'string'],
-            'alumnos.*.categoria_profesional'                 => ['required', 'string'],
-            'alumnos.*.erte'                                  => ['required', 'string'],
-            'alumnos.*.fijo_discontinuo'                      => ['required', 'string'],
-            'alumnos.*.nivel_estudio'                         => ['required', 'string'],
-            'alumnos.*.diploma'                               => ['required', 'string'],
-            'alumnos.*.certificado_discapacidad'              => ['required', 'string'],
-            'alumnos.*.certificado_afectado_terrorismo'       => ['required', 'string'],
-            'alumnos.*.certificado_afectado_violencia_genero' => ['required', 'string'],
+            'alumnos.*.empresa_id'                            => ['required', Rule::exists((new Empresa)->getTable(), (new Empresa)->getKeyName())],
+            'alumnos.*.jornada_laboral'                       => $siNo,
+            'alumnos.*.categoria_profesional'                 => ['required', Rule::enum(CategoriaProfesional::class)],
+            'alumnos.*.erte'                                  => $siNo,
+            'alumnos.*.fijo_discontinuo'                      => $siNo,
+            'alumnos.*.nivel_estudio'                         => ['required', Rule::enum(NivelEstudio::class)],
+            'alumnos.*.diploma'                               => $siNo,
+            'alumnos.*.certificado_discapacidad'              => $siNo,
+            'alumnos.*.certificado_afectado_terrorismo'       => $siNo,
+            'alumnos.*.certificado_afectado_violencia_genero' => $siNo,
         ], [
-            'alumnos.required'   => 'Añade al menos un alumno.',
-            'alumnos.*.required' => 'Faltan datos de algún alumno.',
+            'alumnos.required'                     => 'Añade al menos un alumno.',
+            'alumnos.*.*.required'                 => 'Faltan datos de algún alumno.',
+            'alumnos.*.categoria_profesional.enum' => 'La categoría profesional no es válida.',
+            'alumnos.*.nivel_estudio.enum'         => 'El nivel de estudios no es válido.',
+            'alumnos.*.*.enum'                     => 'Algún campo Sí/No tiene un valor no válido.',
         ]);
 
         // Personas que ya están matriculadas en este curso (evita duplicados).
@@ -270,6 +267,9 @@ class CursoController extends Controller
                 if (in_array((int) $datos['persona_id'], $yaMatriculadas, true)) {
                     continue;
                 }
+
+                // Quien se matricula pasa a tener el rol ALUMNO (si no lo tenía ya)
+                Persona::find($datos['persona_id'])?->roles()->syncWithoutDetaching([Rol::idDePersona(TipoRol::Alumno)]);
 
                 CursoAlumno::create([
                     'curso_id'   => $curso->id, // viene de la ruta, no del formulario
@@ -292,31 +292,33 @@ class CursoController extends Controller
 
         return redirect()
             ->route('curso.visualizar', $curso)
-            ->with('status', $guardados === 1
+            ->with('ok', $guardados === 1
                 ? 'Alumno agregado correctamente.'
                 : "{$guardados} alumnos agregados correctamente.");
     }
     public function guardarDocentes(Request $request, Curso $curso)
     {
-        // Para ver lo que llega:
-        // dd($request->input('docentes'));
-
         $request->validate([
             'docentes'                      => ['required', 'array', 'min:1'],
             'docentes.*.persona_id'         => ['required', 'integer', 'distinct', Rule::exists((new Persona)->getTable(), (new Persona)->getKeyName())],
             'docentes.*.empresa_id'         => ['required', Rule::exists((new Empresa)->getTable(), (new Empresa)->getKeyName())],
-            'docentes.*.categoria'          => ['required', 'string', 'max:45'],
-            'docentes.*.tipo_contrato'      => ['required', 'string'],
+            'docentes.*.catagoria'          => ['required', Rule::enum(Categoria::class)],
+            'docentes.*.tipo_contrato'      => ['required', Rule::enum(TipoContrato::class)],
             'docentes.*.convenio'           => ['required', 'string', 'max:45'],
+            'docentes.*.categoria'          => ['nullable', 'string', 'max:45'],
             'docentes.*.IBAN'               => ['required', 'string', 'max:45'],
-            'docentes.*.numero_horas'       => ['required', 'numeric', 'min:0'],
+            'docentes.*.numero_horas'       => ['required', 'numeric', 'min:0', 'max:9999.99'],
             'docentes.*.horas_presenciales' => ['nullable', 'numeric', 'min:0'],
             'docentes.*.horas_virtuales'    => ['nullable', 'numeric', 'min:0'],
             'docentes.*.fecha_inicio'       => ['required', 'date'],
             'docentes.*.fecha_fin'          => ['required', 'date', 'after_or_equal:docentes.*.fecha_inicio'],
         ], [
-            'docentes.required'   => 'Añade al menos un docente.',
-            'docentes.*.required' => 'Faltan datos de algún docente.',
+            'docentes.required'          => 'Añade al menos un docente.',
+            'docentes.*.required'        => 'Faltan datos de algún docente.',
+            'docentes.*.*.required'      => 'Faltan datos de algún docente.',
+            'docentes.*.catagoria.enum'  => 'El tipo de trabajador no es válido.',
+            'docentes.*.tipo_contrato.enum' => 'El tipo de contrato no es válido.',
+            'docentes.*.fecha_fin.after_or_equal' => 'La fecha de fin no puede ser anterior a la de inicio.',
         ]);
 
         // Personas que ya son docentes de este curso (evita duplicados).
@@ -332,17 +334,21 @@ class CursoController extends Controller
                     continue;
                 }
 
+                // Quien da clase pasa a tener el rol DOCENTE (si no lo tenía ya)
+                Persona::find($datos['persona_id'])?->roles()->syncWithoutDetaching([Rol::idDePersona(TipoRol::Docente)]);
+
                 CursoDocente::create([
                     'curso_id'           => $curso->id, // viene de la ruta, no del formulario
                     'persona_id'         => $datos['persona_id'],
                     'empresa_id'         => $datos['empresa_id'],
-                    'categoria'          => $datos['categoria'],
+                    'catagoria'          => $datos['catagoria'],
                     'tipo_contrato'      => $datos['tipo_contrato'],
                     'convenio'           => $datos['convenio'],
+                    'categoria'          => ($datos['categoria'] ?? null) ?: 'DOCENTE',
                     'IBAN'               => $datos['IBAN'],
                     'numero_horas'       => $datos['numero_horas'],
-                    'horas_presenciales' => $datos['horas_presenciales'] ?? null,
-                    'horas_virtuales'    => $datos['horas_virtuales'] ?? null,
+                    'horas_presenciales' => ($datos['horas_presenciales'] ?? '') !== '' ? $datos['horas_presenciales'] : null, // vacío => null (0 se guarda como 0)
+                    'horas_virtuales'    => ($datos['horas_virtuales'] ?? '') !== '' ? $datos['horas_virtuales'] : null, // vacío => null (0 se guarda como 0)
                     'fecha_inicio'       => $datos['fecha_inicio'],
                     'fecha_fin'          => $datos['fecha_fin'],
                 ]);
@@ -353,7 +359,7 @@ class CursoController extends Controller
 
         return redirect()
             ->route('curso.visualizar', $curso)
-            ->with('status', $guardados === 1
+            ->with('ok', $guardados === 1
                 ? 'Docente agregado correctamente.'
                 : "{$guardados} docentes agregados correctamente.");
     }
@@ -689,10 +695,10 @@ class CursoController extends Controller
 
         // Si pertenece a un centro, lo devolvemos explícitamente a la vista de ese centro
         if ($centroId) {
-            return redirect()->to("/view/centro/{$centroId}")->with('success', 'Aula actualizada correctamente.');
+            return redirect()->to("/view/centro/{$centroId}")->with('ok', 'Aula actualizada correctamente.');
         }
 
-        return redirect()->route('aula.index')->with('success', 'Aula actualizada correctamente.');
+        return redirect()->route('aula.index')->with('ok', 'Aula actualizada correctamente.');
     }
 
     // Elimina el aula
@@ -999,12 +1005,8 @@ class CursoController extends Controller
     {
         $personaId = Auth::user()->persona_id;
 
-        // Buscamos el rol a través de la tabla intermedia rol_persona
-        $rol = DB::table('rol_persona')
-            ->join('rol', 'rol.id', '=', 'rol_persona.rol_id')
-            ->where('rol_persona.persona_id', $personaId)
-            ->value('rol.rol'); // O ajusta según el nombre del campo del enum en tu tabla rol
-
+        // Rol con el que entra (tabla rol_persona); si tiene varios, el de más prioridad
+        $rol     = Rol::principal($personaId);
         $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
 
         $nombre = collect([$persona?->nombre, $persona?->primer_apellido, $persona?->segundo_apellido])
@@ -1024,7 +1026,7 @@ class CursoController extends Controller
         $cursoAlumno->delete();
 
         return redirect()
-            ->route('curso.visualizar', $curso)
+            ->route('curso.visualizar', $cursoId)
             ->with('ok', 'Alumno desmatriculado del curso correctamente.');
     }
 

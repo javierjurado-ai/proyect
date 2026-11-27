@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Curso;
 use App\Models\Empresa;
 use App\Models\Persona;
-use App\Models\enums\Genero;
-use App\Models\enums\LOPD;
+use App\Models\Enums\Genero;
+use App\Models\Enums\LOPD;
 use App\Models\Enums\TipoRol;
 use App\Models\Rol;
 use Illuminate\Http\Request;
@@ -19,7 +19,7 @@ class PersonaController extends Controller
     {
         $personaId = Auth::user()->persona_id;
 
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $rol     = Rol::principal($personaId);
         $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
 
         if (! $rol || ! $persona) {
@@ -49,7 +49,7 @@ class PersonaController extends Controller
     {
         $personaId = Auth::user()->persona_id;
 
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $rol     = Rol::principal($personaId);
         $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
         $nombre = collect([$persona->nombre, $persona->primer_apellido, $persona->segundo_apellido])
             ->filter()
@@ -89,10 +89,35 @@ class PersonaController extends Controller
             ->with('ok', 'Persona guardada correctamente.');
     }
 
-    public function editarWeb($id)
+    // Muestra el formulario con los datos de la persona para editarla
+    public function editarFormulario(Request $request, $id)
     {
         $persona = Persona::findOrFail($id);
-        return view('persona.editar', compact('persona'));
+
+        $generos = collect(Genero::cases())
+            ->mapWithKeys(fn($g) => [$g->value => ucfirst(strtolower($g->value))]);
+        $lopd = collect(LOPD::cases())
+            ->mapWithKeys(fn($l) => [$l->value => ucfirst(strtolower($l->value))]);
+
+        // Al volver de un error de validación se conserva a dónde había que regresar
+        $volver = $request->old('volver', url()->previous());
+
+        return view('persona.formulario', compact('persona', 'generos', 'lopd', 'volver'));
+    }
+
+    // Guarda los cambios del formulario de edición y vuelve a donde estaba
+    public function update(Request $request, $id)
+    {
+        $persona = Persona::findOrFail($id);
+
+        $this->normalizarDocumento($request);
+
+        $datos = $request->validate($this->reglas(), $this->mensajes());
+
+        $persona->update($datos);
+
+        return redirect($this->urlVolver($request, route('persona.index')))
+            ->with('ok', 'Persona actualizada correctamente.');
     }
     /* =========================================================
      *  API (JSON)
@@ -109,17 +134,11 @@ class PersonaController extends Controller
             'rol.enum'     => 'El rol seleccionado no es válido.',
         ]);
 
-        Rol::firstOrCreate([
-            'persona_id' => $persona->id,
-            'rol'        => $datos['rol'],
-        ]);
+        // Se añade a los que ya tenga (tabla rol_persona); no se repite
+        $persona->roles()->syncWithoutDetaching([Rol::idDePersona($datos['rol'])]);
 
         return back()->with('ok', 'Rol asignado correctamente.');
     }
-
-    /* =========================================================
-     *  API (JSON)
-     * ========================================================= */
 
     public function listarPersona()
     {
@@ -141,16 +160,7 @@ class PersonaController extends Controller
 
         Persona::create($datos);
 
-        $volver = $request->input('volver');
-
-        // Solo se aceptan URLs de este mismo sitio (evita redirecciones a webs externas)
-        $host = parse_url((string) $volver, PHP_URL_HOST);
-        $esInterna = is_string($volver)
-            && $volver !== ''
-            && ($host === null || $host === $request->getHost())
-            && ! str_starts_with($volver, '//');
-
-        return redirect($esInterna ? $volver : route('formacion.index'))
+        return redirect($this->urlVolver($request, route('persona.index')))
             ->with('ok', 'Persona guardada correctamente.');
     }
     public function agregarPersonaPorAlumno(Request $request, Curso $curso)
@@ -190,6 +200,21 @@ class PersonaController extends Controller
     /* =========================================================
      *  AUXILIARES (compartidos por formulario y API)
      * ========================================================= */
+
+    // URL a la que volver tras guardar (campo oculto "volver" del formulario).
+    // Solo se aceptan URLs de este mismo sitio, para evitar redirecciones a webs externas.
+    private function urlVolver(Request $request, string $porDefecto): string
+    {
+        $volver = $request->input('volver');
+        $host   = parse_url((string) $volver, PHP_URL_HOST);
+
+        $esInterna = is_string($volver)
+            && $volver !== ''
+            && ($host === null || $host === $request->getHost())
+            && ! str_starts_with($volver, '//');
+
+        return $esInterna ? $volver : $porDefecto;
+    }
 
     // DNI/NIE en mayúsculas y sin espacios; vacío => null
     private function normalizarDocumento(Request $request): void
