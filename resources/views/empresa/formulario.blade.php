@@ -1,5 +1,9 @@
 @php
     $editando = isset($empresa);
+    $rolObj = $editando ? $empresa->roles->first()?->rol_empresa : null;
+    // Si viene como Enum, extraemos su string con ->value; si es string directo, lo usamos
+    $rolActual = $rolObj instanceof \BackedEnum ? $rolObj->value : ($rolObj ?? '');
+    $rolSeleccionado = old('roles.0', $rolActual);
 @endphp
 
 <x-interfaz.layout.app :titulo="$editando ? 'Editar empresa' : 'Nueva empresa'" :rol="$rol" :usuario="$nombre" :contadores="$contadores ?? []">
@@ -15,7 +19,6 @@
         </x-slot:acciones>
     </x-interfaz.panel.cabecera>
 
-    {{-- Resumen de errores (igual que en cursos, centros y formaciones) --}}
     @if ($errors->any())
         <div role="alert" class="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
             Revisa los campos marcados en rojo ({{ $errors->count() }} {{ $errors->count() === 1 ? 'error' : 'errores' }}).
@@ -33,7 +36,6 @@
             <fieldset class="mb-8">
                 <legend class="mb-3 text-sm font-semibold uppercase tracking-wide text-marca-800">Datos de la empresa</legend>
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                    {{-- El componente ya usa old() primero: si hay un error se conserva lo escrito --}}
                     <x-formulario.entrada
                         name="cif"
                         label="CIF *"
@@ -50,6 +52,44 @@
                         :value="$empresa->nombre ?? ''" />
 
                     <x-formulario.entrada
+                        name="direccion"
+                        label="Dirección"
+                        maxlength="150"
+                        contenedor="md:col-span-2"
+                        :value="$empresa->direccion ?? ''" />
+
+                    <x-formulario.entrada
+                        name="codigo_postal"
+                        label="Código postal"
+                        maxlength="5"
+                        :value="$empresa->codigo_postal ?? ''" />
+
+                    <x-formulario.entrada
+                        name="municipio"
+                        label="Municipio"
+                        maxlength="45"
+                        :value="$empresa->municipio ?? ''" />
+
+                    <x-formulario.entrada
+                        name="provincia"
+                        label="Provincia"
+                        maxlength="45"
+                        :value="$empresa->provincia ?? ''" />
+
+                    <x-formulario.entrada
+                        name="email_facturacion"
+                        label="Email"
+                        type="email"
+                        maxlength="100"
+                        :value="$empresa->email_facturacion ?? ''" />
+
+                    <x-formulario.entrada
+                        name="telefono"
+                        label="Teléfono"
+                        maxlength="20"
+                        :value="$empresa->telefono ?? ''" />
+
+                    <x-formulario.entrada
                         name="total_trabajadores"
                         label="Total trabajadores"
                         type="number"
@@ -57,6 +97,25 @@
                         step="1"
                         placeholder="0"
                         :value="$empresa->total_trabajadores ?? ''" />
+
+                    <div>
+                        <label for="roles" class="mb-2 block text-xs font-medium text-slate-1100">Tipo de Empresa</label>
+                        <select id="roles" name="roles[]"
+                                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-marca-700">
+                            <option value="">Selecciona un rol...</option>
+                            @foreach (\App\Models\Enums\RolEmpresa::cases() as $rolEnum)
+                                <option value="{{ $rolEnum->value }}" @selected($rolSeleccionado === $rolEnum->value)>
+                                    {{ ucfirst(strtolower($rolEnum->value)) }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('roles')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                        @error('roles.*')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
             </fieldset>
 
@@ -108,13 +167,11 @@
     </section>
 
     <script>
-        // El CIF se guarda en mayúsculas y sin espacios
         const cif = document.getElementById('cif');
         document.getElementById('empresa-form').addEventListener('submit', () => {
             cif.value = cif.value.replace(/\s+/g, '').toUpperCase();
         });
 
-        // El mensaje de éxito desaparece al empezar a escribir
         document.getElementById('empresa-form').addEventListener('focusin', () => {
             document.getElementById('success-alert')?.remove();
         }, { once: true });
