@@ -431,5 +431,93 @@
                 </form>
             </x-interfaz.panel.tarjeta>
         </x-slot:carrito>
+
+        <x-slot:pedidos title="Pedidos">
+            <x-interfaz.panel.tarjeta titulo="Pedidos Logistica">
+                <div class="mb-4 flex items-center justify-between">
+                    <p class="text-sm text-slate-500">{{ $peticiones->count() }} pedidos</p>
+                </div>
+
+                @forelse ($peticiones as $peticion)
+                    <div class="mb-6">
+                        <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <p class="text-sm font-medium text-slate-700">
+                                Pedido #{{ $peticion->id }}
+                                · {{ $peticion->fecha?->format('d/m/Y') ?? '—' }}
+                            </p>
+                            <span
+                                class="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                                {{ ucfirst(strtolower(str_replace('_', ' ', $peticion->estado->value))) }}
+                            </span>
+                        </div>
+
+                        <x-tabla.tabla vacio="Este pedido no tiene productos." :columnas="['Nombre', 'Cantidad']">
+                            @foreach ($peticion->peticionProductos as $linea)
+                                <tr class="hover:bg-slate-50">
+                                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->producto }}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->cantidad }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </x-tabla.tabla>
+                    </div>
+                @empty
+                    <p class="text-sm text-slate-500">Todavía no hay pedidos.</p>
+                @endforelse
+            </x-interfaz.panel.tarjeta>
+        </x-slot:pedidos>
+        <x-slot:pruebas title="Pruebas">
+            @vite(['resources/css/app.css', 'resources/js/app.js'])
+            <ul id="chat-mensajes"></ul>
+
+            <form id="chat-formulario">
+                <input id="chat-texto" type="text" maxlength="500" placeholder="Escribe un mensaje" required>
+                <button type="submit">Enviar</button>
+            </form>
+
+            <p id="chat-error" style="color: red;"></p>
+
+            <script type="module">
+                const lista = document.getElementById('chat-mensajes');
+                const formulario = document.getElementById('chat-formulario');
+                const input = document.getElementById('chat-texto');
+                const error = document.getElementById('chat-error');
+
+                // Recibir
+                window.Echo.channel('chat').listen('EnviarMensaje', (e) => {
+                    const li = document.createElement('li');
+                    li.textContent = `[${e.fecha} ${e.hora}] ${e.autor}: ${e.mensaje}`;
+                    lista.appendChild(li);
+                });
+
+                // Enviar
+                formulario.addEventListener('submit', async (ev) => {
+                    ev.preventDefault();
+                    error.textContent = '';
+
+                    const respuesta = await fetch('/mensajes', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        },
+                        body: JSON.stringify({
+                            mensaje: input.value
+                        }),
+                    });
+
+                    if (respuesta.ok) {
+                        input.value = '';
+                    } else {
+                        const datos = await respuesta.json().catch(() => null);
+                        error.textContent = datos ?
+                            `${datos.message} — ${datos.file ?? ''}:${datos.line ?? ''}` :
+                            `No se pudo enviar (error ${respuesta.status})`;
+                    }
+                });
+            </script>
+        </x-slot:pruebas>
     </x-interfaz.layout.pestanas>
 </x-interfaz.layout.app>

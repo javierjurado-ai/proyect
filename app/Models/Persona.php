@@ -46,6 +46,7 @@ class Persona extends Model
     }
 
     // Roles de la persona (tabla intermedia rol_persona)
+    // Roles de la persona (tabla intermedia rol_persona)
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Rol::class, 'rol_persona', 'persona_id', 'rol_id');
