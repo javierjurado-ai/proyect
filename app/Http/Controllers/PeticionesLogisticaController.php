@@ -32,7 +32,7 @@ class PeticionesLogisticaController extends Controller
 
     public function index(Request $request){
         $personaId = Auth::user()->persona_id;
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $rol     = Rol::principal($personaId);
         $personas = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
         $nombre = collect([$personas->nombre, $personas->primer_apellido, $personas->segundo_apellido])
             ->filter()

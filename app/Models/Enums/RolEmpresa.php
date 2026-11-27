@@ -2,7 +2,7 @@
 
 namespace App\Models\Enums;
 
-// empresa_rol.rol
+// rol.rol_empresa (se asigna a cada empresa en la tabla rol_empresa)
 enum RolEmpresa: string
 {
     case Formadora = 'FORMADORA';

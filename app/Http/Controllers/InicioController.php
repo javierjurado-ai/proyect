@@ -27,7 +27,7 @@ class InicioController extends Controller
     {
         $personaId = Auth::user()->persona_id;
 
-        $rol     = Rol::where('persona_id', $personaId)->value('rol')?->value;
+        $rol     = Rol::principal($personaId);
         $persona = Persona::select('nombre', 'primer_apellido', 'segundo_apellido')->find($personaId);
 
         if (! $rol || ! $persona) {
@@ -117,16 +117,20 @@ class InicioController extends Controller
         $logisticaPendiente = PeticionesLogistica::where('estado', 'PENDIENTE')->count();
 
         // Personas por rol
-        $rolesDeAcceso      = ['ADMINISTRADOR', 'COORDINADOR', 'COMERCIAL', 'LOGISTA'];
+        $rolesDeAcceso      = Rol::ROLES_DE_ACCESO;
         $personasConUsuario = Usuario::pluck('persona_id');
 
-        // Cosas que revisar
-        $personasSinUsuario = Rol::whereIn('rol', $rolesDeAcceso)
-            ->whereNotIn('persona_id', $personasConUsuario)
+        // Personas con algún rol de acceso (tablas rol_persona + rol)
+        $personalConAcceso = DB::table('rol_persona')
+            ->join('rol', 'rol.id', '=', 'rol_persona.rol_id')
+            ->whereIn('rol.rol', $rolesDeAcceso)
             ->distinct()
-            ->count('persona_id');
+            ->pluck('rol_persona.persona_id');
 
-        $usuariosSinRol = Usuario::whereNotIn('persona_id', Rol::pluck('persona_id'))->count();
+        // Cosas que revisar
+        $personasSinUsuario = $personalConAcceso->diff($personasConUsuario)->count();
+
+        $usuariosSinRol = Usuario::whereNotIn('persona_id', $personalConAcceso)->count();
 
         $empresasSinCredito = Empresa::whereNotIn('id', $creditosAnio->pluck('empresa_id'))
             ->orderBy('nombre')
@@ -156,7 +160,7 @@ class InicioController extends Controller
             'logisticaPendiente' => $logisticaPendiente,
             'totalPresupuestos'  => Presupuesto::count(),
 
-            'totalPersonal'      => Rol::whereIn('rol', $rolesDeAcceso)->distinct()->count('persona_id'),
+            'totalPersonal'      => $personalConAcceso->count(),
             'totalCreditos'      => $creditosAnio->count(),
 
             'personasSinUsuario' => $personasSinUsuario,

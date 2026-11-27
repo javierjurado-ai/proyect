@@ -77,7 +77,7 @@ class DocenteController extends Controller
 
     private function soloAdministradorYCoordinador(): void
     {
-        $rol = Rol::where('persona_id', Auth::user()->persona_id)->value('rol')?->value;
+        $rol = Rol::principal(Auth::user()->persona_id);
         abort_unless(in_array($rol, ['ADMINISTRADOR', 'COORDINADOR'], true), 403, 'No tienes acceso a los datos de los docentes.');
     }
 }

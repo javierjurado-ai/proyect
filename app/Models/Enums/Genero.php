@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\enums;
+namespace App\Models\Enums;
 
 enum Genero: string
 {

@@ -45,9 +45,10 @@ class Persona extends Model
         return $this->hasOne(Usuario::class, 'persona_id', 'id');
     }
 
-    public function roles(): HasMany
+    // Roles de la persona (tabla intermedia rol_persona)
+    public function roles(): BelongsToMany
     {
-        return $this->hasMany(Rol::class, 'persona_id', 'id');
+        return $this->belongsToMany(Rol::class, 'rol_persona', 'persona_id', 'rol_id');
     }
 
     public function cursoAlumno(): HasMany

@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\enums\LOPD;
+use App\Models\Enums\LOPD;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

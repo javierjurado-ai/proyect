@@ -66,6 +66,23 @@
         </x-slot:acciones>
     </x-interfaz.panel.cabecera>
 
+    {{-- Mensajes (una sola vez para todas las pestañas) --}}
+    @if (session('ok'))
+        <div class="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {{ session('ok') }}
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {{ session('error') }}
+        </div>
+    @endif
+    @if ($errors->any())
+        <div class="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {{ $errors->first() }}
+        </div>
+    @endif
+
     <x-interfaz.layout.pestanas :inicial="request('pestana') === 'calendario' ? 'calendario' : null">
 
         {{-- Curso --}}
@@ -224,21 +241,18 @@
                 @endif
             </x-interfaz.panel.tarjeta>
         </x-slot:informacion>
+
+        {{-- Alumnos y docentes: datos personales, solo para administrador y coordinador --}}
+        @if ($puedeVerPersonas)
         <x-slot:alumnos title="Alumnos">
             <x-interfaz.panel.tarjeta titulo="Alumnos matriculados">
                 <div class="mb-4 flex items-center justify-between">
                     <p class="text-sm text-slate-500">{{ $curso->alumnos->count() }} registrados</p>
-                    <a href="{{ route('curso.alumno.store', $curso) }}"
+                    <a href="{{ route('curso.alumno.create', $curso) }}"
                         class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
                         + Nuevo alumno
                     </a>
                 </div>
-
-                @if (session('ok'))
-                    <div class="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
-                        {{ session('ok') }}
-                    </div>
-                @endif
 
                 <x-tabla.tabla vacio="Todavía no hay alumnos matriculados en este curso." :columnas="[
                     'Nombre',
@@ -283,8 +297,6 @@
 
                             <td class="px-4 py-3 text-center whitespace-nowrap">
                                 <div class="inline-flex items-center gap-2">
-
-
                                     <x-tabla.boton-eliminar :action="route('curso.alumno.destroy', [$curso->id, $cursoAlumno->id])" />
                                 </div>
                             </td>
@@ -297,17 +309,11 @@
             <x-interfaz.panel.tarjeta titulo="Docentes trabajando">
                 <div class="mb-4 flex items-center justify-between">
                     <p class="text-sm text-slate-500">{{ $curso->docentes->count() }} registrados</p>
-                    <a href="{{ route('curso.docente.store', $curso) }}"
+                    <a href="{{ route('curso.docente.create', $curso) }}"
                         class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
                         + Nuevo docente
                     </a>
                 </div>
-
-                @if (session('ok'))
-                    <div class="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
-                        {{ session('ok') }}
-                    </div>
-                @endif
 
                 <x-tabla.tabla vacio="Todavía no hay docentes en este curso." :columnas="[
                     'Nombre',
@@ -353,8 +359,6 @@
 
                             <td class="px-4 py-3 text-center whitespace-nowrap">
                                 <div class="inline-flex items-center gap-2">
-
-
                                 </div>
                             </td>
                         </tr>
@@ -362,82 +366,70 @@
                 </x-tabla.tabla>
             </x-interfaz.panel.tarjeta>
         </x-slot:docentes>
-        <x-slot:calendario title="Calendario">
-            <x-slot:calendario title="Calendario">
-                <x-calendario.calendario :url="route('curso.dia.create', $curso)" :inicial="\Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString()" :eventos="[
-                    [
-                        'title' => $horario,
-                        'daysOfWeek' => [1, 2, 3, 4, 5],
-                        'startTime' => $horaInicio,
-                        'endTime' => $horaFinal,
-                        'startRecur' => \Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString(),
-                        'endRecur' => \Illuminate\Support\Carbon::parse($curso->fecha_fin)->addDay()->toDateString(),
-                    ],
-                ]" />
-            </x-slot:calendario>
-            <x-slot:carrito title="Carrito">
-                <x-interfaz.panel.tarjeta titulo="Peticiones de logística">
-                    <div class="mb-4 flex items-center justify-between">
-                        <p class="text-sm text-slate-500">{{ $productos->count() }} productos</p>
-                        <a href="{{ route('curso.logistica.store', $curso) }}"
-                            class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
-                            + Nueva petición
-                        </a>
-                    </div>
+        @endif
 
-                    @if (session('ok'))
-                        <div
-                            class="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
-                            {{ session('ok') }}
+        <x-slot:calendario title="Calendario">
+            <x-calendario.calendario :url="route('curso.dia.create', $curso)"
+                :inicial="\Illuminate\Support\Carbon::parse($curso->fecha_inicio)->toDateString()"
+                :eventos="$eventosCalendario" />
+        </x-slot:calendario>
+
+        <x-slot:carrito title="Carrito">
+            <x-interfaz.panel.tarjeta titulo="Peticiones de logística">
+                <div class="mb-4 flex items-center justify-between">
+                    <p class="text-sm text-slate-500">{{ $productos->count() }} productos</p>
+                    <a href="{{ route('curso.logistica.store', $curso) }}"
+                        class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
+                        + Nueva petición
+                    </a>
+                </div>
+
+                <form method="POST" action="{{ route('curso.logistica.enviar', $curso) }}">
+                    @csrf
+
+                    <x-tabla.tabla vacio="Todavía no hay productos pendientes de petición en este curso."
+                        :columnas="['Nombre', 'Cantidad']">
+                        @foreach ($productos as $linea)
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->producto }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->cantidad }}</td>
+                            </tr>
+                        @endforeach
+                    </x-tabla.tabla>
+
+                    @if ($productos->isNotEmpty())
+                        <div class="mt-4 flex flex-wrap items-end gap-4">
+                            <input type="hidden" name="direccion_envio"
+                                value="{{ $curso->centro->direccion ?? '' }}">
+
+                            <div class="min-w-[220px] flex-1">
+                                <label class="mb-1 block text-sm font-medium text-slate-700">Curso</label>
+                                <input type="text"
+                                    value="{{ $curso->codigo_accion ?? '' }} / {{ $curso->codigo_grupo ?? '' }} - {{ $curso->formacion->nombre ?? '' }}"
+                                    disabled
+                                    class="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-sm text-slate-600">
+                            </div>
+
+                            <div class="min-w-[220px] flex-1">
+                                <label class="mb-1 block text-sm font-medium text-slate-700">Dirección de
+                                    envío</label>
+                                <input type="text" value="{{ $curso->centro->direccion ?? '' }}" disabled
+                                    class="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-sm text-slate-600">
+                            </div>
+
+                            <div class="min-w-[220px] flex-1">
+                                <x-formulario.entrada name="fecha_necesaria" label="Fecha requerida"
+                                    type="date" :value="$fecha($peticion?->fecha_necesaria)" />
+                            </div>
+
+                            <button type="submit"
+                                class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
+                                Enviar productos
+                            </button>
                         </div>
                     @endif
-
-                    <form method="POST" action="{{ route('curso.logistica.enviar', $curso) }}">
-                        @csrf
-
-                        <x-tabla.tabla vacio="Todavía no hay productos pendientes de petición en este curso."
-                            :columnas="['Nombre', 'Cantidad']">
-                            @foreach ($productos as $linea)
-                                <tr class="hover:bg-slate-50">
-                                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->producto }}</td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $linea->cantidad }}</td>
-                                </tr>
-                            @endforeach
-                        </x-tabla.tabla>
-
-                        @if ($productos->isNotEmpty())
-                            <div class="mt-4 flex flex-wrap items-end gap-4">
-                                <input type="hidden" name="direccion_envio"
-                                    value="{{ $curso->centro->direccion ?? '' }}">
-
-                                <div class="min-w-[220px] flex-1">
-                                    <label class="mb-1 block text-sm font-medium text-slate-700">Curso</label>
-                                    <input type="text"
-                                        value="{{ $curso->codigo_accion ?? '' }} / {{ $curso->codigo_grupo ?? '' }} - {{ $curso->formacion->nombre ?? '' }}"
-                                        disabled
-                                        class="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-sm text-slate-600">
-                                </div>
-
-                                <div class="min-w-[220px] flex-1">
-                                    <label class="mb-1 block text-sm font-medium text-slate-700">Dirección de
-                                        envío</label>
-                                    <input type="text" value="{{ $curso->centro->direccion ?? '' }}" disabled
-                                        class="w-full cursor-not-allowed rounded-lg border border-stone-300 bg-stone-100 px-3 py-2 text-sm text-slate-600">
-                                </div>
-
-                                <div class="min-w-[220px] flex-1">
-                                    <x-formulario.entrada name="fecha_necesaria" label="Fecha requerida"
-                                        type="date" :value="$fecha($peticion?->fecha_necesaria)" />
-                                </div>
-
-                                <button type="submit"
-                                    class="inline-flex items-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-900">
-                                    Enviar productos
-                                </button>
-                            </div>
-                        @endif
-                    </form>
-                </x-interfaz.panel.tarjeta>
-            </x-slot:carrito>
+                </form>
+            </x-interfaz.panel.tarjeta>
+        </x-slot:carrito>
     </x-interfaz.layout.pestanas>
 </x-interfaz.layout.app>

@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
  * Deja pasar solo a los roles indicados en la ruta.
  * Uso: Route::middleware('rol:ADMINISTRADOR,LOGISTA')->group(...)
  *
- * Una persona puede tener varias filas en `rol`: basta con que una coincida.
+ * Una persona puede tener varios roles (tabla rol_persona): basta con que uno coincida.
  */
 class ComprobarRol
 {
@@ -19,9 +19,9 @@ class ComprobarRol
     {
         $personaId = $request->user()?->persona_id;
 
-        $tieneRol = $personaId && Rol::where('persona_id', $personaId)
-            ->whereIn('rol', array_map('strtoupper', $roles))
-            ->exists();
+        $tieneRol = $personaId && Rol::dePersona($personaId)
+            ->intersect(array_map('strtoupper', $roles))
+            ->isNotEmpty();
 
         if (! $tieneRol) {
             if ($request->expectsJson()) {

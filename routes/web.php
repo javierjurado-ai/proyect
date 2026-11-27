@@ -205,6 +205,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/view/persona', [PersonaController::class, 'index'])->name('persona.index');
     Route::get('/view/formularioPersona', [PersonaController::class, 'create'])->name('persona.crearFormulario');
     Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
+    Route::get('/view/formularioPersona/{id}/editar', [PersonaController::class, 'editarFormulario'])->name('persona.edit')->whereNumber('id');
     Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
 
     Route::post('/rol/{id}', [CentroController::class, 'agregarRolCoordinador']);
@@ -236,8 +237,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/curso/{curso}/docentes', [CursoController::class, 'agregarDocentes'])->name('curso.docente.create');
     Route::post('/curso/{curso}/docentes', [CursoController::class, 'guardarDocentes'])->name('curso.docente.store');
     Route::get('/curso/{curso}/calendario/crear', [CursoController::class, 'crearFormularioDia'])->name('curso.dia.create');
-    Route::post('/curso/{curso}/calendario', [CursoController::class, 'store'])->name('curso.calendario.store');
-    Route::get('/curso/{curso}/formularioLogistica', [CursoController::class, 'crearFormularioLogistica'])->name('curso.logistica.store');
+    Route::post('/curso/{curso}/calendario', [CursoController::class, 'guardarDia'])->name('curso.calendario.store');    Route::get('/curso/{curso}/formularioLogistica', [CursoController::class, 'crearFormularioLogistica'])->name('curso.logistica.store');
     Route::post('/curso/{curso}/carrito', [CursoController::class, 'crearPeticionLogistica'])->name('curso.logistica.create');
     Route::post('/curso/{curso}/logistica/enviar', [CursoController::class, 'enviarPeticionesLogistica'])->name('curso.logistica.enviar');
 
@@ -418,6 +418,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/view/compras', [FacturaEmpresaProveedoraController::class, 'index'])->name('compra.index');
         Route::get('/view/compras/crear', [FacturaEmpresaProveedoraController::class, 'crearFormulario'])->name('compra.create');
         Route::post('/view/compras', [FacturaEmpresaProveedoraController::class, 'agregarFacturaProveedora'])->name('compra.store');
+        Route::get('/view/compras/{id}', [FacturaEmpresaProveedoraController::class, 'vistaCompra'])->name('compra.visualizar')->whereNumber('id');
+        Route::post('/view/compras/{id}/anular', [FacturaEmpresaProveedoraController::class, 'anularFacturaProveedora'])->name('compra.anular')->whereNumber('id');
 
         Route::get('/facturaProveedora/listar', [FacturaEmpresaProveedoraController::class, 'listarFacturasProveedora']);
         Route::get('/facturaProveedora/{id}', [FacturaEmpresaProveedoraController::class, 'obtenerFacturaProveedoraPorID'])->whereNumber('id');
@@ -426,5 +428,43 @@ Route::middleware('auth')->group(function () {
         Route::delete('/facturaProveedora/{id}', [FacturaEmpresaProveedoraController::class, 'eliminarFacturaProveedora'])->whereNumber('id');
         Route::post('/facturaProveedora/{id}/pagar', [FacturaEmpresaProveedoraController::class, 'marcarPagada'])->name('compra.pagar')->whereNumber('id');
         Route::post('/facturaProveedora/{id}/anular', [FacturaEmpresaProveedoraController::class, 'anularFacturaProveedora'])->whereNumber('id');
+    });
+
+   
+    Route::middleware('rol:ADMINISTRADOR,COORDINADOR')->group(function () {
+
+        // Personas
+        Route::get('/view/persona', [PersonaController::class, 'index'])->name('persona.index');
+        Route::get('/view/formularioPersona', [PersonaController::class, 'create'])->name('persona.crearFormulario');
+        Route::get('/view/formularioPersona/crear', [PersonaController::class, 'create'])->name('persona.create');
+        Route::post('/view/formularioPersona', [PersonaController::class, 'store'])->name('persona.store');
+        Route::get('/view/formularioPersona/{id}/editar', [PersonaController::class, 'editarFormulario'])->name('persona.edit')->whereNumber('id');
+        Route::post('/persona', [PersonaController::class, 'agregarPersona'])->name('persona.crearPersona');
+        Route::put('/persona/{id}', [PersonaController::class, 'update'])->name('persona.update');
+        Route::get('/persona/listar', [PersonaController::class, 'listarPersona']);
+        Route::get('/persona/{id}', [PersonaController::class, 'obtenerUsuarioPorID']);
+        Route::delete('/persona/{id}', [PersonaController::class, 'eliminarPersona']);
+
+        // Alumnos del curso
+        Route::get('/view/formulario/crearTablaAlumno/{id}', [CursoController::class, 'crearTablaPorAlumno'])->name('curso.crearTablaPorAlumno');
+        Route::get('/curso/{curso}/alumnos', [CursoController::class, 'agregarAlumnos'])->name('curso.alumno.create');
+        Route::post('/curso/{curso}/alumnos', [CursoController::class, 'guardarAlumnos'])->name('curso.alumno.store');
+        Route::delete('/curso/{curso}/alumno/{cursoAlumno}', [CursoController::class, 'eliminarCursoAlumno'])->name('curso.alumno.destroy');
+        Route::get('/persona/{curso}/crear', [PersonaController::class, 'create'])->name('persona.crear');
+        Route::post('/curso/rolAlumno/{id}', [CursoController::class, 'agregarRolAlumno']);
+        Route::post('/curso/CursoAlumno/{id}', [CursoController::class, 'agregarCursoAlumno']);
+
+        // Docentes del curso
+        Route::get('/view/formulario/crearTablaDocente/{id}', [CursoController::class, 'crearTablaPorDocente'])->name('curso.crearTablaPorDocente');
+        Route::get('/curso/{curso}/docentes', [CursoController::class, 'agregarDocentes'])->name('curso.docente.create');
+        Route::post('/curso/{curso}/docentes', [CursoController::class, 'guardarDocentes'])->name('curso.docente.store');
+        Route::post('/curso/rolDocente/{id}', [CursoController::class, 'agregarRolDocente']);
+        Route::post('/curso/CursoDocente/{id}', [CursoController::class, 'agregarCursoDocente']);
+
+        // Listados de alumnos y docentes
+        Route::get('/view/alumnos', [AlumnoController::class, 'index'])->name('alumno.index');
+        Route::get('/view/alumnos/{persona}', [AlumnoController::class, 'visualizar'])->name('alumno.visualizar')->whereNumber('persona');
+        Route::get('/view/docentes', [DocenteController::class, 'index'])->name('docente.index');
+        Route::get('/view/docentes/{persona}', [DocenteController::class, 'visualizar'])->name('docente.visualizar')->whereNumber('persona');
     });
 });

@@ -35,7 +35,7 @@ class FacturaEmpresaProveedoraController extends Controller
      *  VISTAS WEB: COMPRAS
      * ========================================================= */
 
-    // Listado de compras (?estado=pendientes|pagadas). Un LOGISTA solo ve las suyas.
+    // Listado de compras (?estado=pendientes|pagadas|anuladas). Un LOGISTA solo ve las suyas.
     public function index(Request $request)
     {
         [$rol, $nombre] = $this->rolYNombre();
@@ -47,6 +47,7 @@ class FacturaEmpresaProveedoraController extends Controller
         $compras = match ($filtro) {
             'pendientes' => $sinPagar,
             'pagadas'    => $todas->where('estado', EstadoFacturaProveedora::Pagada),
+            'anuladas'   => $todas->where('estado', EstadoFacturaProveedora::Anulada),
             default      => $todas,
         };
 
@@ -60,6 +61,7 @@ class FacturaEmpresaProveedoraController extends Controller
             'todas'      => ['Todas', $todas->count()],
             'pendientes' => ['Sin pagar', $sinPagar->count()],
             'pagadas'    => ['Pagadas', $todas->where('estado', EstadoFacturaProveedora::Pagada)->count()],
+            'anuladas'   => ['Anuladas', $todas->where('estado', EstadoFacturaProveedora::Anulada)->count()],
         ];
 
         return view('compras.index', compact('rol', 'nombre', 'compras', 'filtro', 'resumen', 'pestanas'));
@@ -79,6 +81,20 @@ class FacturaEmpresaProveedoraController extends Controller
         $cursos = Curso::with('formacion')->whereDate('fecha_fin', '>=', today()->subMonths(3))->orderBy('fecha_inicio')->get();
 
         return view('compras.formulario', compact('rol', 'nombre', 'proveedores', 'almacenes', 'almacenId', 'articulos', 'cursos'));
+    }
+
+    // Detalle de una compra: datos, líneas, totales y entradas de almacén que generó.
+    // Un LOGISTA solo puede abrir las suyas (consulta() ya lo filtra; si no es suya, 404).
+    public function vistaCompra($id)
+    {
+        [$rol, $nombre] = $this->rolYNombre();
+
+        $compra = $this->consulta()->with([
+            'empresa', 'docente', 'curso.formacion', 'persona', 'lineas.articulo', 'lineas.curso.formacion',
+            'movimientos.almacenDestino', 'movimientos.persona', 'movimientos.lineas.articulo', 'movimientos.lineas.unidad',
+        ])->findOrFail($id);
+
+        return view('compras.visualizar', compact('rol', 'nombre', 'compra'));
     }
 
     // Listar (?estado=, ?empresa_id=, ?docente_id=, ?curso_id=, ?vencidas=1)
@@ -234,16 +250,27 @@ class FacturaEmpresaProveedoraController extends Controller
             return response()->json(['mensaje' => 'Factura no encontrada'], 404);
         }
         if ($factura->estado === EstadoFacturaProveedora::Anulada) {
-            return response()->json(['mensaje' => 'La factura ya está anulada'], 409);
+            return $request->expectsJson()
+                ? response()->json(['mensaje' => 'La factura ya está anulada'], 409)
+                : back()->withErrors(['compra' => 'La factura ya está anulada']);
         }
 
-        $datos = $request->validate(['observaciones' => 'required|string|max:300']);
+        $datos = $request->validate(
+            ['observaciones' => 'required|string|max:300'],
+            ['observaciones.required' => 'Indica el motivo de la anulación.', 'observaciones.max' => 'Máximo :max caracteres.']
+        );
 
         $factura->update(['estado' => EstadoFacturaProveedora::Anulada, 'observaciones' => $datos['observaciones']]);
 
         $aviso = $factura->movimientos()->exists()
             ? 'La factura generó una entrada de almacén: si el material no llegó, regístralo con un ajuste.'
             : null;
+
+        if (! $request->expectsJson()) {
+            return redirect()
+                ->route('compra.visualizar', $factura->id)
+                ->with('exito', 'Compra ' . $factura->numero_factura . ' anulada.' . ($aviso ? ' ' . $aviso : ''));
+        }
 
         return response()->json(['factura' => $factura, 'aviso' => $aviso]);
     }
@@ -301,7 +328,7 @@ class FacturaEmpresaProveedoraController extends Controller
     private function consulta()
     {
         $personaId = Auth::user()->persona_id;
-        $roles = Rol::where('persona_id', $personaId)->pluck('rol')->map(fn ($r) => $r->value ?? $r);
+        $roles = Rol::dePersona($personaId);
 
         $soloPropias = $roles->contains('LOGISTA') && $roles->intersect(['ADMINISTRADOR', 'COMERCIAL'])->isEmpty();
 

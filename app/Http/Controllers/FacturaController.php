@@ -134,7 +134,7 @@ class FacturaController extends Controller
 
     // Emitir un borrador: asigna número de la serie, copia los datos del cliente,
     // calcula vencimiento y totales, y la deja cerrada.
-    public function emitirFactura(Request $request, $id)
+       public function emitirFactura(Request $request, $id)
     {
         $datos = $request->validate(['fecha_emision' => 'nullable|date']);
 
@@ -153,8 +153,10 @@ class FacturaController extends Controller
         $fecha = Carbon::parse($datos['fecha_emision'] ?? today());
 
         $factura = DB::transaction(function () use ($factura, $fecha) {
-            // Bloquea la serie para que dos emisiones a la vez no cojan el mismo número
-            $serie = SerieFactura::lockForUpdate()->find($factura->serie_factura_id);
+            // Bloquea TODAS las series: así dos emisiones a la vez (aunque sean de series distintas)
+            // van una detrás de otra y no cogen ni el mismo número ni la misma huella anterior.
+            SerieFactura::lockForUpdate()->get();
+            $serie = SerieFactura::find($factura->serie_factura_id);
 
             if ($serie->anio !== $fecha->year) {
                 abort(response()->json([
@@ -180,12 +182,21 @@ class FacturaController extends Controller
             ]);
             $factura->recalcularTotales();
 
-            // Huella encadenada con la última factura emitida.
+            // Huella encadenada con la ÚLTIMA FACTURA EMITIDA (no con la de id más alto: un borrador
+            // creado antes puede emitirse después). La última emitida es la que todavía no es
+            // "anterior" de ninguna otra: el final de la cadena.
             // OJO: no es el formato oficial de VeriFactu; habrá que adaptarlo cuando sea obligatorio.
-            $anterior = Factura::whereNotNull('hash')->where('id', '!=', $factura->id)->orderByDesc('id')->value('hash');
+            $anterior = Factura::whereNotNull('hash')
+                ->where('id', '!=', $factura->id)
+                ->whereNotIn('hash', Factura::whereNotNull('hash_anterior')->select('hash_anterior'))
+                ->value('hash');
+
+            // El número completo se calcula con los datos en memoria (no depende de que ya estén guardados)
+            $factura->setRelation('serie', $serie);
+
             $factura->hash_anterior = $anterior;
             $factura->hash = hash('sha256', implode('|', [
-                $factura->fresh('serie')->numero_completo,
+                $factura->numero_completo,
                 $fecha->toDateString(),
                 $factura->cliente_cif,
                 number_format((float) $factura->total, 2, '.', ''),
@@ -203,7 +214,6 @@ class FacturaController extends Controller
 
         return response()->json($factura->fresh(['serie', 'lineas'])->append('numero_completo'));
     }
-
     // Crea una RECTIFICATIVA en borrador con las líneas de la original en negativo.
     // Después se edita (si es una corrección parcial) y se emite.
     public function rectificarFactura(Request $request, $id)

@@ -82,23 +82,23 @@ class Empresa extends Model
         return $this->hasMany(EmpresaRLT::class, 'empresa_id', 'id');
     }
 
-    // --- Roles: FORMADORA, CLIENTE, PROVEEDOR (tabla empresa_rol) ---
+    // --- Roles: FORMADORA, CLIENTE, PROVEEDOR (tabla intermedia rol_empresa → rol.rol_empresa) ---
 
-    public function roles(): HasMany
+    public function roles(): BelongsToMany
     {
-        return $this->hasMany(EmpresaRol::class, 'empresa_id', 'id');
+        return $this->belongsToMany(Rol::class, 'rol_empresa', 'empresa_id', 'rol_id');
     }
 
     // $empresa->tieneRol(RolEmpresa::Proveedor)
     public function tieneRol(RolEmpresa $rol): bool
     {
-        return $this->roles()->where('rol', $rol->value)->exists();
+        return $this->roles()->where('rol.rol_empresa', $rol->value)->exists();
     }
 
     // Empresa::conRol(RolEmpresa::Cliente)->get()
     public function scopeConRol(Builder $query, RolEmpresa $rol): Builder
     {
-        return $query->whereHas('roles', fn (Builder $q) => $q->where('rol', $rol->value));
+        return $query->whereHas('roles', fn (Builder $q) => $q->where('rol.rol_empresa', $rol->value));
     }
 
     // --- Facturación ---
