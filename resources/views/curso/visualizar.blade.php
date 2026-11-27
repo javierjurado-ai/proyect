@@ -459,10 +459,10 @@
                         </x-tabla.tabla>
 
                         <div class="mt-2 flex justify-end">
-                            <button type="button"
+                            <a href="{{ route('ticket.index', $curso) }}"
                                 class="inline-flex items-center rounded-md bg-teal-800 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-teal-900">
                                 Abrir Ticket
-                            </button>
+                            </a>
                         </div>
                     </div>
                 @empty

@@ -21,6 +21,7 @@ use App\Http\Controllers\ArticuloController;
 use App\Http\Controllers\MovimientoAlmacenController;
 use App\Http\Controllers\FacturaController;
 use App\Http\Controllers\FacturaEmpresaProveedoraController;
+use App\Http\Controllers\MensajeController;
 use App\Models\PeticionMensajes;
 use Illuminate\Http\Request;
 
@@ -67,6 +68,11 @@ Route::middleware('auth')->group(function () {
     // Inicio: cada rol ve el suyo
     Route::get('/view/inicio', [InicioController::class, 'mostrarPaginaInicio'])->name('inicio.index');
 
+    Route::get('/cursos/{curso}/tickets/{ticket?}', [MensajeController::class, 'visualizarTicket'])
+        ->name('ticket.index');
+
+    Route::post('/cursos/{curso}/tickets/{ticket}/mensajes', [MensajeController::class, 'enviarMensaje'])
+        ->name('ticket.mensajes.store');
     /*
     |----------------------------------------------------------------------
     | Formación, empresas y administración (todos menos LOGISTA)
